@@ -1,11 +1,13 @@
-const { v4: uuidv4 } = require('uuid');
-const BaseModel = require('./BaseModel');
-const ValidationError = require('./ValidationError');
-
 /**
- * Address Model
+ * Address Entity
  * Represents a physical address for users
  */
+
+const { v4: uuidv4 } = require('uuid');
+const BaseModel = require('../base/BaseModel');
+const ValidationError = require('../validators/ValidationError');
+const { VALIDATION_RULES } = require('../utils/constants');
+
 class Address extends BaseModel {
   constructor(data = {}) {
     super();
@@ -52,34 +54,38 @@ class Address extends BaseModel {
     }
 
     // Length validations
-    if (this.addressLine1 && this.addressLine1.length > 100) {
-      errors.push('Address line 1 must be less than 100 characters');
+    if (this.addressLine1 && this.addressLine1.length > VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH) {
+      errors.push(`Address line 1 must be less than ${VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH} characters`);
     }
 
-    if (this.addressLine2 && this.addressLine2.length > 100) {
-      errors.push('Address line 2 must be less than 100 characters');
+    if (this.addressLine2 && this.addressLine2.length > VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH) {
+      errors.push(`Address line 2 must be less than ${VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH} characters`);
     }
 
-    if (this.city && this.city.length > 50) {
-      errors.push('City must be less than 50 characters');
+    if (this.city && this.city.length > VALIDATION_RULES.ADDRESS.CITY_MAX_LENGTH) {
+      errors.push(`City must be less than ${VALIDATION_RULES.ADDRESS.CITY_MAX_LENGTH} characters`);
     }
 
-    if (this.stateOrProvince && this.stateOrProvince.length > 50) {
-      errors.push('State or Province must be less than 50 characters');
+    if (this.stateOrProvince && this.stateOrProvince.length > VALIDATION_RULES.ADDRESS.STATE_MAX_LENGTH) {
+      errors.push(`State or Province must be less than ${VALIDATION_RULES.ADDRESS.STATE_MAX_LENGTH} characters`);
     }
 
     // Postal code format validation (basic)
-    if (this.postalCode && !/^[A-Za-z0-9\s\-]{3,10}$/.test(this.postalCode)) {
-      errors.push('Postal code format is invalid');
+    if (this.postalCode && this.postalCode.length < VALIDATION_RULES.ADDRESS.POSTAL_CODE_MIN_LENGTH) {
+      errors.push(`Postal code must be at least ${VALIDATION_RULES.ADDRESS.POSTAL_CODE_MIN_LENGTH} characters`);
     }
 
-    // Country code validation (ISO 3166-1 alpha-2 or full name)
-    if (this.country && this.country.length < 2) {
-      errors.push('Country must be at least 2 characters');
+    if (this.postalCode && this.postalCode.length > VALIDATION_RULES.ADDRESS.POSTAL_CODE_MAX_LENGTH) {
+      errors.push(`Postal code must be less than ${VALIDATION_RULES.ADDRESS.POSTAL_CODE_MAX_LENGTH} characters`);
     }
 
-    if (this.country && this.country.length > 50) {
-      errors.push('Country must be less than 50 characters');
+    // Country validation
+    if (this.country && this.country.length < VALIDATION_RULES.ADDRESS.COUNTRY_MIN_LENGTH) {
+      errors.push(`Country must be at least ${VALIDATION_RULES.ADDRESS.COUNTRY_MIN_LENGTH} characters`);
+    }
+
+    if (this.country && this.country.length > VALIDATION_RULES.ADDRESS.COUNTRY_MAX_LENGTH) {
+      errors.push(`Country must be less than ${VALIDATION_RULES.ADDRESS.COUNTRY_MAX_LENGTH} characters`);
     }
 
     if (errors.length > 0) {

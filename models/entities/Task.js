@@ -1,11 +1,11 @@
 /**
- * Task Model
- * Data model for system tasks with complete validation and business logic
+ * Task Entity
+ * Data model for tasks with complete validation and business logic
  */
 
-const BaseModel = require('./BaseModel');
-const ValidationError = require('./ValidationError');
-const { TASK_STATUS, TASK_PRIORITY } = require('./constants');
+const BaseModel = require('../base/BaseModel');
+const ValidationError = require('../validators/ValidationError');
+const { TASK_STATUS, TASK_PRIORITY, VALIDATION_RULES } = require('../utils/constants');
 
 class Task extends BaseModel {
   constructor({
@@ -43,7 +43,8 @@ class Task extends BaseModel {
     const timestamps = BaseModel.createTimestamps();
     return new Task({
       id: BaseModel.generateId(),
-      status: TASK_STATUS.PENDING, // Default status
+      status: TASK_STATUS.PENDING,
+      priority: TASK_PRIORITY.MEDIUM,
       ...taskData,
       ...timestamps
     });
@@ -75,12 +76,7 @@ class Task extends BaseModel {
    */
   _setTitle(title) {
     this._validateRequired(title, 'title');
-    if (title.trim().length < 3) {
-      throw ValidationError.invalidFormat('title', 'at least 3 characters', title);
-    }
-    if (title.trim().length > 200) {
-      throw ValidationError.invalidFormat('title', 'maximum 200 characters', title);
-    }
+    this._validateLength(title.trim(), VALIDATION_RULES.TASK.TITLE_MIN_LENGTH, VALIDATION_RULES.TASK.TITLE_MAX_LENGTH, 'title');
     this.title = title.trim();
   }
 
@@ -91,9 +87,7 @@ class Task extends BaseModel {
    */
   _setDescription(description) {
     this._validateRequired(description, 'description');
-    if (description.trim().length < 10) {
-      throw ValidationError.invalidFormat('description', 'at least 10 characters', description);
-    }
+    this._validateLength(description, 1, VALIDATION_RULES.TASK.DESCRIPTION_MAX_LENGTH, 'description');
     this.description = description.trim();
   }
 
@@ -120,28 +114,21 @@ class Task extends BaseModel {
   /**
    * Sets and validates due date
    * @private
-   * @param {string} dueDate - Due date timestamp
+   * @param {string|Date} dueDate - Task due date
    */
   _setDueDate(dueDate) {
+    this._validateRequired(dueDate, 'dueDate');
     this._validateTimestamp(dueDate, 'dueDate');
-    
-    const dueDateObj = new Date(dueDate);
-    const now = new Date();
-    
-    if (dueDateObj < now) {
-      throw ValidationError.invalidFormat('dueDate', 'future date', dueDate);
-    }
-    
-    this.dueDate = dueDate;
+    this.dueDate = new Date(dueDate);
   }
 
   /**
-   * Sets and validates assigned user
+   * Sets assigned user (nullable)
    * @private
-   * @param {string|null} assignedTo - Assigned user ID (nullable)
+   * @param {string} assignedTo - User ID assigned to task
    */
   _setAssignedTo(assignedTo) {
-    if (assignedTo !== null && assignedTo !== undefined) {
+    if (assignedTo) {
       this._validateUUID(assignedTo, 'assignedTo');
     }
     this.assignedTo = assignedTo || null;
@@ -150,7 +137,7 @@ class Task extends BaseModel {
   /**
    * Sets and validates creator
    * @private
-   * @param {string} createdBy - Creator user ID
+   * @param {string} createdBy - User ID who created the task
    */
   _setCreatedBy(createdBy) {
     this._validateUUID(createdBy, 'createdBy');
@@ -168,6 +155,14 @@ class Task extends BaseModel {
     this._validateTimestamp(updatedAt, 'updatedAt');
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+  }
+
+  /**
+   * Validates the entire task model
+   */
+  validate() {
+    // All validation is done in setters
+    return true;
   }
 
   /**
@@ -195,20 +190,12 @@ class Task extends BaseModel {
   }
 
   /**
-   * Checks if task is assigned to someone
-   * @returns {boolean}
-   */
-  isAssigned() {
-    return this.assignedTo !== null;
-  }
-
-  /**
    * Checks if task is overdue
    * @returns {boolean}
    */
   isOverdue() {
     if (this.isCompleted()) return false;
-    return new Date(this.dueDate) < new Date();
+    return new Date() > this.dueDate;
   }
 
   /**
@@ -220,13 +207,20 @@ class Task extends BaseModel {
   }
 
   /**
+   * Checks if task is assigned to someone
+   * @returns {boolean}
+   */
+  isAssigned() {
+    return !!this.assignedTo;
+  }
+
+  /**
    * Gets days until due date
-   * @returns {number}
+   * @returns {number} Days until due (negative if overdue)
    */
   getDaysUntilDue() {
     const now = new Date();
-    const due = new Date(this.dueDate);
-    const diffTime = due - now;
+    const diffTime = this.dueDate - now;
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
@@ -242,7 +236,7 @@ class Task extends BaseModel {
   }
 
   /**
-   * Unassigns task from current user
+   * Unassigns the task
    * @returns {Task}
    */
   unassign() {
@@ -252,14 +246,14 @@ class Task extends BaseModel {
   }
 
   /**
-   * Starts the task (sets status to in_progress)
+   * Starts the task (sets to in progress)
    * @returns {Task}
    */
   start() {
-    if (this.isCompleted()) {
-      throw new Error('Cannot start a completed task');
+    if (this.status !== TASK_STATUS.PENDING) {
+      throw new ValidationError('Task can only be started from pending status');
     }
-    this._setStatus(TASK_STATUS.IN_PROGRESS);
+    this.status = TASK_STATUS.IN_PROGRESS;
     this.updateTimestamp();
     return this;
   }
@@ -269,17 +263,23 @@ class Task extends BaseModel {
    * @returns {Task}
    */
   complete() {
-    this._setStatus(TASK_STATUS.COMPLETED);
+    if (this.status === TASK_STATUS.COMPLETED) {
+      throw new ValidationError('Task is already completed');
+    }
+    this.status = TASK_STATUS.COMPLETED;
     this.updateTimestamp();
     return this;
   }
 
   /**
-   * Resets task to pending status
+   * Reopens a completed task
    * @returns {Task}
    */
-  reset() {
-    this._setStatus(TASK_STATUS.PENDING);
+  reopen() {
+    if (this.status !== TASK_STATUS.COMPLETED) {
+      throw new ValidationError('Only completed tasks can be reopened');
+    }
+    this.status = TASK_STATUS.PENDING;
     this.updateTimestamp();
     return this;
   }
@@ -309,7 +309,7 @@ class Task extends BaseModel {
    * Converts model to plain object
    * @returns {Object}
    */
-  toObject() {
+  toJSON() {
     return {
       id: this.id,
       title: this.title,
@@ -325,18 +325,43 @@ class Task extends BaseModel {
   }
 
   /**
-   * Converts model to summary object (basic info only)
+   * Create Task from Prisma data
+   * @param {Object} prismaTask - Task data from Prisma
+   * @returns {Task}
+   */
+  static fromPrisma(prismaTask) {
+    if (!prismaTask) return null;
+
+    return new Task({
+      id: prismaTask.id,
+      title: prismaTask.title,
+      description: prismaTask.description,
+      status: prismaTask.status.toLowerCase(), // Convert ENUM to lowercase
+      priority: prismaTask.priority.toLowerCase(), // Convert ENUM to lowercase
+      dueDate: prismaTask.dueDate,
+      assignedTo: prismaTask.assignedToId,
+      createdBy: prismaTask.createdById,
+      createdAt: prismaTask.createdAt,
+      updatedAt: prismaTask.updatedAt
+    });
+  }
+
+  /**
+   * Convert to Prisma format for database operations
    * @returns {Object}
    */
-  toSummary() {
+  toPrisma() {
     return {
       id: this.id,
       title: this.title,
-      status: this.status,
-      priority: this.priority,
+      description: this.description,
+      status: this.status.toUpperCase(), // Convert to ENUM format
+      priority: this.priority.toUpperCase(), // Convert to ENUM format
       dueDate: this.dueDate,
-      isOverdue: this.isOverdue(),
-      daysUntilDue: this.getDaysUntilDue()
+      assignedToId: this.assignedTo,
+      createdById: this.createdBy,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
     };
   }
 }

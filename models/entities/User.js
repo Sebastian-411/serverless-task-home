@@ -1,11 +1,11 @@
 /**
- * User Model
+ * User Entity
  * Data model for system users with complete validation and business logic
  */
 
-const BaseModel = require('./BaseModel');
-const ValidationError = require('./ValidationError');
-const { USER_ROLES } = require('./constants');
+const BaseModel = require('../base/BaseModel');
+const ValidationError = require('../validators/ValidationError');
+const { USER_ROLES, VALIDATION_RULES } = require('../utils/constants');
 const Address = require('./Address');
 
 class User extends BaseModel {
@@ -71,9 +71,7 @@ class User extends BaseModel {
    */
   _setName(name) {
     this._validateRequired(name, 'name');
-    if (name.trim().length < 2) {
-      throw ValidationError.invalidFormat('name', 'at least 2 characters', name);
-    }
+    this._validateLength(name.trim(), VALIDATION_RULES.USER.NAME_MIN_LENGTH, VALIDATION_RULES.USER.NAME_MAX_LENGTH, 'name');
     this.name = name.trim();
   }
 
@@ -84,6 +82,7 @@ class User extends BaseModel {
    */
   _setEmail(email) {
     this._validateEmail(email, 'email');
+    this._validateLength(email, 1, VALIDATION_RULES.USER.EMAIL_MAX_LENGTH, 'email');
     this.email = email.toLowerCase().trim();
   }
 
@@ -141,6 +140,14 @@ class User extends BaseModel {
   }
 
   /**
+   * Validates the entire user model
+   */
+  validate() {
+    // All validation is done in setters
+    return true;
+  }
+
+  /**
    * Checks if user is an administrator
    * @returns {boolean}
    */
@@ -192,7 +199,7 @@ class User extends BaseModel {
    * Converts model to plain object
    * @returns {Object}
    */
-  toObject() {
+  toJSON() {
     return {
       id: this.id,
       name: this.name,
@@ -210,7 +217,7 @@ class User extends BaseModel {
    * @returns {Object}
    */
   toSafeObject() {
-    const obj = this.toObject();
+    const obj = this.toJSON();
     // Add any fields to exclude in the future (like passwords, etc.)
     return obj;
   }

@@ -1,25 +1,51 @@
 /**
  * Models Index
- * Exports all data models, constants, and utilities
+ * Exports all data models, constants, and utilities with organized structure
  */
 
-const User = require('./User');
-const Task = require('./Task');
-const Address = require('./Address');
-const BaseModel = require('./BaseModel');
-const ValidationError = require('./ValidationError');
-const constants = require('./constants');
+// Core Entities
+const User = require('./entities/User');
+const Task = require('./entities/Task');
+const Address = require('./entities/Address');
+
+// Base Classes & Utilities
+const BaseModel = require('./base/BaseModel');
+const ValidationError = require('./validators/ValidationError');
+
+// Constants & Configurations
+const constants = require('./utils/constants');
 
 module.exports = {
-  // Models
+  // === ENTITIES ===
   User,
   Task,
   Address,
+  
+  // === BASE CLASSES ===
   BaseModel,
   
-  // Utilities
+  // === VALIDATORS ===
   ValidationError,
   
-  // Constants
-  ...constants
+  // === CONSTANTS ===
+  ...constants,
+  
+  // === GROUPED EXPORTS ===
+  entities: {
+    User,
+    Task,
+    Address
+  },
+  
+  base: {
+    BaseModel
+  },
+  
+  validators: {
+    ValidationError
+  },
+  
+  utils: {
+    constants
+  }
 }; 
