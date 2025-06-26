@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  phoneNumber String
+  addressId   String?  @unique
+  role        UserRole @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  address       Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  createdTasks  Task[]   @relation("TaskCreator")
+  assignedTasks Task[]   @relation("TaskAssignee")
+
+  @@map("users")
+}
+
+model Address {
+  id              String   @id @default(uuid())
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  stateOrProvince String
+  postalCode      String
+  country         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User?
+
+  @@map("addresses")
+}
+
+model Task {
+  id           String       @id @default(uuid())
+  title        String
+  description  String
+  status       TaskStatus   @default(PENDING)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime
+  assignedToId String?
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  assignedTo   User?        @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy    User         @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
