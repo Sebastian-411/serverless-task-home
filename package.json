@@ -6,6 +6,7 @@
   "scripts": {
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
+    "db:generate": "npx prisma generate",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset",
     "start": "vercel dev"
@@ -28,6 +29,7 @@
   "dependencies": {
     "@prisma/client": "^6.10.1",
     "@supabase/supabase-js": "^2.50.2",
+    "dotenv": "^16.5.0",
     "prisma": "^6.10.1",
     "uuid": "^11.1.0"
   }
