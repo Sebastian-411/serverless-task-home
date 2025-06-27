@@ -14,7 +14,7 @@ export class ErrorHandler {
   private static readonly ERROR_MAP = new Map<string, { status: number; error: string; preserveMessage?: boolean }>([
     // Authorization errors - preserve original messages for test compatibility
     ['Only administrators can access', { status: 403, error: 'Only administrators can access', preserveMessage: true }],
-    ['Users can only access their own profile', { status: 403, error: 'Authorization error' }],
+    ['Users can only access their own profile', { status: 403, error: 'Authorization error', preserveMessage: true }],
     ['Authentication required', { status: 403, error: 'Authorization error' }],
     ['Regular users cannot create', { status: 403, error: 'Authorization error' }],
     ['Anonymous users can only register', { status: 403, error: 'Authorization error' }],
@@ -22,15 +22,15 @@ export class ErrorHandler {
     ['Only administrators can change', { status: 403, error: 'Authorization error' }],
     ['Insufficient permissions', { status: 403, error: 'Insufficient permissions' }],
     
-    // Not found errors
-    ['User not found', { status: 404, error: 'Not found' }],
+    // Not found errors - tests expect exactly 'Not found'
+    ['User not found', { status: 404, error: 'Not found', preserveMessage: true }],
     ['not found', { status: 404, error: 'Not found' }],
     
-    // Conflict errors - preserve exact message for test compatibility
-    ['User with this email already exists', { status: 409, error: 'already exists', preserveMessage: true }],
-    ['User already registered', { status: 409, error: 'already exists' }],
-    ['already registered', { status: 409, error: 'already exists' }],
-    ['already exists', { status: 409, error: 'already exists' }],
+    // Conflict errors - tests expect error="Conflict error" and message to include "already exists"
+    ['User with this email already exists', { status: 409, error: 'Conflict error', preserveMessage: true }],
+    ['User already registered', { status: 409, error: 'Conflict error', preserveMessage: true }],
+    ['already registered', { status: 409, error: 'Conflict error', preserveMessage: true }],
+    ['already exists', { status: 409, error: 'Conflict error', preserveMessage: true }],
     
     // Validation errors
     ['validation', { status: 400, error: 'Validation error' }],
