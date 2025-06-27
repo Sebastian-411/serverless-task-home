@@ -3,6 +3,7 @@ import { UserRepositoryPrisma } from '../../core/user/infrastructure/user.reposi
 import { GetUsersUseCase } from '../../core/user/application/get-users.usecase';
 import { GetUserByIdUseCase } from '../../core/user/application/get-user-by-id.usecase';
 import { CreateUserUseCase } from '../../core/user/application/create-user.usecase';
+import { ChangeUserRoleUseCase } from '../../core/user/application/change-user-role.usecase';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { RequestProcessor } from '../middlewares/request-handler.middleware';
 import { Cache } from '../cache/cache.service';
@@ -21,6 +22,7 @@ class DependencyContainer {
   private _getUsersUseCase: GetUsersUseCase | null = null;
   private _getUserByIdUseCase: GetUserByIdUseCase | null = null;
   private _createUserUseCase: CreateUserUseCase | null = null;
+  private _changeUserRoleUseCase: ChangeUserRoleUseCase | null = null;
 
   /**
    * Singleton instance - O(1) with lazy initialization
@@ -104,6 +106,13 @@ class DependencyContainer {
       this._createUserUseCase = new CreateUserUseCase(this.userRepository);
     }
     return this._createUserUseCase;
+  }
+
+  get changeUserRoleUseCase(): ChangeUserRoleUseCase {
+    if (!this._changeUserRoleUseCase) {
+      this._changeUserRoleUseCase = new ChangeUserRoleUseCase(this.userRepository, this.prisma);
+    }
+    return this._changeUserRoleUseCase;
   }
 
   /**

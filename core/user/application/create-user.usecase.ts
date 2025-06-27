@@ -43,13 +43,16 @@ export class CreateUserUseCase {
   ) {}
 
   async execute(request: CreateUserRequest, authContext: AuthContext): Promise<CreateUserResponse> {
-    // Validate authorization scenarios
-    this.validateAuthorization(request, authContext);
+    // Step 1: Normalize input data
+    const normalizedRequest = this.normalizeInputData(request);
 
-    // Create user in Supabase Auth
+    // Step 2: Validate authorization scenarios
+    this.validateAuthorization(normalizedRequest, authContext);
+
+    // Step 3: Create user in Supabase Auth
     const { user: supabaseUser, error } = await SupabaseService.createUser(
-      request.email, 
-      request.password
+      normalizedRequest.email, 
+      normalizedRequest.password
     );
 
     if (error) {
@@ -61,34 +64,27 @@ export class CreateUserUseCase {
     }
 
     try {
-      // Create user entity in the database
+      // Step 4: Create user entity in the database
       const userData: CreateUserData = {
         id: supabaseUser.id, // Use Supabase ID
-        name: request.name,
-        email: request.email,
-        phoneNumber: request.phoneNumber,
-        role: this.mapRoleToPrisma(this.determineUserRole(request, authContext)),
-        address: request.address ? {
-          addressLine1: request.address.addressLine1,
-          addressLine2: request.address.addressLine2,
-          city: request.address.city,
-          stateOrProvince: request.address.stateOrProvince,
-          postalCode: request.address.postalCode,
-          country: request.address.country
+        name: normalizedRequest.name,
+        email: normalizedRequest.email,
+        phoneNumber: normalizedRequest.phoneNumber,
+        role: this.mapRoleToPrisma(this.determineUserRole(normalizedRequest, authContext)),
+        address: normalizedRequest.address ? {
+          addressLine1: normalizedRequest.address.addressLine1,
+          addressLine2: normalizedRequest.address.addressLine2,
+          city: normalizedRequest.address.city,
+          stateOrProvince: normalizedRequest.address.stateOrProvince,
+          postalCode: normalizedRequest.address.postalCode,
+          country: normalizedRequest.address.country
         } : null
       };
 
       const createdUser = await this.userRepository.create(userData);
 
-      return {
-        id: createdUser.id,
-        email: createdUser.email,
-        name: createdUser.name,
-        phoneNumber: createdUser.phoneNumber,
-        role: createdUser.role.toLowerCase(), // Return in lowercase for the API
-        address: createdUser.address,
-        createdAt: createdUser.createdAt
-      };
+      // Step 5: Return formatted response
+      return this.formatResponse(createdUser);
 
     } catch (dbError) {
       // If there's an error in the DB, try to delete the user from Supabase
@@ -96,6 +92,55 @@ export class CreateUserUseCase {
       console.error('Database error, user created in Supabase but not in DB:', dbError);
       throw new Error('Error creating user in database');
     }
+  }
+
+  /**
+   * Normalize input data - Data transformation logic
+   */
+  private normalizeInputData(request: CreateUserRequest): CreateUserRequest {
+    const normalized = { ...request };
+
+    // Normalize email
+    normalized.email = normalized.email.trim().toLowerCase();
+
+    // Normalize role
+    if (normalized.role) {
+      normalized.role = normalized.role.toLowerCase().trim() as 'admin' | 'user';
+    }
+
+    // Normalize text fields
+    ['name', 'phoneNumber'].forEach(field => {
+      if (normalized[field as keyof CreateUserRequest]) {
+        (normalized as any)[field] = (normalized as any)[field].trim();
+      }
+    });
+
+    // Normalize address fields
+    if (normalized.address) {
+      ['addressLine1', 'addressLine2', 'city', 'stateOrProvince', 'postalCode', 'country']
+        .forEach(field => {
+          if (normalized.address![field as keyof typeof normalized.address]) {
+            (normalized.address as any)[field] = (normalized.address as any)[field].trim();
+          }
+        });
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Format response data for API consumption
+   */
+  private formatResponse(user: any): CreateUserResponse {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phoneNumber: user.phoneNumber,
+      role: user.role.toLowerCase(), // Return in lowercase for the API
+      address: user.address,
+      createdAt: user.createdAt
+    };
   }
 
   private validateAuthorization(request: CreateUserRequest, authContext: AuthContext): void {

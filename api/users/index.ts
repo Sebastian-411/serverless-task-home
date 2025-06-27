@@ -60,43 +60,17 @@ const handleCreateUser = async (req: VercelRequest, res: VercelResponse) => {
       context.authContext = { isAuthenticated: false };
     }
 
-    // Step 4: Data normalization
-    const body = { ...context.validatedBody };
+    // Step 4: Execute use case - all business logic is handled there
+    const user = await Dependencies.createUserUseCase.execute(
+      context.validatedBody, 
+      context.authContext
+    );
     
-    if (body.role) body.role = body.role.toLowerCase().trim();
-    body.email = body.email.trim().toLowerCase();
-    
-    ['name', 'phoneNumber'].forEach(field => {
-      if (body[field]) body[field] = body[field].trim();
-    });
-
-    if (body.address) {
-      ['addressLine1', 'addressLine2', 'city', 'stateOrProvince', 'postalCode', 'country']
-        .forEach(field => {
-          if (body.address[field]) body.address[field] = body.address[field].trim();
-        });
-    }
-
-    // Step 5: Execute business logic
-    const user = await Dependencies.createUserUseCase.execute(body, context.authContext);
-    
-    // Step 6: Success response
-    const responseData = {
-      data: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phoneNumber: user.phoneNumber,
-        role: user.role.toLowerCase(),
-        address: user.address,
-        createdAt: user.createdAt
-      },
-      message: 'User created successfully'
-    };
-
+    // Step 5: Success response
     return res.status(201).json({
       success: true,
-      ...responseData
+      data: user,
+      message: 'User created successfully'
     });
 
   } catch (error) {

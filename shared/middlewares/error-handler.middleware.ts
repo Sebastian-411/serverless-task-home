@@ -23,7 +23,7 @@ export class ErrorHandler {
     ['Insufficient permissions', { status: 403, error: 'Insufficient permissions' }],
     
     // Not found errors - tests expect exactly 'Not found'
-    ['User not found', { status: 404, error: 'Not found', preserveMessage: true }],
+    ['User not found', { status: 404, error: 'Not found' }],
     ['not found', { status: 404, error: 'Not found' }],
     
     // Conflict errors - tests expect error="Conflict error" and message to include "already exists"
