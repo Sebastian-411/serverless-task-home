@@ -1,21 +1,21 @@
 // GET /users/:id
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Dependencies } from '../../shared/config/dependencies';
+import { HandlerContext } from '../../shared/middlewares/request-handler.middleware';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { id } = req.query;
+// Ultra-fast handler with built-in validation, auth, and business logic
+const handler = Dependencies.createAuthenticatedEndpoint(['GET'])({
+  pathParam: { name: 'id', type: 'uuid' }
+}, async (context: HandlerContext) => {
+  const user = await Dependencies.getUserByIdUseCase.execute(
+    context.pathParam!, 
+    context.authContext
+  );
   
-  try {
-    if (req.method !== 'GET') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-    
-    // GET /users/:id - Retrieve a specific user by ID
-    return res.status(200).json({ 
-      message: "hi, this still in development" 
-    });
-    
-  } catch (error) {
-    console.error('Error in users/[id]:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-} 
+  return {
+    data: user,
+    message: 'User retrieved successfully'
+  };
+});
+
+export default handler; 

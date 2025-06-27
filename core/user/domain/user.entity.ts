@@ -1,211 +1,217 @@
 /**
- * User Entity
+ * User Entity - TypeScript ES Module Version
  * Data model for system users with complete validation and business logic
  */
 
-const BaseEntity = require('../../../shared/domain/base.entity');
-const ValidationError = require('../../../shared/domain/exceptions/validation.error');
-const { USER_ROLES, VALIDATION_RULES } = require('../../../shared/domain/value-objects/constants');
-const Address = require('./address.entity');
+import { v4 as uuidv4 } from 'uuid';
 
-class User extends BaseEntity {
-  constructor({
-    id,
-    name,
-    email,
-    phoneNumber,
-    address,
-    role,
-    createdAt,
-    updatedAt
-  }) {
-    super();
-    
-    // Validate and set properties
-    this._setId(id);
-    this._setName(name);
-    this._setEmail(email);
-    this._setPhoneNumber(phoneNumber);
-    this._setAddress(address);
-    this._setRole(role);
-    this._setTimestamps(createdAt, updatedAt);
+// User-related interfaces and types
+export interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  address?: AddressData | null;
+  role: 'ADMIN' | 'USER';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AddressData {
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  stateOrProvince: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface CreateUserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  address?: AddressData;
+  role?: 'ADMIN' | 'USER';
+}
+
+export interface UpdateUserData {
+  name?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: AddressData;
+  role?: 'ADMIN' | 'USER';
+}
+
+// Repository interface for dependency injection
+export interface UserRepository {
+  create(userData: any): Promise<UserData>;
+  findById(id: string): Promise<UserData | null>;
+  findByEmail(email: string): Promise<UserData | null>;
+  findAll(): Promise<UserData[]>;
+  update(id: string, data: any): Promise<UserData>;
+  delete(id: string): Promise<void>;
+}
+
+// Basic validation helpers
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PHONE_REGEX = /^[\+]?[0-9\s\-\(\)]{10,20}$/;
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+export class User {
+  public id!: string;
+  public name!: string;
+  public email!: string;
+  public phoneNumber!: string;
+  public address!: AddressData | null;
+  public role!: 'ADMIN' | 'USER';
+  public createdAt!: Date;
+  public updatedAt!: Date;
+
+  constructor(userData: UserData) {
+    this._setId(userData.id);
+    this._setName(userData.name);
+    this._setEmail(userData.email);
+    this._setPhoneNumber(userData.phoneNumber);
+    this._setAddress(userData.address);
+    this._setRole(userData.role);
+    this._setTimestamps(userData.createdAt, userData.updatedAt);
   }
 
   /**
-   * Factory method to create a new user with auto-generated ID and timestamps
-   * @param {Object} userData - User data without id, createdAt, updatedAt
-   * @returns {User}
+   * Factory method to create a new user
    */
-  static create(userData) {
-    const timestamps = BaseEntity.createTimestamps();
-    return new User({
-      id: BaseEntity.generateId(),
-      ...userData,
-      ...timestamps
+     static create(userData: CreateUserData): User {
+     const now = new Date();
+     return new User({
+       id: uuidv4(),
+      name: userData.name,
+      email: userData.email,
+      phoneNumber: userData.phoneNumber,
+      address: userData.address || null,
+      role: userData.role || 'USER',
+      createdAt: now,
+      updatedAt: now
     });
   }
 
   /**
    * Factory method to create user from existing data
-   * @param {Object} userData - Complete user data
-   * @returns {User}
    */
-  static fromObject(userData) {
+  static fromObject(userData: UserData): User {
     return new User(userData);
   }
 
-  /**
-   * Sets and validates user ID
-   * @private
-   * @param {string} id - User ID
-   */
-  _setId(id) {
-    this._validateUUID(id, 'id');
+  private _setId(id: string): void {
+    if (!id || !UUID_REGEX.test(id)) {
+      throw new ValidationError('Invalid user ID format');
+    }
     this.id = id;
   }
 
-  /**
-   * Sets and validates user name
-   * @private
-   * @param {string} name - User name
-   */
-  _setName(name) {
-    this._validateRequired(name, 'name');
-    this._validateLength(name.trim(), VALIDATION_RULES.USER.NAME_MIN_LENGTH, VALIDATION_RULES.USER.NAME_MAX_LENGTH, 'name');
-    this.name = name.trim();
-  }
-
-  /**
-   * Sets and validates user email
-   * @private
-   * @param {string} email - User email
-   */
-  _setEmail(email) {
-    this._validateEmail(email, 'email');
-    this._validateLength(email, 1, VALIDATION_RULES.USER.EMAIL_MAX_LENGTH, 'email');
-    this.email = email.toLowerCase().trim();
-  }
-
-  /**
-   * Sets and validates phone number
-   * @private
-   * @param {string} phoneNumber - Phone number
-   */
-  _setPhoneNumber(phoneNumber) {
-    this._validatePhone(phoneNumber, 'phoneNumber');
-    this.phoneNumber = phoneNumber.trim();
-  }
-
-  /**
-   * Sets and validates address
-   * @private
-   * @param {Object|Address} address - Address object or Address instance
-   */
-  _setAddress(address) {
-    if (!address) {
-      this.address = null;
-      return;
+  private _setName(name: string): void {
+    if (!name || typeof name !== 'string') {
+      throw new ValidationError('Name is required');
     }
-
-    if (address instanceof Address) {
-      this.address = address;
-    } else if (typeof address === 'object') {
-      this.address = Address.create(address);
-    } else {
-      throw ValidationError.invalidFormat('address', 'object or Address instance', address);
+    const trimmedName = name.trim();
+    if (trimmedName.length < 1 || trimmedName.length > 100) {
+      throw new ValidationError('Name must be between 1 and 100 characters');
     }
+    this.name = trimmedName;
   }
 
-  /**
-   * Sets and validates user role
-   * @private
-   * @param {string} role - User role
-   */
-  _setRole(role) {
-    this._validateEnum(role, Object.values(USER_ROLES), 'role');
+  private _setEmail(email: string): void {
+    if (!email || typeof email !== 'string') {
+      throw new ValidationError('Email is required');
+    }
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      throw new ValidationError('Invalid email format');
+    }
+    if (trimmedEmail.length > 255) {
+      throw new ValidationError('Email must be less than 255 characters');
+    }
+    this.email = trimmedEmail;
+  }
+
+  private _setPhoneNumber(phoneNumber: string): void {
+    if (!phoneNumber || typeof phoneNumber !== 'string') {
+      throw new ValidationError('Phone number is required');
+    }
+    const trimmedPhone = phoneNumber.trim();
+    if (!PHONE_REGEX.test(trimmedPhone)) {
+      throw new ValidationError('Invalid phone number format');
+    }
+    this.phoneNumber = trimmedPhone;
+  }
+
+  private _setAddress(address: AddressData | null | undefined): void {
+    this.address = address || null;
+  }
+
+  private _setRole(role: 'ADMIN' | 'USER'): void {
+    if (!role || !['ADMIN', 'USER'].includes(role)) {
+      throw new ValidationError('Invalid role. Must be ADMIN or USER');
+    }
     this.role = role;
   }
 
-  /**
-   * Sets and validates timestamps
-   * @private
-   * @param {string} createdAt - Creation timestamp
-   * @param {string} updatedAt - Update timestamp
-   */
-  _setTimestamps(createdAt, updatedAt) {
-    this._validateTimestamp(createdAt, 'createdAt');
-    this._validateTimestamp(updatedAt, 'updatedAt');
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
+  private _setTimestamps(createdAt: Date, updatedAt: Date): void {
+    this.createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt);
+    this.updatedAt = updatedAt instanceof Date ? updatedAt : new Date(updatedAt);
   }
 
   /**
    * Validates the entire user model
    */
-  validate() {
-    // All validation is done in setters
-    return true;
+  validate(): boolean {
+    return true; // All validation is done in setters
   }
 
   /**
    * Checks if user is an administrator
-   * @returns {boolean}
    */
-  isAdmin() {
-    return this.role === USER_ROLES.ADMIN;
+  isAdmin(): boolean {
+    return this.role === 'ADMIN';
   }
 
   /**
    * Checks if user is a regular user
-   * @returns {boolean}
    */
-  isRegularUser() {
-    return this.role === USER_ROLES.USER;
-  }
-
-  /**
-   * Gets user's full address as formatted string
-   * @returns {string}
-   */
-  getFormattedAddress() {
-    if (!this.address) {
-      return 'No address provided';
-    }
-    return this.address.getShippingFormat();
+  isRegularUser(): boolean {
+    return this.role === 'USER';
   }
 
   /**
    * Updates user information
-   * @param {Object} updates - Fields to update
-   * @returns {User}
    */
-  update(updates) {
-    const allowedFields = ['name', 'email', 'phoneNumber', 'address', 'role'];
+  update(updates: UpdateUserData): User {
+    if (updates.name !== undefined) this._setName(updates.name);
+    if (updates.email !== undefined) this._setEmail(updates.email);
+    if (updates.phoneNumber !== undefined) this._setPhoneNumber(updates.phoneNumber);
+    if (updates.address !== undefined) this._setAddress(updates.address);
+    if (updates.role !== undefined) this._setRole(updates.role);
     
-    for (const [key, value] of Object.entries(updates)) {
-      if (allowedFields.includes(key) && value !== undefined) {
-        const setterMethod = `_set${key.charAt(0).toUpperCase() + key.slice(1)}`;
-        if (typeof this[setterMethod] === 'function') {
-          this[setterMethod](value);
-        }
-      }
-    }
-    
-    this.updateTimestamp();
+    this.updatedAt = new Date();
     return this;
   }
 
   /**
    * Converts model to plain object
-   * @returns {Object}
    */
-  toJSON() {
+  toJSON(): UserData {
     return {
       id: this.id,
       name: this.name,
       email: this.email,
       phoneNumber: this.phoneNumber,
-      address: this.address ? this.address.toJSON() : null,
+      address: this.address,
       role: this.role,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
@@ -213,62 +219,64 @@ class User extends BaseEntity {
   }
 
   /**
-   * Converts model to safe object (without sensitive data)
-   * @returns {Object}
+   * Converts to safe object (without sensitive data)
    */
-  toSafeObject() {
-    const obj = this.toJSON();
-    // Add any fields to exclude in the future (like passwords, etc.)
-    return obj;
+  toSafeObject(): Omit<UserData, 'email'> {
+    return {
+      id: this.id,
+      name: this.name,
+      phoneNumber: this.phoneNumber,
+      address: this.address,
+      role: this.role,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    };
   }
 
   /**
-   * Create User from Prisma data
-   * @param {Object} prismaUser - User data from Prisma
-   * @returns {User}
+   * Creates User instance from Prisma result
    */
-  static fromPrisma(prismaUser) {
-    if (!prismaUser) return null;
-
-    return new User({
+  static fromPrisma(prismaUser: any): User {
+    const userData: UserData = {
       id: prismaUser.id,
       name: prismaUser.name,
       email: prismaUser.email,
       phoneNumber: prismaUser.phoneNumber,
-      address: prismaUser.address ? Address.fromPrisma(prismaUser.address) : null,
-      role: prismaUser.role.toLowerCase(), // Convert ENUM to lowercase
+      role: prismaUser.role,
       createdAt: prismaUser.createdAt,
-      updatedAt: prismaUser.updatedAt
-    });
+      updatedAt: prismaUser.updatedAt,
+      address: null
+    };
+
+    if (prismaUser.address) {
+      userData.address = {
+        addressLine1: prismaUser.address.addressLine1,
+        addressLine2: prismaUser.address.addressLine2 || undefined,
+        city: prismaUser.address.city,
+        stateOrProvince: prismaUser.address.stateOrProvince,
+        postalCode: prismaUser.address.postalCode,
+        country: prismaUser.address.country
+      };
+    }
+
+    return new User(userData);
   }
 
   /**
-   * Convert to Prisma format for database operations
-   * @returns {Object}
+   * Converts to Prisma format for database operations
    */
-  toPrisma() {
-    const userData = {
+  toPrisma(): any {
+    return {
       id: this.id,
       name: this.name,
       email: this.email,
       phoneNumber: this.phoneNumber,
-      role: this.role.toUpperCase(), // Convert to ENUM format
+      role: this.role,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      updatedAt: this.updatedAt,
+      address: this.address ? {
+        create: this.address
+      } : undefined
     };
-
-    // Include address connection if address exists
-    if (this.address) {
-      userData.address = {
-        connectOrCreate: {
-          where: { id: this.address.id },
-          create: this.address.toPrisma()
-        }
-      };
-    }
-
-    return userData;
   }
-}
-
-module.exports = User; 
+} 

@@ -29,10 +29,12 @@ model User {
   createdTasks  Task[]   @relation("TaskCreator")
   assignedTasks Task[]   @relation("TaskAssignee")
 
-  // Índices
-  @@index([email])
-  @@index([role])
-  @@index([createdAt])
+  // Optimized indexes for frequent queries
+  @@index([email]) // Login lookups
+  @@index([role]) // Authorization checks
+  @@index([createdAt]) // Temporal ordering
+  @@index([role, createdAt]) // Admin queries with sorting
+  @@index([email, role]) // Fast auth + role lookup
   @@map("users")
 }
 
@@ -50,7 +52,7 @@ model Address {
   // Relations
   user User?
 
-  // Índices para búsquedas geográficas
+  // Indexes for geographic searches
   @@index([city, stateOrProvince])
   @@index([country])
   @@index([postalCode])
@@ -74,16 +76,16 @@ model Task {
   user           User  @relation("TaskCreator", fields: [userId], references: [id], onDelete: Cascade)
   assignedToUser User? @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
 
-  // Índices para optimizar consultas comunes
+  // Indexes to optimize common queries
   @@index([userId])
   @@index([assignedTo])
   @@index([status])
   @@index([priority])
   @@index([dueDate])
   @@index([createdAt])
-  @@index([status, priority]) // Índice compuesto para filtros comunes
-  @@index([userId, status])   // Índice compuesto para tareas por usuario y estado
-  @@index([assignedTo, status]) // Índice compuesto para tareas asignadas por estado
+  @@index([status, priority]) // Composite index for common filters
+  @@index([userId, status])   // Composite index for tasks by user and status
+  @@index([assignedTo, status]) // Composite index for assigned tasks by status
   @@map("tasks")
 }
 

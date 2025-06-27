@@ -55,7 +55,7 @@ export class SupabaseService {
         return null;
       }
 
-      // Si se proporciona el repositorio, obtener el rol real de la base de datos
+      // If repository is provided, get the real role from the database
       let role: 'admin' | 'user' = 'user';
       
       if (userRepository) {

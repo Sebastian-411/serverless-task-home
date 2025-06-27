@@ -43,23 +43,27 @@ export class CreateUserUseCase {
   ) {}
 
   async execute(request: CreateUserRequest, authContext: AuthContext): Promise<CreateUserResponse> {
-    // Validar escenarios de autorización
+    // Validate authorization scenarios
     this.validateAuthorization(request, authContext);
 
-    // Crear usuario en Supabase Auth
+    // Create user in Supabase Auth
     const { user: supabaseUser, error } = await SupabaseService.createUser(
       request.email, 
       request.password
     );
 
     if (error) {
+      // Check if it's a duplicate email error
+      if (error.message && (error.message.includes('already') || error.message.includes('exists'))) {
+        throw new Error('User with this email already exists');
+      }
       throw new Error(`Error creating user in Supabase: ${error.message}`);
     }
 
     try {
-      // Crear entidad de usuario en la base de datos
+      // Create user entity in the database
       const userData: CreateUserData = {
-        id: supabaseUser.id, // Usar el ID de Supabase
+        id: supabaseUser.id, // Use Supabase ID
         name: request.name,
         email: request.email,
         phoneNumber: request.phoneNumber,
@@ -81,51 +85,55 @@ export class CreateUserUseCase {
         email: createdUser.email,
         name: createdUser.name,
         phoneNumber: createdUser.phoneNumber,
-        role: createdUser.role.toLowerCase(), // Devolver en minúsculas para la API
+        role: createdUser.role.toLowerCase(), // Return in lowercase for the API
         address: createdUser.address,
         createdAt: createdUser.createdAt
       };
 
     } catch (dbError) {
-      // Si hay error en la DB, intentar eliminar el usuario de Supabase
-      // (rollback manual ya que no tenemos transacciones distribuidas)
+      // If there's an error in the DB, try to delete the user from Supabase
+      // (manual rollback since we don't have distributed transactions)
       console.error('Database error, user created in Supabase but not in DB:', dbError);
       throw new Error('Error creating user in database');
     }
   }
 
   private validateAuthorization(request: CreateUserRequest, authContext: AuthContext): void {
-    // Escenario 1: Admin crea usuario (puede crear admin o user)
+    // Scenario 1: Admin creates user (can create admin or user)
     if (authContext.isAuthenticated && authContext.user?.role === 'admin') {
-      // Admin puede crear cualquier tipo de usuario
+      // Admin can create any type of user
       return;
     }
 
-    // Escenario 2: Self-register (usuario anónimo se registra)
+    // Scenario 2: Self-register (anonymous user registers)
     if (!authContext.isAuthenticated) {
-      // Usuario anónimo solo puede crear usuario con rol 'user'
-      if (request.role && request.role !== 'user') {
+      // Anonymous user can only create user with 'user' role
+      // Normalize role if present to make validation case-insensitive
+      const normalizedRole = request.role?.toLowerCase().trim();
+      if (normalizedRole && normalizedRole !== 'user') {
         throw new Error('Anonymous users can only register as regular users');
       }
       return;
     }
 
-    // Escenario 3: Usuario regular intenta crear otro usuario
+    // Scenario 3: Regular user tries to create another user
     if (authContext.isAuthenticated && authContext.user?.role === 'user') {
       throw new Error('Regular users cannot create other users');
     }
 
-    // Cualquier otro caso no autorizado
+    // Any other unauthorized case
     throw new Error('Unauthorized to create user');
   }
 
   private determineUserRole(request: CreateUserRequest, authContext: AuthContext): 'admin' | 'user' {
-    // Si es admin creando usuario, puede especificar el rol
+    // If it's admin creating user, can specify the role
     if (authContext.isAuthenticated && authContext.user?.role === 'admin') {
-      return request.role || 'user';
+      // Normalize the requested role to lowercase
+      const normalizedRole = request.role?.toLowerCase().trim();
+      return normalizedRole === 'admin' ? 'admin' : 'user';
     }
 
-    // En cualquier otro caso (self-register), siempre es 'user'
+    // In any other case (self-register), always 'user'
     return 'user';
   }
 
