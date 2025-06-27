@@ -16,9 +16,9 @@ datasource db {
 
 model User {
   id          String   @id @default(uuid())
-  name        String
-  email       String   @unique
-  phoneNumber String
+  name        String   @db.VarChar(255)
+  email       String   @unique @db.VarChar(255)
+  phoneNumber String   @db.VarChar(20)
   addressId   String?  @unique
   role        UserRole @default(USER)
   createdAt   DateTime @default(now())
@@ -29,42 +29,61 @@ model User {
   createdTasks  Task[]   @relation("TaskCreator")
   assignedTasks Task[]   @relation("TaskAssignee")
 
+  // Índices
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
   @@map("users")
 }
 
 model Address {
   id              String   @id @default(uuid())
-  addressLine1    String
-  addressLine2    String?
-  city            String
-  stateOrProvince String
-  postalCode      String
-  country         String
+  addressLine1    String   @db.VarChar(500)
+  addressLine2    String?  @db.VarChar(500)
+  city            String   @db.VarChar(100)
+  stateOrProvince String   @db.VarChar(100)
+  postalCode      String   @db.VarChar(20)
+  country         String   @db.VarChar(100)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   // Relations
   user User?
 
+  // Índices para búsquedas geográficas
+  @@index([city, stateOrProvince])
+  @@index([country])
+  @@index([postalCode])
   @@map("addresses")
 }
 
 model Task {
-  id           String       @id @default(uuid())
-  title        String
-  description  String
-  status       TaskStatus   @default(PENDING)
-  priority     TaskPriority @default(MEDIUM)
-  dueDate      DateTime
-  assignedToId String?
-  createdById  String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id          String       @id @default(uuid())
+  title       String       @db.VarChar(255)
+  description String?      @db.Text
+  status      TaskStatus   @default(PENDING)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  userId      String       // Task owner
+  assignedTo  String?      // Assigned user
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   // Relations
-  assignedTo   User?        @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
-  createdBy    User         @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  user           User  @relation("TaskCreator", fields: [userId], references: [id], onDelete: Cascade)
+  assignedToUser User? @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
 
+  // Índices para optimizar consultas comunes
+  @@index([userId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([createdAt])
+  @@index([status, priority]) // Índice compuesto para filtros comunes
+  @@index([userId, status])   // Índice compuesto para tareas por usuario y estado
+  @@index([assignedTo, status]) // Índice compuesto para tareas asignadas por estado
   @@map("tasks")
 }
 
@@ -77,10 +96,12 @@ enum TaskStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+  CANCELLED
 }
 
 enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+  URGENT
 }

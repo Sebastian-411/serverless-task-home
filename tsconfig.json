@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/core/*": ["core/*"],
+      "@/shared/*": ["shared/*"],
+      "@/api/*": ["api/*"],
+      "@/tests/*": ["tests/*"]
+    },
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "api/**/*",
+    "core/**/*",
+    "shared/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    ".vercel",
+    "coverage",
+    "dist"
+  ]
+} 
