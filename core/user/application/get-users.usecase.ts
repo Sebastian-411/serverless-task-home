@@ -1,4 +1,5 @@
 import { UserRepository, UserData } from '../domain/user.entity';
+import { Cache, CacheKeys } from '../../../shared/cache/cache.service';
 
 export interface AuthContext {
   isAuthenticated: boolean;
@@ -36,9 +37,21 @@ export class GetUsersUseCase {
         throw new Error('Only administrators can access the users list');
       }
 
+      // Ultra-fast cache lookup first
+      const cacheKey = CacheKeys.userList();
+      const cachedUsers = Cache.get<GetUsersResponse[]>(cacheKey);
+      
+      if (cachedUsers) {
+        console.log('🚀 Cache HIT - Users list served in ~1ms');
+        return cachedUsers;
+      }
+
+      console.log('🔍 Cache MISS - Fetching users from database...');
+      const startTime = Date.now();
+      
       const users = await this.userRepository.findAll();
       
-      return users.map((user: any) => ({
+      const transformedUsers = users.map((user: any) => ({
         id: user.id,
         email: user.email,
         name: user.name,
@@ -54,6 +67,14 @@ export class GetUsersUseCase {
         } : undefined,
         createdAt: user.createdAt
       }));
+
+      // Cache the result for ultra-fast subsequent requests
+      Cache.setWarm(cacheKey, transformedUsers);
+      
+      const queryTime = Date.now() - startTime;
+      console.log(`✅ Users fetched and cached in ${queryTime}ms`);
+      
+      return transformedUsers;
     } catch (error) {
       console.error('Error in GetUsersUseCase:', error);
       

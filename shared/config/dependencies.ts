@@ -1,9 +1,14 @@
 import { PrismaClient } from '../../lib/generated/prisma';
 import { UserRepositoryPrisma } from '../../core/user/infrastructure/user.repository.prisma';
+import { TaskRepositoryPrisma } from '../../core/task/infrastructure/task.repository.prisma';
 import { GetUsersUseCase } from '../../core/user/application/get-users.usecase';
 import { GetUserByIdUseCase } from '../../core/user/application/get-user-by-id.usecase';
 import { CreateUserUseCase } from '../../core/user/application/create-user.usecase';
 import { ChangeUserRoleUseCase } from '../../core/user/application/change-user-role.usecase';
+import { GetTasksUseCase } from '../../core/task/application/get-tasks.usecase';
+import { CreateTaskUseCase } from '../../core/task/application/create-task.usecase';
+import { AssignTaskUseCase } from '../../core/task/application/assign-task.usecase';
+import { GetTaskByIdUseCase } from '../../core/task/application/get-task-by-id.usecase';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { RequestProcessor } from '../middlewares/request-handler.middleware';
 import { Cache } from '../cache/cache.service';
@@ -18,11 +23,16 @@ class DependencyContainer {
   private static instance: DependencyContainer;
   private _prisma: PrismaClient | null = null;
   private _userRepository: UserRepositoryPrisma | null = null;
+  private _taskRepository: TaskRepositoryPrisma | null = null;
   private _authMiddleware: AuthMiddleware | null = null;
   private _getUsersUseCase: GetUsersUseCase | null = null;
   private _getUserByIdUseCase: GetUserByIdUseCase | null = null;
   private _createUserUseCase: CreateUserUseCase | null = null;
   private _changeUserRoleUseCase: ChangeUserRoleUseCase | null = null;
+  private _getTasksUseCase: GetTasksUseCase | null = null;
+  private _createTaskUseCase: CreateTaskUseCase | null = null;
+  private _assignTaskUseCase: AssignTaskUseCase | null = null;
+  private _getTaskByIdUseCase: GetTaskByIdUseCase | null = null;
 
   /**
    * Singleton instance - O(1) with lazy initialization
@@ -75,6 +85,16 @@ class DependencyContainer {
   }
 
   /**
+   * High-performance task repository - O(1) initialization
+   */
+  get taskRepository(): TaskRepositoryPrisma {
+    if (!this._taskRepository) {
+      this._taskRepository = new TaskRepositoryPrisma(this.prisma);
+    }
+    return this._taskRepository;
+  }
+
+  /**
    * Optimized authentication middleware - O(1) with caching
    */
   get authMiddleware(): AuthMiddleware {
@@ -113,6 +133,34 @@ class DependencyContainer {
       this._changeUserRoleUseCase = new ChangeUserRoleUseCase(this.userRepository, this.prisma);
     }
     return this._changeUserRoleUseCase;
+  }
+
+  get getTasksUseCase(): GetTasksUseCase {
+    if (!this._getTasksUseCase) {
+      this._getTasksUseCase = new GetTasksUseCase(this.taskRepository);
+    }
+    return this._getTasksUseCase;
+  }
+
+  get createTaskUseCase(): CreateTaskUseCase {
+    if (!this._createTaskUseCase) {
+      this._createTaskUseCase = new CreateTaskUseCase(this.taskRepository, this.userRepository);
+    }
+    return this._createTaskUseCase;
+  }
+
+  get assignTaskUseCase(): AssignTaskUseCase {
+    if (!this._assignTaskUseCase) {
+      this._assignTaskUseCase = new AssignTaskUseCase(this.taskRepository, this.userRepository);
+    }
+    return this._assignTaskUseCase;
+  }
+
+  get getTaskByIdUseCase(): GetTaskByIdUseCase {
+    if (!this._getTaskByIdUseCase) {
+      this._getTaskByIdUseCase = new GetTaskByIdUseCase(this.taskRepository);
+    }
+    return this._getTaskByIdUseCase;
   }
 
   /**

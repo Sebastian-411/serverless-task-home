@@ -9,6 +9,8 @@
     "db:generate": "npx prisma generate",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset",
+    "db:seed": "npx ts-node prisma/seed.ts",
+    "db:seed:dev": "npm run db:reset && npm run db:seed",
     "start": "vercel dev",
     "test": "jest",
     "test:watch": "jest --watch",

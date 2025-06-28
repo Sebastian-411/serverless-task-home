@@ -22,8 +22,9 @@ export class ErrorHandler {
     ['Only administrators can change', { status: 403, error: 'Authorization error' }],
     ['Insufficient permissions', { status: 403, error: 'Insufficient permissions' }],
     
-    // Not found errors - tests expect exactly 'Not found'
-    ['User not found', { status: 404, error: 'Not found' }],
+    // Not found errors - preserve specific messages for better UX
+    ['User not found', { status: 404, error: 'Not found', preserveMessage: true }],
+    ['Task not found', { status: 404, error: 'Not found', preserveMessage: true }],
     ['not found', { status: 404, error: 'Not found' }],
     
     // Conflict errors - tests expect error="Conflict error" and message to include "already exists"
@@ -32,10 +33,10 @@ export class ErrorHandler {
     ['already registered', { status: 409, error: 'Conflict error', preserveMessage: true }],
     ['already exists', { status: 409, error: 'Conflict error', preserveMessage: true }],
     
-    // Validation errors
-    ['validation', { status: 400, error: 'Validation error' }],
-    ['Invalid role', { status: 400, error: 'Validation error' }],
-    ['Role must be', { status: 400, error: 'Validation error' }],
+    // Validation errors - preserve message for specific validation details
+    ['validation', { status: 400, error: 'Validation error', preserveMessage: true }],
+    ['Invalid role', { status: 400, error: 'Validation error', preserveMessage: true }],
+    ['Role must be', { status: 400, error: 'Validation error', preserveMessage: true }],
     
     // Service errors
     ['Supabase', { status: 400, error: 'Authentication service error' }],
@@ -79,7 +80,7 @@ export class ErrorHandler {
     };
 
     if (meta) {
-      Object.assign(response, meta);
+      response.meta = meta;
     }
 
     res.status(statusCode).json(response);

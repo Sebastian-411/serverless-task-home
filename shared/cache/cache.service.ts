@@ -23,9 +23,16 @@ interface CacheStats {
 export class CacheService {
   private static instance: CacheService;
   private cache = new Map<string, CacheEntry>();
-  private maxSize = parseInt(process.env.CACHE_MAX_SIZE || '1000'); // Configurable max cache entries
-  private defaultTTL = parseInt(process.env.CACHE_DEFAULT_TTL || '300000'); // Configurable 5 minutes default TTL
+  
+  // Ultra-performance configuration
+  private maxSize = parseInt(process.env.CACHE_MAX_SIZE || '2000'); // Increased cache size
+  private defaultTTL = parseInt(process.env.CACHE_DEFAULT_TTL || '180000'); // 3 minutes for faster updates
+  private hotDataTTL = 60000; // 1 minute for frequently accessed data
+  private warmDataTTL = 300000; // 5 minutes for less frequent data
+  private coldDataTTL = 600000; // 10 minutes for rarely accessed data
+  
   private stats: CacheStats = { hits: 0, misses: 0, evictions: 0, size: 0 };
+  private cleanupInterval: NodeJS.Timer | null = null;
 
   /**
    * Singleton pattern for global cache access - O(1)
@@ -33,8 +40,19 @@ export class CacheService {
   static getInstance(): CacheService {
     if (!CacheService.instance) {
       CacheService.instance = new CacheService();
+      CacheService.instance.startAutomaticCleanup();
     }
     return CacheService.instance;
+  }
+
+  /**
+   * Start automatic cache cleanup for optimal performance
+   */
+  private startAutomaticCleanup(): void {
+    // Clean expired entries every 30 seconds
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 30000);
   }
 
   /**
@@ -189,16 +207,107 @@ export class CacheService {
     this.set(key, data, ttlMs);
     return data;
   }
+
+  /**
+   * Cache hot data (frequently accessed) - shorter TTL for freshness
+   */
+  setHot(key: string, data: any): void {
+    this.set(key, data, this.hotDataTTL);
+  }
+
+  /**
+   * Cache warm data (moderately accessed) - standard TTL
+   */
+  setWarm(key: string, data: any): void {
+    this.set(key, data, this.warmDataTTL);
+  }
+
+  /**
+   * Cache cold data (rarely accessed but expensive to compute) - longer TTL
+   */
+  setCold(key: string, data: any): void {
+    this.set(key, data, this.coldDataTTL);
+  }
+
+  /**
+   * Batch cache invalidation for related data
+   */
+  invalidateRelated(patterns: string[]): number {
+    let totalInvalidated = 0;
+    patterns.forEach(pattern => {
+      totalInvalidated += this.invalidatePattern(pattern);
+    });
+    return totalInvalidated;
+  }
+
+  /**
+   * High-performance batch get operation
+   */
+  getMany<T>(keys: string[]): Map<string, T> {
+    const results = new Map<string, T>();
+    keys.forEach(key => {
+      const value = this.get<T>(key);
+      if (value !== null) {
+        results.set(key, value);
+      }
+    });
+    return results;
+  }
+
+  /**
+   * Prefetch related data to improve performance
+   */
+  async prefetch<T>(
+    key: string,
+    factory: () => Promise<T>,
+    ttlMs?: number
+  ): Promise<void> {
+    // Only prefetch if not already cached
+    if (this.get(key) === null) {
+      try {
+        const data = await factory();
+        this.set(key, data, ttlMs);
+      } catch (error) {
+        // Silently fail prefetch to not break main operations
+        console.warn(`Prefetch failed for key ${key}:`, error);
+      }
+    }
+  }
 }
 
 // Export singleton instance
 export const Cache = CacheService.getInstance();
 
-// Cache key generators for consistent naming
+// Ultra-fast cache key generators for sub-100ms queries
 export const CacheKeys = {
+  // User cache keys - Hot data
   user: (id: string) => `user:${id}`,
   userByEmail: (email: string) => `user:email:${email}`,
   userList: (role?: string) => `users:list${role ? `:${role}` : ''}`,
   userRole: (id: string) => `user:role:${id}`,
-  userCount: (role?: string) => `users:count${role ? `:${role}` : ''}`
+  userCount: (role?: string) => `users:count${role ? `:${role}` : ''}`,
+  
+  // Task cache keys - Critical for performance
+  task: (id: string) => `task:${id}`,
+  tasksList: (userId?: string, assignedTo?: string, status?: string) => 
+    `tasks:list:${userId || 'all'}:${assignedTo || 'none'}:${status || 'all'}`,
+  userTasks: (userId: string) => `tasks:user:${userId}`,
+  assignedTasks: (userId: string) => `tasks:assigned:${userId}`,
+  tasksByStatus: (status: string) => `tasks:status:${status}`,
+  tasksByPriority: (priority: string) => `tasks:priority:${priority}`,
+  tasksCount: (userId?: string, status?: string) => 
+    `tasks:count:${userId || 'all'}:${status || 'all'}`,
+  
+  // Aggregated data cache keys
+  dashboardData: (userId: string) => `dashboard:${userId}`,
+  userStats: (userId: string) => `stats:user:${userId}`,
+  systemStats: () => `stats:system`,
+  
+  // Authentication cache keys
+  authSession: (token: string) => `auth:session:${token}`,
+  authUser: (userId: string) => `auth:user:${userId}`,
+  
+  // Computed cache keys for expensive operations
+  complexQuery: (hash: string) => `complex:${hash}`,
+  aggregateData: (type: string, params: string) => `aggregate:${type}:${params}`
 }; 

@@ -79,21 +79,32 @@ export class RequestProcessor {
       }
 
       // Step 5: Body validation - O(n) where n = validation rules
-      if (config.bodyValidation && req.method !== 'GET') {
-        const bodyResult = ValidationMiddleware.validate(req.body, config.bodyValidation);
-        if (!bodyResult.success) {
-          return res.status(bodyResult.response!.status).json(bodyResult.response!.body);
+      if (req.method !== 'GET') {
+        if (config.bodyValidation) {
+          const bodyResult = ValidationMiddleware.validate(req.body, config.bodyValidation);
+          if (!bodyResult.success) {
+            return res.status(bodyResult.response!.status).json(bodyResult.response!.body);
+          }
+          context.validatedBody = bodyResult.data;
+        } else {
+          // Si no hay validación específica, pasar el body directamente
+          context.validatedBody = req.body;
         }
-        context.validatedBody = bodyResult.data;
       }
 
       // Step 6: Execute business logic - O(varies by use case)
       const result = await handler(context);
       
       // Step 7: Success response - O(1)
-      // Login endpoints should return 200, not 201
-      const isCreationEndpoint = req.method === 'POST' && !req.url?.includes('/auth/login');
-      const statusCode = isCreationEndpoint ? 201 : 200;
+      // Determine appropriate status code based on operation type
+      let statusCode = 200; // Default for most operations
+      
+      if (req.method === 'POST') {
+        // Creation endpoints return 201
+        const isCreationEndpoint = req.url?.includes('/api/users') && !req.url?.includes('/role') ||
+                                   req.url?.includes('/api/tasks') && !req.url?.includes('/assign');
+        statusCode = isCreationEndpoint ? 201 : 200;
+      }
       ErrorHandler.success(res, result.data, result.message, result.meta, statusCode);
 
     } catch (error) {

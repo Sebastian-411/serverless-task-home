@@ -3,11 +3,11 @@
  * Data model for tasks with complete validation and business logic
  */
 
-const BaseEntity = require('../../../shared/domain/base.entity');
-const ValidationError = require('../../../shared/domain/exceptions/validation.error');
-const { TASK_STATUS, TASK_PRIORITY, VALIDATION_RULES } = require('../../../shared/domain/value-objects/constants');
+const TaskBaseEntity = require('../../../shared/domain/base.entity');
+const TaskValidationError = require('../../../shared/domain/exceptions/validation.error');
+const { TASK_STATUS, TASK_PRIORITY, VALIDATION_RULES: TASK_VALIDATION_RULES } = require('../../../shared/domain/value-objects/constants');
 
-class Task extends BaseEntity {
+class Task extends TaskBaseEntity {
   constructor({
     id,
     title,
@@ -42,9 +42,9 @@ class Task extends BaseEntity {
    * @returns {Task}
    */
   static create(taskData) {
-    const timestamps = BaseEntity.createTimestamps();
+    const timestamps = TaskBaseEntity.createTimestamps();
     return new Task({
-      id: BaseEntity.generateId(),
+      id: TaskBaseEntity.generateId(),
       status: TASK_STATUS.PENDING,
       priority: TASK_PRIORITY.MEDIUM,
       ...taskData,
@@ -78,7 +78,7 @@ class Task extends BaseEntity {
    */
   _setTitle(title) {
     this._validateRequired(title, 'title');
-    this._validateLength(title.trim(), VALIDATION_RULES.TASK.TITLE_MIN_LENGTH, VALIDATION_RULES.TASK.TITLE_MAX_LENGTH, 'title');
+    this._validateLength(title.trim(), TASK_VALIDATION_RULES.TASK.TITLE_MIN_LENGTH, TASK_VALIDATION_RULES.TASK.TITLE_MAX_LENGTH, 'title');
     this.title = title.trim();
   }
 
@@ -89,7 +89,7 @@ class Task extends BaseEntity {
    */
   _setDescription(description) {
     if (description) {
-      this._validateLength(description, 1, VALIDATION_RULES.TASK.DESCRIPTION_MAX_LENGTH, 'description');
+      this._validateLength(description, 1, TASK_VALIDATION_RULES.TASK.DESCRIPTION_MAX_LENGTH, 'description');
       this.description = description.trim();
     } else {
       this.description = null;
@@ -102,8 +102,10 @@ class Task extends BaseEntity {
    * @param {string} status - Task status
    */
   _setStatus(status) {
-    this._validateEnum(status, Object.values(TASK_STATUS), 'status');
-    this.status = status;
+    // Normalize to lowercase for case-insensitive validation
+    const normalizedStatus = status ? status.toLowerCase() : status;
+    this._validateEnum(normalizedStatus, Object.values(TASK_STATUS), 'status');
+    this.status = normalizedStatus;
   }
 
   /**
@@ -112,8 +114,10 @@ class Task extends BaseEntity {
    * @param {string} priority - Task priority
    */
   _setPriority(priority) {
-    this._validateEnum(priority, Object.values(TASK_PRIORITY), 'priority');
-    this.priority = priority;
+    // Normalize to lowercase for case-insensitive validation
+    const normalizedPriority = priority ? priority.toLowerCase() : priority;
+    this._validateEnum(normalizedPriority, Object.values(TASK_PRIORITY), 'priority');
+    this.priority = normalizedPriority;
   }
 
   /**
@@ -251,7 +255,7 @@ class Task extends BaseEntity {
   getDaysUntilDue() {
     if (!this.dueDate) return null;
     const now = new Date();
-    const diffTime = this.dueDate - now;
+    const diffTime = this.dueDate.getTime() - now.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
@@ -414,9 +418,8 @@ class Task extends BaseEntity {
       dueDate: this.dueDate,
       assignedTo: this.assignedTo,
       userId: this.userId,
-      completedAt: this.completedAt,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+      completedAt: this.completedAt
+      // createdAt and updatedAt are excluded for CREATE operations
     };
   }
 }

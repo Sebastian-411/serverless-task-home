@@ -25,6 +25,12 @@ export interface UserRepository {
   findAll(): Promise<any[]>;
   update(id: string, data: any): Promise<any>;
   delete(id: string): Promise<void>;
+  // ULTRA-FAST assignment validation methods
+  findByIdMinimal(id: string): Promise<{ id: string; role: string; name: string } | null>;
+  validateUsersForAssignment(assigneeId: string, assignedById: string): Promise<{
+    assignee: { id: string; role: string; name: string } | null;
+    assignedBy: { id: string; role: string; name: string } | null;
+  }>;
 }
 
 export class UserRepositoryPrisma implements UserRepository {
@@ -180,6 +186,47 @@ export class UserRepositoryPrisma implements UserRepository {
       
     } catch (error) {
       console.error('Error deleting user:', error);
+      throw error;
+    }
+  }
+
+  async findByIdMinimal(id: string): Promise<{ id: string; role: string; name: string } | null> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          role: true,
+          name: true
+        }
+      });
+      return user;
+    } catch (error) {
+      console.error('Error finding user by ID minimal:', error);
+      throw error;
+    }
+  }
+
+  async validateUsersForAssignment(assigneeId: string, assignedById: string): Promise<{
+    assignee: { id: string; role: string; name: string } | null;
+    assignedBy: { id: string; role: string; name: string } | null;
+  }> {
+    try {
+      console.log(`🚀 PARALLEL user validation: ${assigneeId} + ${assignedById}`);
+      const startTime = Date.now();
+
+      // Execute both user lookups in parallel for maximum speed
+      const [assignee, assignedBy] = await Promise.all([
+        this.findByIdMinimal(assigneeId),
+        this.findByIdMinimal(assignedById)
+      ]);
+
+      const queryTime = Date.now() - startTime;
+      console.log(`⚡ Parallel user validation completed in ${queryTime}ms`);
+      
+      return { assignee, assignedBy };
+    } catch (error) {
+      console.error('Error validating users for assignment:', error);
       throw error;
     }
   }

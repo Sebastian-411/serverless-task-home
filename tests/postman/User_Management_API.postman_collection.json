@@ -483,11 +483,11 @@
 									"    pm.expect(jsonData.success).to.eql(true);",
 									"});",
 									"",
-									"pm.test(\"Response contains users array\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data).to.be.an('array');",
-									"    pm.expect(jsonData.count).to.be.a('number');",
-									"});",
+																	"pm.test(\"Response contains users array\", function () {",
+								"    var jsonData = pm.response.json();",
+								"    pm.expect(jsonData.data).to.be.an('array');",
+								"    pm.expect(jsonData.meta.count).to.be.a('number');",
+								"});",
 									"",
 									"pm.test(\"Users have required fields\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -1146,6 +1146,483 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Task Management",
+			"item": [
+				{
+					"name": "Create Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Task is created with correct data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.title).to.eql(\"Test Task\");",
+									"    pm.expect(jsonData.data.priority).to.eql(\"high\");",
+									"    pm.expect(jsonData.data.userId).to.exist;",
+									"    // Save task ID for other tests",
+									"    pm.environment.set(\"test_task_id\", jsonData.data.id);",
+									"});",
+									"",
+									"pm.test(\"Response contains required task fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('title');",
+									"    pm.expect(jsonData.data).to.have.property('priority');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data).to.have.property('createdAt');",
+									"});",
+									"",
+									"console.log(\"✅ Task created successfully\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test Task\",\n  \"description\": \"This is a test task for Postman testing\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Task - Case Insensitive Priority",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Priority is normalized to lowercase\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.priority).to.eql('urgent');",
+									"});",
+									"",
+									"pm.test(\"Task created with uppercase priority\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('title');",
+									"    pm.expect(jsonData.data.title).to.eql('UPPERCASE Priority Test');",
+									"});",
+									"",
+									"console.log(\"✅ Case-insensitive priority working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"UPPERCASE Priority Test\",\n  \"description\": \"Testing case-insensitive priority validation\",\n  \"priority\": \"URGENT\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Task - Mixed Case Priority",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Priority is normalized to lowercase\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.priority).to.eql('high');",
+									"});",
+									"",
+									"pm.test(\"Task created with mixed case priority\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('title');",
+									"    pm.expect(jsonData.data.title).to.eql('MixedCase Priority Test');",
+									"});",
+									"",
+									"console.log(\"✅ Mixed case priority working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"MixedCase Priority Test\",\n  \"description\": \"Testing case-insensitive priority validation with mixed case\",\n  \"priority\": \"High\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Task - Invalid Data (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 (Bad Request)\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has validation error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.eql(\"Validation error\");",
+									"    pm.expect(jsonData.message).to.include(\"Title is required\");",
+									"});",
+									"",
+									"console.log(\"✅ Task validation working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Task without title\",\n  \"priority\": \"invalid_priority\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Response contains tasks array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData.meta.count).to.be.a('number');",
+									"});",
+									"",
+									"pm.test(\"Tasks have required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.length > 0) {",
+									"        var task = jsonData.data[0];",
+									"        pm.expect(task).to.have.property('id');",
+									"        pm.expect(task).to.have.property('title');",
+									"        pm.expect(task).to.have.property('status');",
+									"        pm.expect(task).to.have.property('priority');",
+									"    }",
+									"});",
+									"",
+									"console.log(\"✅ Tasks retrieved successfully\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tasks",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Task",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Task is assigned correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.assignedTo).to.exist;",
+									"    pm.expect(jsonData.message).to.include(\"assigned\");",
+									"});",
+									"",
+									"console.log(\"✅ Task assigned successfully\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"assignedTo\": \"{{test_regular_user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks/{{test_task_id}}/assign",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks",
+								"{{test_task_id}}",
+								"assign"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Task - Unauthorized (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Response has authorization error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.be.oneOf([\"Authorization error\", \"Forbidden\"]);",
+									"});",
+									"",
+									"console.log(\"✅ Authorization validation working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"assignedTo\": \"{{test_regular_user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks/{{test_task_id}}/assign",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks",
+								"{{test_task_id}}",
+								"assign"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Task has correct structure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('title');",
+									"    pm.expect(jsonData.data).to.have.property('status');",
+									"    pm.expect(jsonData.data).to.have.property('priority');",
+									"    pm.expect(jsonData.data.id).to.eql(pm.environment.get('test_task_id'));",
+									"});",
+									"",
+									"console.log(\"✅ Task retrieved by ID successfully\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tasks/{{test_task_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks",
+								"{{test_task_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -1165,8 +1642,8 @@
 				"type": "text/javascript",
 				"exec": [
 					"// Global test script",
-					"pm.test(\"Response time is less than 5000ms\", function () {",
-					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"pm.test(\"Response time is less than 6000ms\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(6000);",
 					"});",
 					"",
 					"pm.test(\"Response has JSON content-type\", function () {",

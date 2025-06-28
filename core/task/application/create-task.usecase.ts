@@ -3,10 +3,14 @@
  * Handles the business logic for creating new tasks
  */
 
-const Task = require('../domain/task.entity');
-const ValidationError = require('../../../shared/domain/exceptions/validation.error');
+const TaskDomain = require('../domain/task.entity');
+const CustomValidationError = require('../../../shared/domain/exceptions/validation.error');
+const { Cache, CacheKeys } = require('../../../shared/cache/cache.service');
 
 class CreateTaskUseCase {
+  private taskRepository: any;
+  private userRepository: any;
+
   constructor(taskRepository, userRepository) {
     this.taskRepository = taskRepository;
     this.userRepository = userRepository;
@@ -37,22 +41,27 @@ class CreateTaskUseCase {
       }
 
       // 4. Create task entity
-      const task = Task.create({
+      const task = TaskDomain.create({
         title: taskData.title,
         description: taskData.description,
-        priority: taskData.priority || 'medium',
+        priority: taskData.priority ? taskData.priority.toLowerCase() : 'medium',
         dueDate: taskData.dueDate,
         assignedTo: taskData.assignedTo,
         userId: taskData.userId
       });
 
       // 5. Save task to repository
-      const savedTask = await this.taskRepository.create(task);
+      const savedTask = await this.taskRepository.create(task.toPrisma());
 
-      return savedTask;
+      // 6. Invalidate related cache entries for data consistency
+      console.log('🗑️ Invalidating cache after task creation...');
+      this._invalidateTaskCaches(taskData);
+
+      // 7. Return the normalized entity, not the raw database data
+      return task.toJSON();
 
     } catch (error) {
-      if (error instanceof ValidationError) {
+      if (error instanceof CustomValidationError) {
         throw error;
       }
       throw new Error(`Failed to create task: ${error.message}`);
@@ -75,8 +84,8 @@ class CreateTaskUseCase {
       errors.push('User ID is required and must be a string');
     }
 
-    if (taskData.priority && !['low', 'medium', 'high', 'urgent'].includes(taskData.priority)) {
-      errors.push('Priority must be one of: low, medium, high, urgent');
+    if (taskData.priority && !['low', 'medium', 'high', 'urgent'].includes(taskData.priority.toLowerCase())) {
+      errors.push('Priority must be one of: low, medium, high, urgent (case insensitive)');
     }
 
     if (taskData.dueDate && isNaN(Date.parse(taskData.dueDate))) {
@@ -84,7 +93,7 @@ class CreateTaskUseCase {
     }
 
     if (errors.length > 0) {
-      throw new ValidationError('Task validation failed', errors);
+      throw new CustomValidationError(`Task validation failed: ${errors.join(', ')}`, errors);
     }
   }
 
@@ -96,10 +105,43 @@ class CreateTaskUseCase {
   async _verifyUserExists(userId) {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new ValidationError(`User with ID ${userId} not found`);
+      throw new CustomValidationError(`User with ID ${userId} not found`);
     }
     return user;
   }
+
+  /**
+   * Invalidate related cache entries after task creation
+   * @private
+   * @param {Object} taskData - Task data that was created
+   */
+  _invalidateTaskCaches(taskData) {
+    try {
+      // Invalidate general task lists
+      Cache.delete(CacheKeys.tasksList());
+      Cache.delete(CacheKeys.userTasks(taskData.userId));
+      
+      // Invalidate assigned user caches if task was assigned
+      if (taskData.assignedTo) {
+        Cache.delete(CacheKeys.assignedTasks(taskData.assignedTo));
+      }
+      
+      // Invalidate status and priority specific caches
+      const status = taskData.status || 'pending';
+      const priority = taskData.priority || 'medium';
+      Cache.delete(CacheKeys.tasksByStatus(status));
+      Cache.delete(CacheKeys.tasksByPriority(priority));
+      
+      // Invalidate count caches
+      Cache.delete(CacheKeys.tasksCount());
+      Cache.delete(CacheKeys.tasksCount(taskData.userId));
+      
+      console.log('✅ Cache invalidated successfully after task creation');
+    } catch (error) {
+      // Cache invalidation is not critical, just log warning
+      console.warn('⚠️ Cache invalidation warning:', error.message);
+    }
+  }
 }
 
-module.exports = CreateTaskUseCase; 
+export { CreateTaskUseCase }; 
