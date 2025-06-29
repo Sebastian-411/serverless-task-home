@@ -1,8 +1,8 @@
 // GET /users/:id
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import { Dependencies } from '../../../shared/config/dependencies';
-import { handleError } from '../../../shared/middlewares/error-handler.middleware';
+  import { Dependencies } from '../../shared/config/dependencies';
+  import { handleError } from '../../shared/middlewares/error-handler.middleware';
 
 // Simple handler for getting user by ID
 const handleGetUserById = async (req: VercelRequest, res: VercelResponse) => {
