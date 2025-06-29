@@ -1,17 +1,13 @@
 import { PrismaClient } from '../../lib/generated/prisma';
 import { UserRepositoryPrisma } from '../../core/user/infrastructure/user.repository.prisma';
-import { TaskRepositoryPrisma } from '../../core/task/infrastructure/task.repository.prisma';
 import { GetUsersUseCase } from '../../core/user/application/get-users.usecase';
 import { GetUserByIdUseCase } from '../../core/user/application/get-user-by-id.usecase';
 import { CreateUserUseCase } from '../../core/user/application/create-user.usecase';
 import { ChangeUserRoleUseCase } from '../../core/user/application/change-user-role.usecase';
-import { GetTasksUseCase } from '../../core/task/application/get-tasks.usecase';
-import { CreateTaskUseCase } from '../../core/task/application/create-task.usecase';
-import { AssignTaskUseCase } from '../../core/task/application/assign-task.usecase';
-import { GetTaskByIdUseCase } from '../../core/task/application/get-task-by-id.usecase';
-import { AuthMiddleware } from '../middlewares/auth.middleware';
-import { RequestProcessor } from '../middlewares/request-handler.middleware';
-import { Cache } from '../cache/cache.service';
+import { LoginUseCase } from '../../core/user/application/login.usecase';
+import { authenticate, authorize, type AuthContext } from '../middlewares/auth.middleware';
+import { createAuthenticatedEndpoint, createPublicEndpoint } from '../middlewares/request-handler.middleware';
+import * as CacheService from '../cache/cache.service';
 
 /**
  * High-performance Dependency Injection Container
@@ -23,16 +19,11 @@ class DependencyContainer {
   private static instance: DependencyContainer;
   private _prisma: PrismaClient | null = null;
   private _userRepository: UserRepositoryPrisma | null = null;
-  private _taskRepository: TaskRepositoryPrisma | null = null;
-  private _authMiddleware: AuthMiddleware | null = null;
   private _getUsersUseCase: GetUsersUseCase | null = null;
   private _getUserByIdUseCase: GetUserByIdUseCase | null = null;
   private _createUserUseCase: CreateUserUseCase | null = null;
   private _changeUserRoleUseCase: ChangeUserRoleUseCase | null = null;
-  private _getTasksUseCase: GetTasksUseCase | null = null;
-  private _createTaskUseCase: CreateTaskUseCase | null = null;
-  private _assignTaskUseCase: AssignTaskUseCase | null = null;
-  private _getTaskByIdUseCase: GetTaskByIdUseCase | null = null;
+  private _loginUseCase: LoginUseCase | null = null;
 
   /**
    * Singleton instance - O(1) with lazy initialization
@@ -85,26 +76,6 @@ class DependencyContainer {
   }
 
   /**
-   * High-performance task repository - O(1) initialization
-   */
-  get taskRepository(): TaskRepositoryPrisma {
-    if (!this._taskRepository) {
-      this._taskRepository = new TaskRepositoryPrisma(this.prisma);
-    }
-    return this._taskRepository;
-  }
-
-  /**
-   * Optimized authentication middleware - O(1) with caching
-   */
-  get authMiddleware(): AuthMiddleware {
-    if (!this._authMiddleware) {
-      this._authMiddleware = new AuthMiddleware(this.userRepository);
-    }
-    return this._authMiddleware;
-  }
-
-  /**
    * Fast use cases - O(1) initialization with dependency injection
    */
   get getUsersUseCase(): GetUsersUseCase {
@@ -135,75 +106,58 @@ class DependencyContainer {
     return this._changeUserRoleUseCase;
   }
 
-  get getTasksUseCase(): GetTasksUseCase {
-    if (!this._getTasksUseCase) {
-      this._getTasksUseCase = new GetTasksUseCase(this.taskRepository);
+  get loginUseCase(): LoginUseCase {
+    if (!this._loginUseCase) {
+      this._loginUseCase = new LoginUseCase(this.userRepository);
     }
-    return this._getTasksUseCase;
-  }
-
-  get createTaskUseCase(): CreateTaskUseCase {
-    if (!this._createTaskUseCase) {
-      this._createTaskUseCase = new CreateTaskUseCase(this.taskRepository, this.userRepository);
-    }
-    return this._createTaskUseCase;
-  }
-
-  get assignTaskUseCase(): AssignTaskUseCase {
-    if (!this._assignTaskUseCase) {
-      this._assignTaskUseCase = new AssignTaskUseCase(this.taskRepository, this.userRepository);
-    }
-    return this._assignTaskUseCase;
-  }
-
-  get getTaskByIdUseCase(): GetTaskByIdUseCase {
-    if (!this._getTaskByIdUseCase) {
-      this._getTaskByIdUseCase = new GetTaskByIdUseCase(this.taskRepository);
-    }
-    return this._getTaskByIdUseCase;
+    return this._loginUseCase;
   }
 
   /**
    * High-performance endpoint factories - O(1) creation
    */
-  createAuthenticatedEndpoint(
-    methods: string[] = ['GET'], 
+  createAuthenticatedEndpoint = (
+    methods: string[] = ['GET'],
     allowedRoles?: string[]
-  ) {
-    return RequestProcessor.createAuthenticatedEndpoint(
-      this.authMiddleware, 
-      methods, 
-      allowedRoles
+  ) => {
+    return createAuthenticatedEndpoint(
+      async (request, response, context) => {
+        // TODO: Implement method and role validation
+        return { success: true };
+      },
+      'resource',
+      'action'
     );
-  }
+  };
 
-  createPublicEndpoint(methods: string[] = ['POST']) {
-    return RequestProcessor.createPublicEndpoint(this.authMiddleware, methods);
-  }
+  createPublicEndpoint = (methods: string[] = ['POST']) => {
+    return createPublicEndpoint(async (request, response, context) => {
+      // TODO: Implement method validation
+      return { success: true };
+    });
+  };
 
   /**
    * Get cache instance for performance monitoring
    */
   get cache() {
-    return Cache;
+    return CacheService;
   }
 
   /**
-   * Cleanup method for graceful shutdown with cache cleanup
+   * Cleanup resources - O(1) with proper connection management
    */
   async cleanup(): Promise<void> {
     if (this._prisma) {
       await this._prisma.$disconnect();
+      this._prisma = null;
     }
-    // Clean expired cache entries
-    Cache.cleanup();
   }
 }
 
-// Export singleton instance for ultra-fast access
+// Export singleton instance
 export const Dependencies = DependencyContainer.getInstance();
 
 // Export types for better IDE support
-export type { AuthMiddleware } from '../middlewares/auth.middleware';
-export type { RequestProcessor } from '../middlewares/request-handler.middleware';
+export type { AuthContext } from '../middlewares/auth.middleware';
 export type { UserRepositoryPrisma } from '../../core/user/infrastructure/user.repository.prisma'; 

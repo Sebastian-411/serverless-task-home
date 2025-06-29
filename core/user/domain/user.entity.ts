@@ -5,16 +5,35 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-// User-related interfaces and types
+import { BaseEntity } from '../../../shared/domain/base.entity';
+import { ValidationError } from '../../../shared/domain/exceptions/validation.error';
+import { Email } from '../../../shared/domain/value-objects/email.vo';
+import { Name } from '../../../shared/domain/value-objects/name.vo';
+import { Password } from '../../../shared/domain/value-objects/password.vo';
+import { Phone } from '../../../shared/domain/value-objects/phone.vo';
+
+import type { Address } from './address.entity';
+import { UserRepository } from './user.repository';
+
+export enum UserRole {
+  USER = 'user',
+  ADMIN = 'admin'
+}
+
 export interface UserData {
-  id: string;
-  name: string;
+  id?: string;
   email: string;
-  phoneNumber: string;
-  address?: AddressData | null;
-  role: 'ADMIN' | 'USER';
-  createdAt: Date;
-  updatedAt: Date;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role?: UserRole;
+  phone?: string;
+  address?: Address;
+  isActive?: boolean;
+  emailVerified?: boolean;
+  lastLoginAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AddressData {
@@ -52,231 +71,329 @@ export interface UserRepository {
   delete(id: string): Promise<void>;
 }
 
-// Basic validation helpers
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PHONE_REGEX = /^[\+]?[0-9\s\-\(\)]{10,20}$/;
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-export class User {
-  public id!: string;
-  public name!: string;
-  public email!: string;
-  public phoneNumber!: string;
-  public address!: AddressData | null;
-  public role!: 'ADMIN' | 'USER';
-  public createdAt!: Date;
-  public updatedAt!: Date;
+export class User extends BaseEntity {
+  private _email: string;
+  private _password: string;
+  private _firstName: string;
+  private _lastName: string;
+  private _role: UserRole;
+  private _phone?: string;
+  private _address?: Address;
+  private _isActive: boolean;
+  private _emailVerified: boolean;
+  private _lastLoginAt?: string;
 
   constructor(userData: UserData) {
-    this._setId(userData.id);
-    this._setName(userData.name);
-    this._setEmail(userData.email);
-    this._setPhoneNumber(userData.phoneNumber);
-    this._setAddress(userData.address);
-    this._setRole(userData.role);
-    this._setTimestamps(userData.createdAt, userData.updatedAt);
-  }
-
-  /**
-   * Factory method to create a new user
-   */
-     static create(userData: CreateUserData): User {
-     const now = new Date();
-     return new User({
-       id: uuidv4(),
-      name: userData.name,
-      email: userData.email,
-      phoneNumber: userData.phoneNumber,
-      address: userData.address || null,
-      role: userData.role || 'USER',
-      createdAt: now,
-      updatedAt: now
-    });
-  }
-
-  /**
-   * Factory method to create user from existing data
-   */
-  static fromObject(userData: UserData): User {
-    return new User(userData);
-  }
-
-  private _setId(id: string): void {
-    if (!id || !UUID_REGEX.test(id)) {
-      throw new ValidationError('Invalid user ID format');
-    }
-    this.id = id;
-  }
-
-  private _setName(name: string): void {
-    if (!name || typeof name !== 'string') {
-      throw new ValidationError('Name is required');
-    }
-    const trimmedName = name.trim();
-    if (trimmedName.length < 1 || trimmedName.length > 100) {
-      throw new ValidationError('Name must be between 1 and 100 characters');
-    }
-    this.name = trimmedName;
-  }
-
-  private _setEmail(email: string): void {
-    if (!email || typeof email !== 'string') {
-      throw new ValidationError('Email is required');
-    }
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
-      throw new ValidationError('Invalid email format');
-    }
-    if (trimmedEmail.length > 255) {
-      throw new ValidationError('Email must be less than 255 characters');
-    }
-    this.email = trimmedEmail;
-  }
-
-  private _setPhoneNumber(phoneNumber: string): void {
-    if (!phoneNumber || typeof phoneNumber !== 'string') {
-      throw new ValidationError('Phone number is required');
-    }
-    const trimmedPhone = phoneNumber.trim();
-    if (!PHONE_REGEX.test(trimmedPhone)) {
-      throw new ValidationError('Invalid phone number format');
-    }
-    this.phoneNumber = trimmedPhone;
-  }
-
-  private _setAddress(address: AddressData | null | undefined): void {
-    this.address = address || null;
-  }
-
-  private _setRole(role: 'ADMIN' | 'USER'): void {
-    if (!role || !['ADMIN', 'USER'].includes(role)) {
-      throw new ValidationError('Invalid role. Must be ADMIN or USER');
-    }
-    this.role = role;
-  }
-
-  private _setTimestamps(createdAt: Date, updatedAt: Date): void {
-    this.createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt);
-    this.updatedAt = updatedAt instanceof Date ? updatedAt : new Date(updatedAt);
-  }
-
-  /**
-   * Validates the entire user model
-   */
-  validate(): boolean {
-    return true; // All validation is done in setters
-  }
-
-  /**
-   * Checks if user is an administrator
-   */
-  isAdmin(): boolean {
-    return this.role === 'ADMIN';
-  }
-
-  /**
-   * Checks if user is a regular user
-   */
-  isRegularUser(): boolean {
-    return this.role === 'USER';
-  }
-
-  /**
-   * Updates user information
-   */
-  update(updates: UpdateUserData): User {
-    if (updates.name !== undefined) this._setName(updates.name);
-    if (updates.email !== undefined) this._setEmail(updates.email);
-    if (updates.phoneNumber !== undefined) this._setPhoneNumber(updates.phoneNumber);
-    if (updates.address !== undefined) this._setAddress(updates.address);
-    if (updates.role !== undefined) this._setRole(updates.role);
+    super(userData.id);
     
-    this.updatedAt = new Date();
-    return this;
+    this._validateEmail(userData.email);
+    this._validatePassword(userData.password);
+    this._validateName(userData.firstName, 'firstName');
+    this._validateName(userData.lastName, 'lastName');
+    this._validateRole(userData.role);
+    
+    this._email = userData.email.toLowerCase().trim();
+    this._password = userData.password;
+    this._firstName = userData.firstName.trim();
+    this._lastName = userData.lastName.trim();
+    this._role = userData.role || UserRole.USER;
+    this._phone = userData.phone;
+    this._address = userData.address;
+    this._isActive = userData.isActive ?? true;
+    this._emailVerified = userData.emailVerified ?? false;
+    this._lastLoginAt = userData.lastLoginAt;
   }
 
-  /**
-   * Converts model to plain object
-   */
-  toJSON(): UserData {
-    return {
-      id: this.id,
-      name: this.name,
-      email: this.email,
-      phoneNumber: this.phoneNumber,
-      address: this.address,
-      role: this.role,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
+  // Getters
+  get email(): string {
+    return this._email;
   }
 
-  /**
-   * Converts to safe object (without sensitive data)
-   */
-  toSafeObject(): Omit<UserData, 'email'> {
-    return {
-      id: this.id,
-      name: this.name,
-      phoneNumber: this.phoneNumber,
-      address: this.address,
-      role: this.role,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
-    };
+  get password(): string {
+    return this._password;
   }
 
-  /**
-   * Creates User instance from Prisma result
-   */
-  static fromPrisma(prismaUser: any): User {
-    const userData: UserData = {
-      id: prismaUser.id,
-      name: prismaUser.name,
-      email: prismaUser.email,
-      phoneNumber: prismaUser.phoneNumber,
-      role: prismaUser.role,
-      createdAt: prismaUser.createdAt,
-      updatedAt: prismaUser.updatedAt,
-      address: null
-    };
+  get firstName(): string {
+    return this._firstName;
+  }
 
-    if (prismaUser.address) {
-      userData.address = {
-        addressLine1: prismaUser.address.addressLine1,
-        addressLine2: prismaUser.address.addressLine2 || undefined,
-        city: prismaUser.address.city,
-        stateOrProvince: prismaUser.address.stateOrProvince,
-        postalCode: prismaUser.address.postalCode,
-        country: prismaUser.address.country
-      };
+  get lastName(): string {
+    return this._lastName;
+  }
+
+  get fullName(): string {
+    return `${this._firstName} ${this._lastName}`.trim();
+  }
+
+  get role(): UserRole {
+    return this._role;
+  }
+
+  get phone(): string | undefined {
+    return this._phone;
+  }
+
+  get address(): Address | undefined {
+    return this._address;
+  }
+
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
+  get emailVerified(): boolean {
+    return this._emailVerified;
+  }
+
+  get lastLoginAt(): string | undefined {
+    return this._lastLoginAt;
+  }
+
+  get isAdmin(): boolean {
+    return this._role === UserRole.ADMIN;
+  }
+
+  // Setters con validación
+  setEmail(email: string): void {
+    this._validateEmail(email);
+    this._email = email.toLowerCase().trim();
+    this.updateTimestamp();
+  }
+
+  setPassword(password: string): void {
+    this._validatePassword(password);
+    this._password = password;
+    this.updateTimestamp();
+  }
+
+  setFirstName(firstName: string): void {
+    this._validateName(firstName, 'firstName');
+    this._firstName = firstName.trim();
+    this.updateTimestamp();
+  }
+
+  setLastName(lastName: string): void {
+    this._validateName(lastName, 'lastName');
+    this._lastName = lastName.trim();
+    this.updateTimestamp();
+  }
+
+  setRole(role: UserRole): void {
+    this._validateRole(role);
+    this._role = role;
+    this.updateTimestamp();
+  }
+
+  setPhone(phone: string): void {
+    this._validatePhone(phone);
+    this._phone = phone;
+    this.updateTimestamp();
+  }
+
+  setAddress(address: Address): void {
+    this._address = address;
+    this.updateTimestamp();
+  }
+
+  setActive(isActive: boolean): void {
+    this._isActive = isActive;
+    this.updateTimestamp();
+  }
+
+  setEmailVerified(emailVerified: boolean): void {
+    this._emailVerified = emailVerified;
+    this.updateTimestamp();
+  }
+
+  setLastLoginAt(lastLoginAt: string): void {
+    this._validateTimestamp(lastLoginAt, 'lastLoginAt');
+    this._lastLoginAt = lastLoginAt;
+    this.updateTimestamp();
+  }
+
+  // Métodos de negocio
+  updateLastLogin(): void {
+    this._lastLoginAt = new Date().toISOString();
+    this.updateTimestamp();
+  }
+
+  activate(): void {
+    this._isActive = true;
+    this.updateTimestamp();
+  }
+
+  deactivate(): void {
+    this._isActive = false;
+    this.updateTimestamp();
+  }
+
+  verifyEmail(): void {
+    this._emailVerified = true;
+    this.updateTimestamp();
+  }
+
+  promoteToAdmin(): void {
+    this._role = UserRole.ADMIN;
+    this.updateTimestamp();
+  }
+
+  demoteToUser(): void {
+    this._role = UserRole.USER;
+    this.updateTimestamp();
+  }
+
+  // Validaciones privadas
+  private _validateEmail(email: string): void {
+    this._validateRequired(email, 'email');
+    this._validateLength(email, 5, 254, 'email');
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new ValidationError('Email must be a valid email address');
     }
-
-    return new User(userData);
   }
 
-  /**
-   * Converts to Prisma format for database operations
-   */
-  toPrisma(): any {
+  private _validatePassword(password: string): void {
+    this._validateRequired(password, 'password');
+    this._validateLength(password, 8, 128, 'password');
+    
+    // Validar complejidad de contraseña
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+      throw new ValidationError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+    }
+  }
+
+  private _validateName(name: string, fieldName: string): void {
+    this._validateRequired(name, fieldName);
+    this._validateLength(name, 2, 50, fieldName);
+    
+    const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+    if (!nameRegex.test(name)) {
+      throw new ValidationError(`${fieldName} must contain only letters, spaces, hyphens, and apostrophes`);
+    }
+  }
+
+  private _validateRole(role?: UserRole): void {
+    if (role && !Object.values(UserRole).includes(role)) {
+      throw new ValidationError(`Role must be one of: ${Object.values(UserRole).join(', ')}`);
+    }
+  }
+
+  private _validatePhone(phone: string): void {
+    if (phone) {
+      this._validateLength(phone, 10, 15, 'phone');
+      
+      const phoneRegex = /^\+?[\d\s\-()]+$/;
+      if (!phoneRegex.test(phone)) {
+        throw new ValidationError('Phone must contain only digits, spaces, hyphens, parentheses, and optionally a plus sign');
+      }
+    }
+  }
+
+  // Métodos de comparación
+  equals(other: User): boolean {
+    return this.id === other.id;
+  }
+
+  hasSameEmail(other: User): boolean {
+    return this._email === other._email;
+  }
+
+  // Métodos de serialización
+  toJSON(): Record<string, unknown> {
+    return {
+      ...super.toJSON(),
+      email: this._email,
+      firstName: this._firstName,
+      lastName: this._lastName,
+      fullName: this.fullName,
+      role: this._role,
+      phone: this._phone,
+      address: this._address?.toJSON(),
+      isActive: this._isActive,
+      emailVerified: this._emailVerified,
+      lastLoginAt: this._lastLoginAt,
+      isAdmin: this.isAdmin
+    };
+  }
+
+  toSafeJSON(): Record<string, unknown> {
     return {
       id: this.id,
-      name: this.name,
-      email: this.email,
-      phoneNumber: this.phoneNumber,
-      role: this.role,
+      email: this._email,
+      firstName: this._firstName,
+      lastName: this._lastName,
+      fullName: this.fullName,
+      role: this._role,
+      phone: this._phone,
+      address: this._address?.toJSON(),
+      isActive: this._isActive,
+      emailVerified: this._emailVerified,
+      lastLoginAt: this._lastLoginAt,
+      isAdmin: this.isAdmin,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      address: this.address ? {
-        create: this.address
-      } : undefined
+      updatedAt: this.updatedAt
     };
+  }
+
+  // Método de validación requerido por BaseEntity
+  validate(): void {
+    this._validateEmail(this._email);
+    this._validatePassword(this._password);
+    this._validateName(this._firstName, 'firstName');
+    this._validateName(this._lastName, 'lastName');
+    this._validateRole(this._role);
+    
+    if (this._phone) {
+      this._validatePhone(this._phone);
+    }
+    
+    if (this._address) {
+      this._address.validate();
+    }
+    
+    if (this._lastLoginAt) {
+      this._validateTimestamp(this._lastLoginAt, 'lastLoginAt');
+    }
+  }
+
+  // Métodos estáticos
+  static create(data: UserData): User {
+    return new User(data);
+  }
+
+  static createAdmin(data: Omit<UserData, 'role'>): User {
+    return new User({ ...data, role: UserRole.ADMIN });
+  }
+
+  static isValidEmail(email: string): boolean {
+    try {
+      const user = new User({ email, password: 'TempPass123!', firstName: 'Test', lastName: 'User' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static isValidPassword(password: string): boolean {
+    try {
+      const user = new User({ email: 'test@example.com', password, firstName: 'Test', lastName: 'User' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static normalizeEmail(email: string): string {
+    return email.toLowerCase().trim();
+  }
+
+  static normalizeName(name: string): string {
+    return name.trim().replace(/\s+/g, ' ');
   }
 } 

@@ -27,7 +27,8 @@ declare global {
       toBeValidDate(): R;
       toBeValidUUID(): R;
       toHaveValidUserStructure(): R;
-      toHaveValidTaskStructure(): R;
+      toBeValidEmail(): R;
+      toBeValidPassword(): R;
     }
   }
 }
@@ -42,12 +43,30 @@ expect.extend({
     };
   },
 
-  toBeValidUUID(received) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const isValid = typeof received === 'string' && uuidRegex.test(received);
+  toBeValidUUID(received: string) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const pass = uuidRegex.test(received);
     return {
       message: () => `expected ${received} to be a valid UUID`,
-      pass: isValid,
+      pass
+    };
+  },
+
+  toBeValidEmail(received: string) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const pass = emailRegex.test(received);
+    return {
+      message: () => `expected ${received} to be a valid email`,
+      pass
+    };
+  },
+
+  toBeValidPassword(received: string) {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+    const pass = passwordRegex.test(received);
+    return {
+      message: () => `expected ${received} to be a valid password`,
+      pass
     };
   },
 
@@ -65,23 +84,7 @@ expect.extend({
       message: () => `expected ${JSON.stringify(received)} to have valid user structure`,
       pass: !!hasRequiredFields,
     };
-  },
-
-  toHaveValidTaskStructure(received) {
-    const hasRequiredFields = received &&
-      typeof received.id === 'string' &&
-      typeof received.title === 'string' &&
-      typeof received.description === 'string' &&
-      ['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(received.status) &&
-      ['LOW', 'MEDIUM', 'HIGH'].includes(received.priority) &&
-      received.createdAt instanceof Date &&
-      received.updatedAt instanceof Date;
-
-    return {
-      message: () => `expected ${JSON.stringify(received)} to have valid task structure`,
-      pass: !!hasRequiredFields,
-    };
-  },
+  }
 });
 
 // Mock timers for consistent testing

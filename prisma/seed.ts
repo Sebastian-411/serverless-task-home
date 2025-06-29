@@ -96,7 +96,6 @@ async function main() {
   try {
     // Clean existing data (optional)
     console.log('🧹 Cleaning existing data...');
-    await prisma.task.deleteMany();
     await prisma.user.deleteMany();
     await prisma.address.deleteMany();
     console.log('✅ Data cleaned');

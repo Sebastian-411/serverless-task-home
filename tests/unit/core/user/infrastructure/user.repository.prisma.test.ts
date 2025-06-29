@@ -3,7 +3,8 @@
  * Comprehensive testing for User repository with >80% coverage
  */
 
-import { UserRepositoryPrisma, CreateUserData } from '../../../../../core/user/infrastructure/user.repository.prisma';
+import type { CreateUserData } from '../../../../../core/user/infrastructure/user.repository.prisma';
+import { UserRepositoryPrisma } from '../../../../../core/user/infrastructure/user.repository.prisma';
 import { Cache } from '../../../../../shared/cache/cache.service';
 
 // Mock the cache service

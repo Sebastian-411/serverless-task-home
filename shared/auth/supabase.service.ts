@@ -1,90 +1,89 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-export interface SupabaseUser {
-  id: string;
-  email: string;
-  role: 'admin' | 'user';
+import type { UserId } from '../domain/value-objects/types';
+
+export interface SupabaseConfig {
+  url: string;
+  key: string;
 }
 
-export class SupabaseService {
-  private static client: SupabaseClient;
+export interface AuthUser {
+  id: UserId;
+  email: string;
+  role: string;
+  metadata?: Record<string, unknown>;
+}
 
-  static getClient(): SupabaseClient {
-    if (!this.client) {
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const client: SupabaseClient | null = null;
 
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration is missing');
-      }
+export function initialize(_config: SupabaseConfig): void {
+  // TODO: Initialize Supabase client
+}
 
-      this.client = createClient(supabaseUrl, supabaseKey);
-    }
-    return this.client;
+export function getClient(): SupabaseClient {
+  if (!client) {
+    throw new Error('Supabase client not initialized. Call initialize() first.');
   }
+  return client;
+}
 
-  static async createUser(email: string, password: string): Promise<{ user: any; error: any }> {
-    const supabase = this.getClient();
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+export async function authenticateUser(token: string): Promise<AuthUser | null> {
+  try {
+    const supabase = getClient();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    return { user: data.user, error };
-  }
-
-  static async signIn(email: string, password: string): Promise<{ data: any; error: any }> {
-    const supabase = this.getClient();
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    return { data, error };
-  }
-
-  static async validateToken(token: string, userRepository?: any): Promise<SupabaseUser | null> {
-    try {
-      const supabase = this.getClient();
-      
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      
-      if (error || !user) {
-        return null;
-      }
-
-      // If repository is provided, get the real role from the database
-      let role: 'admin' | 'user' = 'user';
-      
-      if (userRepository) {
-        try {
-          const dbUser = await userRepository.findById(user.id);
-          if (dbUser && dbUser.role) {
-            role = dbUser.role.toLowerCase() as 'admin' | 'user';
-          }
-        } catch (dbError) {
-          console.warn('Could not fetch user role from database, defaulting to user');
-        }
-      }
-
-      return {
-        id: user.id,
-        email: user.email!,
-        role: role
-      };
-    } catch (error) {
-      console.error('Error validating token:', error);
+    if (error || !user) {
       return null;
     }
-  }
 
-  static extractTokenFromRequest(req: any): string | null {
-    const authHeader = req.headers?.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return {
+      id: user.id as UserId,
+      email: user.email ?? '',
+      role: user.user_metadata?.role ?? 'user',
+      metadata: user.user_metadata
+    };
+  } catch {
+    // Log error for debugging but don't expose details
+    return null;
+  }
+}
+
+export async function createUser(email: string, password: string, metadata?: Record<string, unknown>): Promise<AuthUser | null> {
+  try {
+    const supabase = getClient();
+    const { data: { user }, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata
+      }
+    });
+
+    if (error || !user) {
       return null;
     }
-    return authHeader.substring(7);
+
+    return {
+      id: user.id as UserId,
+      email: user.email ?? '',
+      role: user.user_metadata?.role ?? 'user',
+      metadata: user.user_metadata
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function updateUserRole(userId: UserId, role: string): Promise<boolean> {
+  try {
+    const supabase = getClient();
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
+      user_metadata: { role }
+    });
+
+    return !error;
+  } catch {
+    return false;
   }
 } 

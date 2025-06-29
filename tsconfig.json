@@ -31,7 +31,8 @@
     "api/**/*",
     "core/**/*",
     "shared/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "prisma/**/*"
   ],
   "exclude": [
     "node_modules",

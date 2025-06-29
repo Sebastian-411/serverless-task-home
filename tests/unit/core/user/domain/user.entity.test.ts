@@ -3,7 +3,8 @@
  * Comprehensive testing for User domain entity with >80% coverage
  */
 
-import { User, ValidationError, UserData, CreateUserData, UpdateUserData } from '../../../../../core/user/domain/user.entity';
+import type { UserData, CreateUserData, UpdateUserData } from '../../../../../core/user/domain/user.entity';
+import { User, ValidationError } from '../../../../../core/user/domain/user.entity';
 
 describe('User Entity Domain Tests', () => {
   const validUserData: UserData = {

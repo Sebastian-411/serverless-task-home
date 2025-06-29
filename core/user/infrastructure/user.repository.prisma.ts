@@ -1,5 +1,6 @@
 // User Repository Prisma Implementation with High-Performance Caching
-import { PrismaClient, User as PrismaUser, Address as PrismaAddress } from '../../../lib/generated/prisma';
+import type { PrismaClient} from '../../../lib/generated/prisma';
+import { User as PrismaUser, Address as PrismaAddress } from '../../../lib/generated/prisma';
 import { Cache, CacheKeys } from '../../../shared/cache/cache.service';
 
 export interface CreateUserData {
@@ -23,6 +24,8 @@ export interface UserRepository {
   findById(id: string): Promise<any | null>;
   findByEmail(email: string): Promise<any | null>;
   findAll(): Promise<any[]>;
+  findAllPaginated(offset: number, limit: number): Promise<any[]>;
+  count(): Promise<number>;
   update(id: string, data: any): Promise<any>;
   delete(id: string): Promise<void>;
   // ULTRA-FAST assignment validation methods
@@ -140,6 +143,49 @@ export class UserRepositoryPrisma implements UserRepository {
       );
     } catch (error) {
       console.error('Error finding all users:', error);
+      throw error;
+    }
+  }
+
+  async findAllPaginated(offset: number, limit: number): Promise<any[]> {
+    try {
+      console.log(`Executing optimized findAllPaginated query with offset: ${offset}, limit: ${limit}`);
+      const startTime = Date.now();
+      
+      const users = await this.prisma.user.findMany({
+        include: {
+          address: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        skip: offset,
+        take: limit
+      });
+      
+      const queryTime = Date.now() - startTime;
+      console.log(`findAllPaginated query completed in ${queryTime}ms`);
+      
+      return users;
+    } catch (error) {
+      console.error('Error finding paginated users:', error);
+      throw error;
+    }
+  }
+
+  async count(): Promise<number> {
+    try {
+      console.log('Executing optimized count query for users');
+      const startTime = Date.now();
+      
+      const total = await this.prisma.user.count();
+      
+      const queryTime = Date.now() - startTime;
+      console.log(`Count query completed in ${queryTime}ms - Total: ${total}`);
+      
+      return total;
+    } catch (error) {
+      console.error('Error counting users:', error);
       throw error;
     }
   }

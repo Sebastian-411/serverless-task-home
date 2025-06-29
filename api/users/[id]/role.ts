@@ -1,8 +1,9 @@
 // PATCH /users/:id/role - Change user role (Admin only)
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
 import { Dependencies } from '../../../shared/config/dependencies';
-import { HandlerContext } from '../../../shared/middlewares/request-handler.middleware';
-import { ValidationRule } from '../../../shared/middlewares/validation.middleware';
+import type { HandlerContext } from '../../../shared/middlewares/request-handler.middleware';
+import type { ValidationRule } from '../../../shared/middlewares/validation.middleware';
 
 // Ultra-fast validation rule
 const ROLE_VALIDATION: ValidationRule[] = [{

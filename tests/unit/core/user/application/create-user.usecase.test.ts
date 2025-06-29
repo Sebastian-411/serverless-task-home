@@ -3,9 +3,16 @@
  * Comprehensive testing for CreateUser use case with >80% coverage
  */
 
-import { CreateUserUseCase, CreateUserRequest, AuthContext } from '../../../../../core/user/application/create-user.usecase';
+import type { CreateUserRequest, AuthContext } from '../../../../../core/user/application/create-user.usecase';
+import { CreateUserUseCase } from '../../../../../core/user/application/create-user.usecase';
 import { createMockUserRepository } from '../../../mocks/repositories/user.repository.mock';
 import { createMockSupabaseService } from '../../../mocks/services/supabase.mock';
+import { UserRepository } from '../../../../../core/user/domain/user.repository';
+import { User } from '../../../../../core/user/domain/user.entity';
+import { Email } from '../../../../../shared/domain/value-objects/email.vo';
+import { Name } from '../../../../../shared/domain/value-objects/name.vo';
+import { Password } from '../../../../../shared/domain/value-objects/password.vo';
+import { Address } from '../../../../../core/user/domain/address.entity';
 
 // Mock the SupabaseService module
 jest.mock('../../../../../shared/auth/supabase.service', () => ({

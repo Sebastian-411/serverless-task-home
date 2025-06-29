@@ -3,7 +3,11 @@
  * Comprehensive testing for user retrieval with >80% coverage
  */
 
-import { GetUserByIdUseCase, AuthContext, GetUserByIdResponse } from '../../../../../core/user/application/get-user-by-id.usecase';
+import type { AuthContext} from '../../../../../core/user/application/get-user-by-id.usecase';
+import { GetUserByIdUseCase } from '../../../../../core/user/application/get-user-by-id.usecase';
+import { UserRepository } from '../../../../../core/user/domain/user.repository';
+import { User } from '../../../../../core/user/domain/user.entity';
+import { createMockUserRepository } from '../../../mocks/repositories/user.repository.mock';
 
 describe('GetUserByIdUseCase Application Tests', () => {
   let getUserByIdUseCase: GetUserByIdUseCase;

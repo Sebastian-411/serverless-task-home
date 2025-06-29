@@ -3,8 +3,10 @@
  * Custom error for validation failures
  */
 
-class ValidationError extends Error {
-  constructor(message, details = []) {
+export class ValidationError extends Error {
+  public details: string[];
+
+  constructor(message: string, details: string[] = []) {
     super(message);
     this.name = 'ValidationError';
     this.details = details;
@@ -25,6 +27,4 @@ class ValidationError extends Error {
       details: this.details
     };
   }
-}
-
-module.exports = ValidationError; 
+} 

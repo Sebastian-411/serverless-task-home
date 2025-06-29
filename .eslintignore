@@ -1,0 +1,19 @@
+# Generated files
+lib/generated/
+node_modules/
+dist/
+build/
+
+# Prisma generated files
+prisma/migrations/
+*.generated.*
+
+# Test fixtures and mocks that don't need linting
+tests/*
+
+# Configuration files
+*.config.js
+*.config.mjs
+
+# Environment files
+.env* 

@@ -25,9 +25,7 @@ model User {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  address       Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
-  createdTasks  Task[]   @relation("TaskCreator")
-  assignedTasks Task[]   @relation("TaskAssignee")
+  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
 
   // Optimized indexes for ALL possible queries
   @@index([email]) // Login lookups
@@ -89,89 +87,7 @@ model Address {
   @@map("addresses")
 }
 
-model Task {
-  id          String       @id @default(uuid())
-  title       String       @db.VarChar(255)
-  description String?      @db.Text
-  status      TaskStatus   @default(PENDING)
-  priority    TaskPriority @default(MEDIUM)
-  dueDate     DateTime?
-  userId      String       // Task owner
-  assignedTo  String?      // Assigned user
-  completedAt DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  // Relations
-  user           User  @relation("TaskCreator", fields: [userId], references: [id], onDelete: Cascade)
-  assignedToUser User? @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
-
-  // Primary indexes for core queries
-  @@index([userId]) // User's created tasks
-  @@index([assignedTo]) // User's assigned tasks
-  @@index([status]) // Status filtering
-  @@index([priority]) // Priority filtering
-  @@index([dueDate]) // Date-based sorting and filtering
-  @@index([createdAt]) // Creation order
-  @@index([updatedAt]) // Recent changes
-  @@index([completedAt]) // Completion tracking
-  @@index([title]) // Title-based searches
-  
-  // Critical composite indexes for complex queries
-  @@index([status, priority]) // Status + priority filtering
-  @@index([status, dueDate]) // Overdue tasks by status
-  @@index([priority, dueDate]) // Priority + deadline management
-  @@index([userId, status]) // User's tasks by status
-  @@index([userId, priority]) // User's tasks by priority
-  @@index([assignedTo, status]) // Assigned tasks by status
-  @@index([assignedTo, priority]) // Assigned tasks by priority
-  
-  // Temporal composite indexes for performance
-  @@index([userId, createdAt]) // User's tasks chronologically
-  @@index([assignedTo, createdAt]) // Assigned tasks chronologically
-  @@index([status, createdAt]) // Tasks by status and creation date
-  @@index([status, updatedAt]) // Recent status changes
-  @@index([priority, createdAt]) // Priority-based task timeline
-  @@index([dueDate, status]) // Due date management by status
-  @@index([dueDate, priority]) // Critical deadline tracking
-  
-  // Advanced analytics indexes
-  @@index([userId, status, priority]) // User task analytics
-  @@index([assignedTo, status, priority]) // Assignee performance metrics
-  @@index([status, priority, dueDate]) // Task management dashboard
-  @@index([createdAt, status, priority]) // Historical task analysis
-  @@index([userId, dueDate, status]) // User deadline management
-  @@index([assignedTo, dueDate, status]) // Assignee deadline tracking
-  
-  // Completion tracking indexes
-  @@index([completedAt, status]) // Completion verification
-  @@index([userId, completedAt]) // User completion history
-  @@index([assignedTo, completedAt]) // Assignee completion tracking
-  @@index([status, completedAt, createdAt]) // Task lifecycle analysis
-  
-  // Search and filtering optimization
-  @@index([title, status]) // Title search with status filter
-  @@index([title, priority]) // Title search with priority filter
-  @@index([userId, title]) // User's task search
-  @@index([assignedTo, title]) // Assigned task search
-  @@map("tasks")
-}
-
 enum UserRole {
   ADMIN
   USER
-}
-
-enum TaskStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum TaskPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
 }

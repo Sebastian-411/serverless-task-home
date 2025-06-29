@@ -1,5 +1,5 @@
-import { UserRepository, UserData } from '../domain/user.entity';
-import { Cache, CacheKeys } from '../../../shared/cache/cache.service';
+import type { UserRepository } from '../infrastructure/user.repository.prisma';
+import { get, set, Keys } from '../../../shared/cache/cache.service';
 
 export interface AuthContext {
   isAuthenticated: boolean;
@@ -10,46 +10,67 @@ export interface AuthContext {
   };
 }
 
+export interface PaginationOptions {
+  page: number;
+  limit: number;
+}
+
 export interface GetUsersResponse {
-  id: string;
-  email: string;
-  name: string;
-  phoneNumber: string;
-  role: 'admin' | 'user';
-  address?: {
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    stateOrProvince: string;
-    postalCode: string;
-    country: string;
-  };
-  createdAt: Date;
+  users: {
+    id: string;
+    email: string;
+    name: string;
+    phoneNumber: string;
+    role: 'admin' | 'user';
+    address?: {
+      addressLine1: string;
+      addressLine2?: string;
+      city: string;
+      stateOrProvince: string;
+      postalCode: string;
+      country: string;
+    };
+    createdAt: Date;
+  }[];
+  total: number;
 }
 
 export class GetUsersUseCase {
   constructor(private userRepository: UserRepository) {}
 
-  async execute(authContext: AuthContext): Promise<GetUsersResponse[]> {
+  async execute(authContext: AuthContext, pagination?: PaginationOptions): Promise<GetUsersResponse> {
     try {
       // Only administrators can view all users
       if (!authContext.isAuthenticated || authContext.user?.role !== 'admin') {
         throw new Error('Only administrators can access the users list');
       }
 
-      // Ultra-fast cache lookup first
-      const cacheKey = CacheKeys.userList();
-      const cachedUsers = Cache.get<GetUsersResponse[]>(cacheKey);
-      
-      if (cachedUsers) {
-        console.log('🚀 Cache HIT - Users list served in ~1ms');
-        return cachedUsers;
+      const page = pagination?.page || 1;
+      const limit = pagination?.limit || 10;
+      const offset = (page - 1) * limit;
+
+      // Ultra-fast cache lookup first (only for first page without pagination)
+      if (!pagination || (page === 1 && limit === 10)) {
+        const cacheKey = Keys.users();
+        const cachedUsers = await get<GetUsersResponse['users']>(cacheKey);
+        
+        if (cachedUsers) {
+          console.log(`Cache HIT - Users list served in ~1ms for admin ${authContext.user.email}`);
+          return {
+            users: cachedUsers,
+            total: cachedUsers.length
+          };
+        }
       }
 
-      console.log('🔍 Cache MISS - Fetching users from database...');
+      console.log(`Cache MISS - Fetching users from database for admin ${authContext.user.email} - Page: ${page}, Limit: ${limit}`);
       const startTime = Date.now();
       
-      const users = await this.userRepository.findAll();
+      // Get paginated users and total count
+      const [users, total] = await Promise.all([
+        this.userRepository.findAllPaginated(offset, limit),
+        this.userRepository.count()
+      ]);
       
       const transformedUsers = users.map((user: any) => ({
         id: user.id,
@@ -68,13 +89,18 @@ export class GetUsersUseCase {
         createdAt: user.createdAt
       }));
 
-      // Cache the result for ultra-fast subsequent requests
-      Cache.setWarm(cacheKey, transformedUsers);
+      // Cache the result for ultra-fast subsequent requests (only first page)
+      if (!pagination || (page === 1 && limit === 10)) {
+        await set(Keys.users(), transformedUsers);
+      } 
       
       const queryTime = Date.now() - startTime;
-      console.log(`✅ Users fetched and cached in ${queryTime}ms`);
+      console.log(`Users fetched and cached in ${queryTime}ms - Total: ${total}, Page: ${page}, Limit: ${limit}`);
       
-      return transformedUsers;
+      return {
+        users: transformedUsers,
+        total
+      };
     } catch (error) {
       console.error('Error in GetUsersUseCase:', error);
       

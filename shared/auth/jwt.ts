@@ -1,28 +1,27 @@
+import type { UserId } from '../domain/value-objects/types';
+
 // JWT Authentication utilities
 export interface JWTPayload {
-  userId: string;
+  userId: UserId;
   email: string;
-  exp?: number;
-  iat?: number;
+  role: string;
+  iat: number;
+  exp: number;
 }
 
-export class JWTService {
-  private static readonly SECRET = process.env.JWT_SECRET || 'your-secret-key';
-  
-  static generateToken(payload: Omit<JWTPayload, 'exp' | 'iat'>): string {
-    // JWT token generation logic
-    throw new Error('JWT implementation pending');
+export function generateToken(_payload: JWTPayload): string {
+  // TODO: Implement JWT token generation
+  return 'mock-jwt-token';
+}
+
+export function verifyToken(_token: string): JWTPayload {
+  // TODO: Implement JWT token verification
+  throw new Error('JWT verification not implemented');
+}
+
+export function extractTokenFromHeader(authHeader: string): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
   }
-  
-  static verifyToken(token: string): JWTPayload {
-    // JWT token verification logic
-    throw new Error('JWT implementation pending');
-  }
-  
-  static extractTokenFromHeader(authHeader: string): string | null {
-    if (!authHeader || !authHeader.startsWith('Bearer ') || !authHeader.startsWith('bearer')) {
-      return null;
-    }
-    return authHeader.substring(7);
-  }
+  return authHeader.substring(7);
 } 

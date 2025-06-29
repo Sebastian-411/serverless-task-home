@@ -1,4 +1,5 @@
-import { UserRepository, UserData } from '../domain/user.entity';
+import type { UserRepository} from '../domain/user.entity';
+import { UserData } from '../domain/user.entity';
 
 export interface AuthContext {
   isAuthenticated: boolean;

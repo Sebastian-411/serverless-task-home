@@ -98,16 +98,31 @@ export const createMockCacheService = () => {
   return mockCache;
 };
 
-export const mockCacheService = createMockCacheService();
+export const mockCacheService = {
+  get: jest.fn(),
+  set: jest.fn(),
+  delete: jest.fn(),
+  clear: jest.fn(),
+  keys: {
+    user: (id: string) => `user:${id}`,
+    users: (filters?: any) => `users:list:${JSON.stringify(filters || {})}`,
+    userByEmail: (email: string) => `user:email:${email}`,
+    userCount: () => 'users:count',
+    userUpdates: (userId: string) => `user:updates:${userId}`,
+    auth: {
+      token: (token: string) => `auth:token:${token}`,
+      user: (userId: string) => `auth:user:${userId}`,
+      session: (sessionId: string) => `auth:session:${sessionId}`,
+      blacklist: (token: string) => `auth:blacklist:${token}`
+    }
+  }
+};
 
 // Mock CacheKeys utility
 export const mockCacheKeys = {
   user: (id: string) => `user:${id}`,
   userByEmail: (email: string) => `user:email:${email}`,
-  userList: (page = 1, limit = 10) => `users:list:${page}:${limit}`,
-  task: (id: string) => `task:${id}`,
-  tasksByUser: (userId: string) => `tasks:user:${userId}`,
-  taskList: (filters?: any) => `tasks:list:${JSON.stringify(filters || {})}`
+  userList: (page = 1, limit = 10) => `users:list:${page}:${limit}`
 };
 
 // Mock the actual Cache module

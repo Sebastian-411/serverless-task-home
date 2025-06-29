@@ -1,6 +1,6 @@
 import { ChangeUserRoleUseCase } from '../../../../../core/user/application/change-user-role.usecase';
-import { UserRepository } from '../../../../../core/user/infrastructure/user.repository.prisma';
-import { PrismaClient } from '../../../../../lib/generated/prisma';
+import type { UserRepository } from '../../../../../core/user/infrastructure/user.repository.prisma';
+import type { PrismaClient } from '../../../../../lib/generated/prisma';
 
 // Mock dependencies
 const mockUserRepository = {

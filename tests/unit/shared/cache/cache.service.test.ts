@@ -3,7 +3,7 @@
  * Basic testing for cache service functionality
  */
 
-import { CacheService, Cache, CacheKeys } from '../../../../shared/cache/cache.service';
+import { get, set, remove, clear, exists, getOrSet, invalidatePattern, Keys } from '../../../../shared/cache/cache.service';
 
 describe('Cache Service Tests - Initial', () => {
   describe('Cache Service Module Setup', () => {

@@ -3,15 +3,34 @@
  * Represents a physical address for users
  */
 
-const { v4: uuidv4 } = require('uuid');
-const BaseEntity = require('../../../shared/domain/base.entity');
-const ValidationError = require('../../../shared/domain/exceptions/validation.error');
-const { VALIDATION_RULES } = require('../../../shared/domain/value-objects/constants');
+import { v4 as uuidv4 } from 'uuid';
 
-class Address extends BaseEntity {
-  constructor(data = {}) {
-    super();
-    
+import { ValidationError } from '../../../shared/domain/exceptions/validation.error';
+
+export interface AddressData {
+  id?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  stateOrProvince: string;
+  postalCode: string;
+  country: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export class Address {
+  public id: string;
+  public addressLine1: string;
+  public addressLine2: string;
+  public city: string;
+  public stateOrProvince: string;
+  public postalCode: string;
+  public country: string;
+  public createdAt: Date;
+  public updatedAt: Date;
+
+  constructor(data: AddressData = {} as AddressData) {
     this.id = data.id || uuidv4();
     this.addressLine1 = data.addressLine1 || '';
     this.addressLine2 = data.addressLine2 || '';
@@ -29,8 +48,8 @@ class Address extends BaseEntity {
   /**
    * Validation rules for Address
    */
-  validate() {
-    const errors = [];
+  validate(): boolean {
+    const errors: string[] = [];
 
     // Required fields
     if (!this.addressLine1?.trim()) {
@@ -54,38 +73,38 @@ class Address extends BaseEntity {
     }
 
     // Length validations
-    if (this.addressLine1 && this.addressLine1.length > VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH) {
-      errors.push(`Address line 1 must be less than ${VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH} characters`);
+    if (this.addressLine1 && this.addressLine1.length > 255) {
+      errors.push('Address line 1 must be less than 255 characters');
     }
 
-    if (this.addressLine2 && this.addressLine2.length > VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH) {
-      errors.push(`Address line 2 must be less than ${VALIDATION_RULES.ADDRESS.LINE_MAX_LENGTH} characters`);
+    if (this.addressLine2 && this.addressLine2.length > 255) {
+      errors.push('Address line 2 must be less than 255 characters');
     }
 
-    if (this.city && this.city.length > VALIDATION_RULES.ADDRESS.CITY_MAX_LENGTH) {
-      errors.push(`City must be less than ${VALIDATION_RULES.ADDRESS.CITY_MAX_LENGTH} characters`);
+    if (this.city && this.city.length > 100) {
+      errors.push('City must be less than 100 characters');
     }
 
-    if (this.stateOrProvince && this.stateOrProvince.length > VALIDATION_RULES.ADDRESS.STATE_MAX_LENGTH) {
-      errors.push(`State or Province must be less than ${VALIDATION_RULES.ADDRESS.STATE_MAX_LENGTH} characters`);
+    if (this.stateOrProvince && this.stateOrProvince.length > 100) {
+      errors.push('State or Province must be less than 100 characters');
     }
 
     // Postal code format validation (basic)
-    if (this.postalCode && this.postalCode.length < VALIDATION_RULES.ADDRESS.POSTAL_CODE_MIN_LENGTH) {
-      errors.push(`Postal code must be at least ${VALIDATION_RULES.ADDRESS.POSTAL_CODE_MIN_LENGTH} characters`);
+    if (this.postalCode && this.postalCode.length < 3) {
+      errors.push('Postal code must be at least 3 characters');
     }
 
-    if (this.postalCode && this.postalCode.length > VALIDATION_RULES.ADDRESS.POSTAL_CODE_MAX_LENGTH) {
-      errors.push(`Postal code must be less than ${VALIDATION_RULES.ADDRESS.POSTAL_CODE_MAX_LENGTH} characters`);
+    if (this.postalCode && this.postalCode.length > 20) {
+      errors.push('Postal code must be less than 20 characters');
     }
 
     // Country validation
-    if (this.country && this.country.length < VALIDATION_RULES.ADDRESS.COUNTRY_MIN_LENGTH) {
-      errors.push(`Country must be at least ${VALIDATION_RULES.ADDRESS.COUNTRY_MIN_LENGTH} characters`);
+    if (this.country && this.country.length < 2) {
+      errors.push('Country must be at least 2 characters');
     }
 
-    if (this.country && this.country.length > VALIDATION_RULES.ADDRESS.COUNTRY_MAX_LENGTH) {
-      errors.push(`Country must be less than ${VALIDATION_RULES.ADDRESS.COUNTRY_MAX_LENGTH} characters`);
+    if (this.country && this.country.length > 100) {
+      errors.push('Country must be less than 100 characters');
     }
 
     if (errors.length > 0) {
@@ -98,14 +117,14 @@ class Address extends BaseEntity {
   /**
    * Factory method to create a new Address instance
    */
-  static create(addressData) {
+  static create(addressData: AddressData): Address {
     return new Address(addressData);
   }
 
   /**
    * Get full address as formatted string
    */
-  getFullAddress() {
+  getFullAddress(): string {
     const parts = [
       this.addressLine1,
       this.addressLine2,
@@ -121,7 +140,7 @@ class Address extends BaseEntity {
   /**
    * Get address for shipping label format
    */
-  getShippingFormat() {
+  getShippingFormat(): string {
     const line1 = this.addressLine1;
     const line2 = this.addressLine2 ? `\n${this.addressLine2}` : '';
     const cityStateZip = `${this.city}, ${this.stateOrProvince} ${this.postalCode}`;
@@ -133,29 +152,29 @@ class Address extends BaseEntity {
   /**
    * Check if address is in a specific country
    */
-  isInCountry(countryCode) {
+  isInCountry(countryCode: string): boolean {
     return this.country.toLowerCase() === countryCode.toLowerCase();
   }
 
   /**
    * Check if address appears to be international (basic check)
    */
-  isInternational(homeCountry = 'US') {
+  isInternational(homeCountry: string = 'US'): boolean {
     return !this.isInCountry(homeCountry);
   }
 
   /**
    * Update address fields
    */
-  updateAddress(updates) {
+  updateAddress(updates: Partial<AddressData>): Address {
     const allowedFields = [
       'addressLine1', 'addressLine2', 'city', 
       'stateOrProvince', 'postalCode', 'country'
     ];
 
     allowedFields.forEach(field => {
-      if (updates[field] !== undefined) {
-        this[field] = updates[field];
+      if (updates[field as keyof AddressData] !== undefined) {
+        (this as any)[field] = updates[field as keyof AddressData];
       }
     });
 
@@ -168,7 +187,7 @@ class Address extends BaseEntity {
   /**
    * Convert to plain object for JSON serialization
    */
-  toJSON() {
+  toJSON(): AddressData {
     return {
       id: this.id,
       addressLine1: this.addressLine1,
@@ -185,7 +204,7 @@ class Address extends BaseEntity {
   /**
    * Create Address from Prisma data
    */
-  static fromPrisma(prismaAddress) {
+  static fromPrisma(prismaAddress: Record<string, unknown>): Address | null {
     if (!prismaAddress) return null;
 
     return new Address({
@@ -202,9 +221,9 @@ class Address extends BaseEntity {
   }
 
   /**
-   * Convert to Prisma format for database operations
+   * Convert to Prisma data format
    */
-  toPrisma() {
+  toPrisma(): Record<string, unknown> {
     return {
       id: this.id,
       addressLine1: this.addressLine1,
@@ -217,6 +236,4 @@ class Address extends BaseEntity {
       updatedAt: this.updatedAt
     };
   }
-}
-
-module.exports = Address; 
+} 

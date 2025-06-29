@@ -20,21 +20,21 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response has success true\", function () {",
+									"pm.test(\"Response has message\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
+									"    pm.expect(jsonData.message).to.eql(\"Login successful\");",
 									"});",
 									"",
-									"pm.test(\"Response contains access_token\", function () {",
+									"pm.test(\"Response contains accessToken\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.session.access_token).to.exist;",
+									"    pm.expect(jsonData.accessToken).to.exist;",
 									"    // Save token for other requests",
-									"    pm.environment.set(\"admin_token\", jsonData.data.session.access_token);",
+									"    pm.environment.set(\"admin_token\", jsonData.accessToken);",
 									"});",
 									"",
 									"pm.test(\"User role is admin\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.user.role).to.eql(\"admin\");",
+									"    pm.expect(jsonData.user.role).to.eql(\"admin\");",
 									"});"
 								],
 								"type": "text/javascript"
@@ -98,14 +98,14 @@
 									"    pm.expect(jsonData.success).to.eql(true);",
 									"});",
 									"",
-																	"pm.test(\"User is created with role user\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    pm.expect(jsonData.data.role).to.eql(\"user\");",
-								"    // Save regular user ID for tests",
-								"    pm.environment.set(\"test_regular_user_id\", jsonData.data.id);",
-								"});",
-								"",
-								"console.log(\"✅ Dedicated regular user created successfully\");"
+									"pm.test(\"User is created with role user\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.role).to.eql(\"user\");",
+									"    // Save regular user ID for tests",
+									"    pm.environment.set(\"test_regular_user_id\", jsonData.data.id);",
+									"});",
+									"",
+									"console.log(\"✅ Dedicated regular user created successfully\");"
 								],
 								"type": "text/javascript"
 							}
@@ -147,21 +147,21 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test(\"Response has success true\", function () {",
+									"pm.test(\"Response has message\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
+									"    pm.expect(jsonData.message).to.eql(\"Login successful\");",
 									"});",
 									"",
-									"pm.test(\"Response contains access_token\", function () {",
+									"pm.test(\"Response contains accessToken\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.session.access_token).to.exist;",
+									"    pm.expect(jsonData.accessToken).to.exist;",
 									"    // Save token for regular user requests",
-									"    pm.environment.set(\"regular_user_token\", jsonData.data.session.access_token);",
+									"    pm.environment.set(\"regular_user_token\", jsonData.accessToken);",
 									"});",
 									"",
 									"pm.test(\"User role is user\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.user.role).to.eql(\"user\");",
+									"    pm.expect(jsonData.user.role).to.eql(\"user\");",
 									"});"
 								],
 								"type": "text/javascript"
@@ -230,27 +230,27 @@
 									"    pm.expect(jsonData.success).to.eql(true);",
 									"});",
 									"",
-																	"pm.test(\"User is created with role user\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    pm.expect(jsonData.data.role).to.eql(\"user\");",
-								"});",
-								"",
-								"pm.test(\"User has correct email\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    var expectedEmail = pm.environment.get(\"unique_email\");",
-								"    pm.expect(jsonData.data.email).to.eql(expectedEmail);",
-								"});",
-								"",
-								"pm.test(\"Response contains required user fields\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    pm.expect(jsonData.data).to.have.property('id');",
-								"    pm.expect(jsonData.data).to.have.property('name');",
-								"    pm.expect(jsonData.data).to.have.property('phoneNumber');",
-								"    pm.expect(jsonData.data).to.have.property('address');",
-								"    pm.expect(jsonData.data).to.have.property('createdAt');",
-								"    // Save user ID for role change tests",
-								"    pm.environment.set(\"test_user_id\", jsonData.data.id);",
-								"});"
+									"pm.test(\"User is created with role user\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.role).to.eql(\"user\");",
+									"});",
+									"",
+									"pm.test(\"User has correct email\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var expectedEmail = pm.environment.get(\"unique_email\");",
+									"    pm.expect(jsonData.data.email).to.eql(expectedEmail);",
+									"});",
+									"",
+									"pm.test(\"Response contains required user fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('name');",
+									"    pm.expect(jsonData.data).to.have.property('phoneNumber');",
+									"    pm.expect(jsonData.data).to.have.property('address');",
+									"    pm.expect(jsonData.data).to.have.property('createdAt');",
+									"    // Save user ID for role change tests",
+									"    pm.environment.set(\"test_user_id\", jsonData.data.id);",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -323,16 +323,16 @@
 									"    pm.expect(jsonData.data.email).to.eql(expectedEmail);",
 									"});",
 									"",
-																	"pm.test(\"Response contains required admin fields\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    pm.expect(jsonData.data).to.have.property('id');",
-								"    pm.expect(jsonData.data).to.have.property('name');",
-								"    pm.expect(jsonData.data).to.have.property('phoneNumber');",
-								"    pm.expect(jsonData.data).to.have.property('address');",
-								"    pm.expect(jsonData.data).to.have.property('createdAt');",
-								"    // Save admin ID for role change tests",
-								"    pm.environment.set(\"created_admin_id\", jsonData.data.id);",
-								"});"
+									"pm.test(\"Response contains required admin fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('name');",
+									"    pm.expect(jsonData.data).to.have.property('phoneNumber');",
+									"    pm.expect(jsonData.data).to.have.property('address');",
+									"    pm.expect(jsonData.data).to.have.property('createdAt');",
+									"    // Save admin ID for role change tests",
+									"    pm.environment.set(\"created_admin_id\", jsonData.data.id);",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -483,11 +483,11 @@
 									"    pm.expect(jsonData.success).to.eql(true);",
 									"});",
 									"",
-																	"pm.test(\"Response contains users array\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    pm.expect(jsonData.data).to.be.an('array');",
-								"    pm.expect(jsonData.meta.count).to.be.a('number');",
-								"});",
+									"pm.test(\"Response contains users array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData.meta.count).to.be.a('number');",
+									"});",
 									"",
 									"pm.test(\"Users have required fields\", function () {",
 									"    var jsonData = pm.response.json();",
@@ -781,11 +781,11 @@
 									"    pm.expect(jsonData.data.role).to.eql(\"user\");",
 									"});",
 									"",
-																	"pm.test(\"User ID matches own ID\", function () {",
-								"    var jsonData = pm.response.json();",
-								"    var expectedId = pm.environment.get(\"test_regular_user_id\");",
-								"    pm.expect(jsonData.data.id).to.eql(expectedId);",
-								"});",
+									"pm.test(\"User ID matches own ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var expectedId = pm.environment.get(\"test_regular_user_id\");",
+									"    pm.expect(jsonData.data.id).to.eql(expectedId);",
+									"});",
 									"",
 									"console.log(\"✅ Regular user can access own profile successfully\");"
 								],
@@ -1419,6 +1419,16 @@
 									"    pm.expect(jsonData.meta.count).to.be.a('number');",
 									"});",
 									"",
+									"pm.test(\"Response contains pagination metadata\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.meta).to.have.property('total');",
+									"    pm.expect(jsonData.meta).to.have.property('page');",
+									"    pm.expect(jsonData.meta).to.have.property('limit');",
+									"    pm.expect(jsonData.meta).to.have.property('totalPages');",
+									"    pm.expect(jsonData.meta).to.have.property('hasNext');",
+									"    pm.expect(jsonData.meta).to.have.property('hasPrev');",
+									"});",
+									"",
 									"pm.test(\"Tasks have required fields\", function () {",
 									"    var jsonData = pm.response.json();",
 									"    if (jsonData.data.length > 0) {",
@@ -1430,7 +1440,7 @@
 									"    }",
 									"});",
 									"",
-									"console.log(\"✅ Tasks retrieved successfully\");"
+									"console.log(\"✅ Tasks retrieved successfully with pagination\");"
 								],
 								"type": "text/javascript"
 							}
@@ -1458,6 +1468,131 @@
 					"response": []
 				},
 				{
+					"name": "Get Tasks with Pagination",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Pagination parameters are correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.meta.page).to.eql(1);",
+									"    pm.expect(jsonData.meta.limit).to.eql(5);",
+									"});",
+									"",
+									"pm.test(\"Pagination metadata is valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.meta.total).to.be.a('number');",
+									"    pm.expect(jsonData.meta.totalPages).to.be.a('number');",
+									"    pm.expect(jsonData.meta.hasNext).to.be.a('boolean');",
+									"    pm.expect(jsonData.meta.hasPrev).to.be.a('boolean');",
+									"});",
+									"",
+									"pm.test(\"Tasks count matches limit\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.length).to.be.at.most(5);",
+									"});",
+									"",
+									"console.log(\"✅ Tasks pagination working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tasks?page=1&limit=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks - Invalid Pagination (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has validation error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.eql(\"Validation error\");",
+									"});",
+									"",
+									"console.log(\"✅ Pagination validation working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{regular_user_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tasks?page=0&limit=200",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "200"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Assign Task",
 					"event": [
 						{
@@ -1475,7 +1610,7 @@
 									"",
 									"pm.test(\"Task is assigned correctly\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.data.assignedTo).to.exist;",
+									"    pm.expect(jsonData.data.assignment.assignedTo).to.exist;",
 									"    pm.expect(jsonData.message).to.include(\"assigned\");",
 									"});",
 									"",
@@ -1617,6 +1752,337 @@
 								"api",
 								"tasks",
 								"{{test_task_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks with Status Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has data\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('data');",
+									"    pm.expect(response).to.have.property('meta');",
+									"    pm.expect(response).to.have.property('traceId');",
+									"});",
+									"",
+									"pm.test(\"All tasks have pending status\", function () {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.length > 0) {",
+									"        response.data.forEach(task => {",
+									"            pm.expect(task.status).to.eql('pending');",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Meta contains pagination info\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.meta).to.have.property('page');",
+									"    pm.expect(response.meta).to.have.property('limit');",
+									"    pm.expect(response.meta).to.have.property('total');",
+									"    pm.expect(response.meta).to.have.property('totalPages');",
+									"    pm.expect(response.meta).to.have.property('hasNext');",
+									"    pm.expect(response.meta).to.have.property('hasPrev');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tasks?status=pending&page=1&limit=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks with Priority Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has data\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('data');",
+									"    pm.expect(response).to.have.property('meta');",
+									"    pm.expect(response).to.have.property('traceId');",
+									"});",
+									"",
+									"pm.test(\"All tasks have high priority\", function () {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.length > 0) {",
+									"        response.data.forEach(task => {",
+									"            pm.expect(task.priority).to.eql('high');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tasks?priority=high&page=1&limit=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "priority",
+									"value": "high"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks with Multiple Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has data\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('data');",
+									"    pm.expect(response).to.have.property('meta');",
+									"    pm.expect(response).to.have.property('traceId');",
+									"});",
+									"",
+									"pm.test(\"Meta contains filters info\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.meta).to.have.property('filters');",
+									"    pm.expect(response.meta.filters).to.have.property('status');",
+									"    pm.expect(response.meta.filters).to.have.property('priority');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tasks?status=pending&priority=high&page=1&limit=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending"
+								},
+								{
+									"key": "priority",
+									"value": "high"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks - Invalid Status Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has error message\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response).to.have.property('traceId');",
+									"    pm.expect(response.message).to.include('Invalid status filter');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tasks?status=invalid&page=1&limit=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "invalid"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tasks - Invalid Priority Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has error message\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response).to.have.property('traceId');",
+									"    pm.expect(response.message).to.include('Invalid priority filter');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/tasks?priority=invalid&page=1&limit=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"tasks"
+							],
+							"query": [
+								{
+									"key": "priority",
+									"value": "invalid"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
 							]
 						}
 					},

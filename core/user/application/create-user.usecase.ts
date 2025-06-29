@@ -1,5 +1,7 @@
 import { SupabaseService } from '../../../shared/auth/supabase.service';
-import { CreateUserData } from '../infrastructure/user.repository.prisma';
+import type { CreateUserData } from '../infrastructure/user.repository.prisma';
+import type { UserRepository } from '../domain/user.entity';
+import type { Address } from '../domain/address.entity';
 
 // Create User Use Case
 export interface CreateUserRequest {
@@ -38,9 +40,10 @@ export interface AuthContext {
 }
 
 export class CreateUserUseCase {
-  constructor(
-    private userRepository: any // TODO: Type this properly
-  ) {}
+  private userRepository: UserRepository;
+  constructor(userRepository: UserRepository) {
+    this.userRepository = userRepository;
+  }
 
   async execute(request: CreateUserRequest, authContext: AuthContext): Promise<CreateUserResponse> {
     // Step 1: Normalize input data
@@ -65,19 +68,23 @@ export class CreateUserUseCase {
 
     try {
       // Step 4: Create user entity in the database
+      let address: Address | undefined;
+      if (normalizedRequest.address) {
+        address = new Address(normalizedRequest.address);
+      }
       const userData: CreateUserData = {
         id: supabaseUser.id, // Use Supabase ID
         name: normalizedRequest.name,
         email: normalizedRequest.email,
         phoneNumber: normalizedRequest.phoneNumber,
         role: this.mapRoleToPrisma(this.determineUserRole(normalizedRequest, authContext)),
-        address: normalizedRequest.address ? {
-          addressLine1: normalizedRequest.address.addressLine1,
-          addressLine2: normalizedRequest.address.addressLine2,
-          city: normalizedRequest.address.city,
-          stateOrProvince: normalizedRequest.address.stateOrProvince,
-          postalCode: normalizedRequest.address.postalCode,
-          country: normalizedRequest.address.country
+        address: address ? {
+          addressLine1: address.addressLine1,
+          addressLine2: address.addressLine2,
+          city: address.city,
+          stateOrProvince: address.stateOrProvince,
+          postalCode: address.postalCode,
+          country: address.country
         } : null
       };
 

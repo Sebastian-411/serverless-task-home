@@ -1,149 +1,116 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { AuthMiddleware, AuthResult } from './auth.middleware';
-import { ValidationMiddleware, ValidationResult } from './validation.middleware';
-import { ErrorHandler } from './error-handler.middleware';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export interface RequestConfig {
-  methods: string[];
-  authRequired?: boolean;
-  allowedRoles?: string[];
-  pathParam?: {
-    name: string;
-    type: 'uuid' | 'string';
-  };
-  bodyValidation?: any[];
+import { authenticate, authorize, type AuthContext } from './auth.middleware';
+import { handleError } from './error-handler.middleware';
+
+export interface RequestContext {
+  auth?: AuthContext;
+  requestId: string;
+  timestamp: number;
 }
 
-export interface HandlerContext {
-  authContext?: any;
-  pathParam?: string;
-  validatedBody?: any;
+export interface RequestHandler<T = unknown> {
+  (request: VercelRequest, response: VercelResponse, context: RequestContext): Promise<T>;
 }
 
-export type RequestHandler = (context: HandlerContext) => Promise<any>;
-
-/**
- * High-performance request processor following SOLID and Hexagonal Architecture
- * - Single Responsibility: Process requests through middleware chain
- * - Open/Closed: Easily extensible with new middleware
- * - Liskov Substitution: Handlers are interchangeable
- * - Interface Segregation: Small, focused interfaces
- * - Dependency Inversion: Depends on abstractions, not concretions
- */
-export class RequestProcessor {
-  constructor(private authMiddleware: AuthMiddleware) {}
-
-  /**
-   * Ultra-fast request processing pipeline - O(k) where k = number of middleware
-   * Follows hexagonal architecture by separating concerns
-   */
-  async process(
-    req: VercelRequest,
-    res: VercelResponse,
-    config: RequestConfig,
-    handler: RequestHandler
-  ): Promise<VercelResponse | void> {
+export function createAuthenticatedEndpoint<T>(
+  handler: RequestHandler<T>,
+  resource: string,
+  action: string
+) {
+  return async (request: VercelRequest, response: VercelResponse): Promise<void> => {
     try {
-      const context: HandlerContext = {};
+      const context: RequestContext = {
+        requestId: generateRequestId(),
+        timestamp: Date.now()
+      };
 
-      // Step 1: Method validation - O(1)
-      const methodResult = ValidationMiddleware.validateMethod(req, config.methods);
-      if (!methodResult.success) {
-        return res.status(methodResult.response!.status).json(methodResult.response!.body);
-      }
-
-      // Step 2: Path parameter validation - O(1)
-      if (config.pathParam) {
-        const paramResult = ValidationMiddleware.validatePathParam(req, config.pathParam.name, config.pathParam.type);
-        if (!paramResult.success) {
-          return res.status(paramResult.response!.status).json(paramResult.response!.body);
-        }
-        context.pathParam = paramResult.data;
-      }
-
-      // Step 3: Authentication - O(1) with caching
-      if (config.authRequired !== false) {
-        const authResult = await this.authMiddleware.authenticate(req, config.authRequired);
-        if (!authResult.success) {
-          return res.status(authResult.response!.status).json(authResult.response!.body);
-        }
-        context.authContext = authResult.authContext;
-
-        // Step 4: Authorization - O(1)
-        if (config.allowedRoles) {
-          const roleResult = this.authMiddleware.authorizeRole(context.authContext!, config.allowedRoles);
-          if (!roleResult.success) {
-            return res.status(roleResult.response!.status).json(roleResult.response!.body);
-          }
-        }
-      }
-
-      // Step 5: Body validation - O(n) where n = validation rules
-      if (req.method !== 'GET') {
-        if (config.bodyValidation) {
-          const bodyResult = ValidationMiddleware.validate(req.body, config.bodyValidation);
-          if (!bodyResult.success) {
-            return res.status(bodyResult.response!.status).json(bodyResult.response!.body);
-          }
-          context.validatedBody = bodyResult.data;
-        } else {
-          // Si no hay validación específica, pasar el body directamente
-          context.validatedBody = req.body;
-        }
-      }
-
-      // Step 6: Execute business logic - O(varies by use case)
-      const result = await handler(context);
+      // Authenticate and authorize
+      const authContext = await authenticate(request);
+      const isAuthorized = await authorize(authContext, resource, action);
       
-      // Step 7: Success response - O(1)
-      // Determine appropriate status code based on operation type
-      let statusCode = 200; // Default for most operations
-      
-      if (req.method === 'POST') {
-        // Creation endpoints return 201
-        const isCreationEndpoint = req.url?.includes('/api/users') && !req.url?.includes('/role') ||
-                                   req.url?.includes('/api/tasks') && !req.url?.includes('/assign');
-        statusCode = isCreationEndpoint ? 201 : 200;
+      if (!isAuthorized) {
+        response.status(403).json({ 
+          error: 'Forbidden',
+          message: `Unauthorized to perform '${action}' on '${resource}'`
+        });
+        return;
       }
-      ErrorHandler.success(res, result.data, result.message, result.meta, statusCode);
 
+      context.auth = authContext;
+
+      // Execute handler
+      const result = await handler(request, response, context);
+      
+      // Send response
+      if (result !== undefined) {
+        response.status(200).json(result);
+      }
     } catch (error) {
-      // Step 8: Error handling - O(1)
-      ErrorHandler.handle(error, res, req.url || 'unknown');
+      handleError(error as Error, request, response);
     }
-  }
+  };
+}
 
-  /**
-   * Fast factory method for common patterns - O(1)
-   */
-  static createAuthenticatedEndpoint(
-    authMiddleware: AuthMiddleware,
-    methods: string[] = ['GET'],
-    allowedRoles?: string[]
-  ) {
-    const processor = new RequestProcessor(authMiddleware);
-    return (config: Partial<RequestConfig>, handler: RequestHandler) => {
-      return (req: VercelRequest, res: VercelResponse) => processor.process(
-        req,
-        res,
-        { methods, authRequired: true, allowedRoles, ...config },
-        handler
-      );
-    };
-  }
+export function createPublicEndpoint<T>(
+  handler: RequestHandler<T>
+) {
+  return async (request: VercelRequest, response: VercelResponse): Promise<void> => {
+    try {
+      const context: RequestContext = {
+        requestId: generateRequestId(),
+        timestamp: Date.now()
+      };
 
-  /**
-   * Fast factory method for public endpoints - O(1)
-   */
-  static createPublicEndpoint(authMiddleware: AuthMiddleware, methods: string[] = ['POST']) {
-    const processor = new RequestProcessor(authMiddleware);
-    return (config: Partial<RequestConfig>, handler: RequestHandler) => {
-      return (req: VercelRequest, res: VercelResponse) => processor.process(
-        req,
-        res,
-        { methods, authRequired: false, ...config },
-        handler
-      );
-    };
-  }
+      // Execute handler
+      const result = await handler(request, response, context);
+      
+      // Send response
+      if (result !== undefined) {
+        response.status(200).json(result);
+      }
+    } catch (error) {
+      handleError(error as Error, request, response);
+    }
+  };
+}
+
+export function createValidatedEndpoint<T>(
+  handler: RequestHandler<T>,
+  validator?: (request: VercelRequest) => Promise<boolean>
+) {
+  return async (request: VercelRequest, response: VercelResponse): Promise<void> => {
+    try {
+      const context: RequestContext = {
+        requestId: generateRequestId(),
+        timestamp: Date.now()
+      };
+
+      // Validate request if validator provided
+      if (validator) {
+        const isValid = await validator(request);
+        if (!isValid) {
+          response.status(400).json({ 
+            error: 'ValidationError',
+            message: 'Request validation failed'
+          });
+          return;
+        }
+      }
+
+      // Execute handler
+      const result = await handler(request, response, context);
+      
+      // Send response
+      if (result !== undefined) {
+        response.status(200).json(result);
+      }
+    } catch (error) {
+      handleError(error as Error, request, response);
+    }
+  };
+}
+
+function generateRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 } 

@@ -1,5 +1,6 @@
-import { UserRepository } from '../domain/user.entity';
-import { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
+
+import type { UserRepository } from '../domain/user.entity';
 
 export interface ChangeUserRoleRequest {
   targetUserId: string;

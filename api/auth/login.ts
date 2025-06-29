@@ -1,65 +1,53 @@
 // POST /auth/login
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
 import { Dependencies } from '../../shared/config/dependencies';
-import { HandlerContext } from '../../shared/middlewares/request-handler.middleware';
-import { ValidationRule } from '../../shared/middlewares/validation.middleware';
-import { SupabaseService } from '../../shared/auth/supabase.service';
+import { validateEmail, validatePassword } from '../../shared/middlewares/validation.middleware';
+import { handleError } from '../../shared/middlewares/error-handler.middleware';
 
-// Ultra-fast validation rules
-const LOGIN_VALIDATION: ValidationRule[] = [
-  { field: 'email', required: true, type: 'email', maxLength: 255 },
-  { field: 'password', required: true, type: 'string', minLength: 1, maxLength: 100 }
-];
-
-// High-performance public endpoint
-const handler = Dependencies.createPublicEndpoint(['POST'])({
-  bodyValidation: LOGIN_VALIDATION
-}, async (context: HandlerContext) => {
-  const { email, password } = context.validatedBody;
-  const normalizedEmail = email.trim().toLowerCase();
-
-  // Fast authentication - O(1) network call
-  const { data, error } = await SupabaseService.signIn(normalizedEmail, password);
-
-  if (error) {
-    if (error.message.includes('Invalid login credentials') || 
-        error.message.includes('Email not confirmed') ||
-        error.message.includes('Password')) {
-      throw new Error('Invalid email or password');
+// High-performance login endpoint - O(1) initialization
+const handleLogin = async (req: VercelRequest, res: VercelResponse) => {
+  try {
+    // Step 1: Method validation
+    if (req.method !== 'POST') {
+      return res.status(405).json({
+        error: 'Method not allowed',
+        message: 'Only POST method is allowed'
+      });
     }
-    throw new Error('Login failed. Please try again.');
+
+    // Step 2: Body validation
+    const { email, password } = req.body;
+    
+    if (!email || !validateEmail(email)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Valid email is required'
+      });
+    }
+    
+    if (!password || !validatePassword(password)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Valid password is required'
+      });
+    }
+
+    // Step 3: Execute use case - all business logic is handled there
+    const loginResult = await Dependencies.loginUseCase.execute({ email, password });
+    
+    // Step 4: Success response
+    return res.status(200).json({
+      message: 'Login successful',
+      user: loginResult.user,
+      accessToken: loginResult.accessToken,
+      refreshToken: loginResult.refreshToken,
+      expiresAt: loginResult.expiresAt
+    });
+
+  } catch (error) {
+    handleError(error as Error, req, res);
   }
+};
 
-  if (!data.session || !data.user) {
-    throw new Error('Login failed. Invalid credentials.');
-  }
-
-  // Ultra-fast user profile lookup - O(1) with index
-  const userProfile = await Dependencies.userRepository.findById(data.user.id);
-  if (!userProfile) {
-    throw new Error('User profile not found');
-  }
-
-  return {
-    data: {
-      user: {
-        id: userProfile.id,
-        email: userProfile.email,
-        name: userProfile.name,
-        role: userProfile.role.toLowerCase(),
-        phoneNumber: userProfile.phoneNumber,
-        address: userProfile.address,
-        createdAt: userProfile.createdAt
-      },
-      session: {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        expires_at: data.session.expires_at,
-        expires_in: data.session.expires_in
-      }
-    },
-    message: 'Login successful'
-  };
-});
-
-export default handler; 
+export default handleLogin; 
