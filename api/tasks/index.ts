@@ -179,8 +179,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 import { HttpTaskController } from "../../core/task/infrastructure/adapters/in/http-task-controller";
-import { authenticate } from "../../core/common/config/middlewares/auth.middleware";
-import { handleError } from "../../core/common/config/middlewares/error-handler.middleware";
 
 const taskController = new HttpTaskController();
 

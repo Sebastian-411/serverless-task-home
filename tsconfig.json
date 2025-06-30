@@ -30,7 +30,8 @@
     "api/**/*",
     "core/**/*",
     "tests/**/*",
-    "prisma/**/*"
+    "prisma/**/*",
+    "swagger/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -40,4 +41,4 @@
     "dist",
     "build"
   ]
-} 
+}

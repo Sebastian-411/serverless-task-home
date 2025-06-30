@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 /**
  * @openapi
@@ -17,17 +17,17 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  *               type: string
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
+  if (req.method !== "GET") {
     return res.status(405).json({
-      error: 'Method not allowed',
-      message: 'Only GET method is allowed'
+      error: "Method not allowed",
+      message: "Only GET method is allowed",
     });
   }
 
   try {
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
 
     const html = `
 <!DOCTYPE html>
@@ -81,13 +81,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 </body>
 </html>`;
 
-    res.setHeader('Content-Type', 'text/html');
+    res.setHeader("Content-Type", "text/html");
     return res.status(200).send(html);
   } catch (error) {
-    console.error('Error serving Swagger UI:', error);
     return res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to serve Swagger UI'
+      error: "Internal server error",
+      message: "Failed to serve Swagger UI",
     });
   }
-} 
+}

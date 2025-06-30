@@ -24,4 +24,8 @@ prisma/migrations/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Swagger documentation files
+swagger/**/*
+api/docs/**/* 
