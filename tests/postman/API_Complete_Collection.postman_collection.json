@@ -1,1243 +1,2987 @@
 {
-	"info": {
-		"_postman_id": "api-complete-collection-2024",
-		"name": "API Complete Collection - Role-Based Testing",
-		"description": "Colección completa de la API con tests organizados por roles: Admin, User y Anonymous. Incluye todos los endpoints de auth y users con validaciones exhaustivas.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "28076391"
-	},
-	"item": [
-		{
-			"name": "🔐 Authentication",
-			"item": [
-				{
-					"name": "Admin",
-					"item": [
-						{
-							"name": "✅ Login Admin - Success",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Response time is less than 6000ms\", function () {",
-											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-											"});",
-											"",
-											"if (pm.response.code === 200) {",
-											"    const response = pm.response.json();",
-											"    ",
-											"    pm.test(\"User role is admin\", function () {",
-											"        pm.expect(response.user.role).to.equal('admin');",
-											"    });",
-											"    ",
-											"    pm.environment.set('admin_token', response.token);",
-											"    pm.environment.set('admin_user_id', response.user.id);",
-											"    pm.environment.set('admin_user_email', response.user.email);",
-											"    ",
-											"    console.log('✅ Admin login successful - Token saved');",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login"]
-								}
-							}
-						},
-						{
-							"name": "❌ Login Admin - Invalid Password",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 401\", function () {",
-											"    pm.response.to.have.status(401);",
-											"});",
-											"",
-											"pm.test(\"Response time is less than 6000ms\", function () {",
-											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-											"});",
-											"",
-											"if (pm.response.code === 401) {",
-											"    const response = pm.response.json();",
-											"    ",
-											"    pm.test(\"Error response has correct structure\", function () {",
-											"        pm.expect(response).to.have.property('error');",
-											"        pm.expect(response.error).to.have.property('code');",
-											"        pm.expect(response.error.code).to.equal('INVALID_CREDENTIALS');",
-											"    });",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"WrongPassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login"]
-								}
-							}
-						}
-					]
-				},
-				{
-					"name": "User",
-					"item": [
-						{
-							"name": "✅ Login User - Success",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Response time is less than 6000ms\", function () {",
-											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-											"});",
-											"",
-											"if (pm.response.code === 200) {",
-											"    const response = pm.response.json();",
-											"    ",
-											"    pm.test(\"User role is user\", function () {",
-											"        pm.expect(response.user.role).to.equal('user');",
-											"    });",
-											"    ",
-											"    pm.environment.set('user_token', response.token);",
-											"    pm.environment.set('user_user_id', response.user.id);",
-											"    pm.environment.set('user_user_email', response.user.email);",
-											"    ",
-											"    console.log('✅ User login successful - Token saved');",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"email\": \"{{test_regular_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login"]
-								}
-							}
-						}
-					]
-				},
-				{
-					"name": "Anonymous",
-					"item": [
-						{
-							"name": "❌ Login - No Credentials",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Response time is less than 6000ms\", function () {",
-											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-											"});",
-											"",
-											"if (pm.response.code === 400) {",
-											"    const response = pm.response.json();",
-											"    ",
-											"    pm.test(\"Error response indicates missing fields\", function () {",
-											"        pm.expect(response).to.have.property('error');",
-											"        pm.expect(response).to.have.property('message');",
-											"    });",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login"]
-								}
-							}
-						},
-						{
-							"name": "❌ Login - Invalid Email Format",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Response time is less than 6000ms\", function () {",
-											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-											"});",
-											"",
-											"if (pm.response.code === 400) {",
-											"    const response = pm.response.json();",
-											"    ",
-											"    pm.test(\"Error message mentions email validation\", function () {",
-											"        pm.expect(response.message).to.include('email');",
-											"    });",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"ValidPass123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login"]
-								}
-							}
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "👥 Users Management",
-			"item": [
-				{
-					"name": "Admin",
-					"item": [
-						{
-							"name": "✅ Success",
-							"item": [
-								{
-									"name": "✅ Get Users - Success",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});",
-													"pm.test(\"Response has users array\", function () {",
-													"    const response = pm.response.json();",
-													"    pm.expect(response).to.have.property('data');",
-													"    pm.expect(response.data).to.be.an('array');",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{admin_token}}"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								},
-								{
-									"name": "✅ Create User - Success",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 201\", function () {",
-													"    pm.response.to.have.status(201);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});",
-													"",
-													"if (pm.response.code === 201) {",
-													"    const response = pm.response.json();",
-													"    ",
-													"    pm.test(\"Response has correct structure\", function () {",
-													"        pm.expect(response).to.have.property('data');",
-													"        pm.expect(response.data).to.have.property('id');",
-													"        pm.expect(response.data).to.have.property('email');",
-													"        pm.expect(response.data).to.have.property('name');",
-													"    });",
-													"    ",
-													"    pm.environment.set('created_user_id', response.data.id);",
-													"    console.log('✅ User created successfully, ID saved:', response.data.id);",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{admin_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								},
-								{
-									"name": "✅ Get User By ID - Success",
-									"event": [
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"// Validate created_user_id exists",
-													"const createdUserId = pm.environment.get('created_user_id');",
-													"if (!createdUserId) {",
-													"    pm.test('SKIP: created_user_id no está disponible', function () {",
-													"        pm.test.skip();",
-													"    });",
-													"    return;",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										},
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [{
-											"key": "Authorization",
-											"value": "Bearer {{admin_token}}"
-										}],
-										"url": {
-											"raw": "{{base_url}}/users/{{created_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{created_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "✅ Update User (PUT) - Success",
-									"event": [
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"const createdUserId = pm.environment.get('created_user_id');",
-													"if (!createdUserId) {",
-													"    pm.test('SKIP: created_user_id no está disponible', function () {",
-													"        pm.test.skip();",
-													"    });",
-													"    return;",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										},
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}} Updated\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"address\": {\n    \"addressLine1\": \"Calle 456 #89-10\",\n    \"addressLine2\": \"Apto 9C\",\n    \"city\": \"Bogotá\",\n    \"stateOrProvince\": \"Cundinamarca\",\n    \"postalCode\": \"110111\",\n    \"country\": \"CO\"\n  }\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{created_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{created_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "✅ Update User (PATCH) - Success",
-									"event": [
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"const createdUserId = pm.environment.get('created_user_id');",
-													"if (!createdUserId) {",
-													"    pm.test('SKIP: created_user_id no está disponible', function () {",
-													"        pm.test.skip();",
-													"    });",
-													"    return;",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										},
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{created_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{created_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "✅ Change User Role - Success",
-									"event": [
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"const createdUserId = pm.environment.get('created_user_id');",
-													"if (!createdUserId) {",
-													"    pm.test('SKIP: created_user_id no está disponible', function () {",
-													"        pm.test.skip();",
-													"    });",
-													"    return;",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										},
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});",
-													"pm.test(\"Role was changed successfully\", function () {",
-													"    const response = pm.response.json();",
-													"    pm.expect(response).to.have.property('data');",
-													"    pm.expect(response.data).to.have.property('role');",
-													"    pm.expect(response.data.role).to.equal('admin');",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"role\": \"admin\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{created_user_id}}/role",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{created_user_id}}", "role"]
-										}
-									}
-								},
-								{
-									"name": "✅ Delete User - Success",
-									"event": [
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"const createdUserId = pm.environment.get('created_user_id');",
-													"if (!createdUserId) {",
-													"    pm.test('SKIP: created_user_id no está disponible', function () {",
-													"        pm.test.skip();",
-													"    });",
-													"    return;",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										},
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 200\", function () {",
-													"    pm.response.to.have.status(200);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});",
-													"// Clear the created_user_id after successful deletion",
-													"pm.environment.unset('created_user_id');",
-													"console.log('✅ User deleted successfully, ID cleared');"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
-										"url": {
-											"raw": "{{base_url}}/users/{{created_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{created_user_id}}"]
-										}
-									}
-								}
-							]
-						},
-						{
-							"name": "❌ Failure",
-							"item": [
-								{
-									"name": "❌ Create User - Invalid Email",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});",
-													"pm.test(\"Error mentions email validation\", function () {",
-													"    const response = pm.response.json();",
-													"    pm.expect(response.message).to.include('email');",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"invalid-email-format\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								},
-								{
-									"name": "❌ Get User By ID - Not Found",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 404\", function () {",
-													"    pm.response.to.have.status(404);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
-										"url": {
-											"raw": "{{base_url}}/users/00000000-0000-0000-0000-000000000000",
-											"host": ["{{base_url}}"],
-											"path": ["users", "00000000-0000-0000-0000-000000000000"]
-										}
-									}
-								}
-							]
-						}
-					]
-				},
-				{
-					"name": "User",
-					"item": [
-						{
-							"name": "✅ Success",
-							"item": [
-								{
-									"name": "✅ Get Own User By ID - Success",
-									"event": [{
-										"listen": "test",
-										"script": {
-											"exec": [
-												"pm.test(\"Status code is 200\", function () {",
-												"    pm.response.to.have.status(200);",
-												"});",
-												"pm.test(\"Response time is less than 6000ms\", function () {",
-												"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-												"});"
-											],
-											"type": "text/javascript"
-										}
-									}],
-									"request": {
-										"method": "GET",
-										"header": [{
-											"key": "Authorization",
-											"value": "Bearer {{user_token}}"
-										}],
-										"url": {
-											"raw": "{{base_url}}/users/{{user_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{user_user_id}}"]
-										}
-									}
-								}
-							]
-						},
-						{
-							"name": "❌ Failure",
-							"item": [
-								{
-									"name": "❌ Get Users - Unauthorized",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{user_token}}"
-											}
-										],
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								},
-								{
-									"name": "❌ Create User - Unauthorized",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Authorization",
-												"value": "Bearer {{user_token}}"
-											},
-											{
-												"key": "Content-Type",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								},
-								{
-									"name": "❌ Get Another User By ID - Forbidden",
-									"event": [{
-										"listen": "test",
-										"script": {
-											"exec": [
-												"pm.test(\"Status code is 401 or 403\", function () {",
-												"    pm.expect([401, 403]).to.include(pm.response.code);",
-												"});",
-												"pm.test(\"Response time is less than 6000ms\", function () {",
-												"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-												"});"
-											],
-											"type": "text/javascript"
-										}
-									}],
-									"request": {
-										"method": "GET",
-										"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Update Another User (PUT) - Unauthorized",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401 or 403\", function () {",
-													"    pm.expect([401, 403]).to.include(pm.response.code);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{user_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}} Updated\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Update Another User (PATCH) - Unauthorized",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401 or 403\", function () {",
-													"    pm.expect([401, 403]).to.include(pm.response.code);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{user_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Delete Another User - Unauthorized",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401 or 403\", function () {",
-													"    pm.expect([401, 403]).to.include(pm.response.code);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Change Another User Role - Unauthorized",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401 or 403\", function () {",
-													"    pm.expect([401, 403]).to.include(pm.response.code);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [
-											{"key": "Authorization", "value": "Bearer {{user_token}}"},
-											{"key": "Content-Type", "value": "application/json"}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"role\": \"admin\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}/role",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}", "role"]
-										}
-									}
-								}
-							]
-						}
-					]
-				},
-				{
-					"name": "Anonymous",
-					"item": [
-						{
-							"name": "✅ Success",
-							"item": [
-								{
-									"name": "✅ Register User (Anonymous) - Success",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 201\", function () {",
-													"    pm.response.to.have.status(201);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});",
-													"",
-													"// Save the created user ID for other tests that need it",
-													"if (pm.response.code === 201) {",
-													"    const response = pm.response.json();",
-													"    if (response.data && response.data.id) {",
-													"        pm.environment.set('anonymous_created_user_id', response.data.id);",
-													"        console.log('✅ Anonymous user created, ID saved:', response.data.id);",
-													"    }",
-													"}"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Content-Type",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								}
-							]
-						},
-						{
-							"name": "❌ Failure",
-							"item": [
-								{
-									"name": "❌ Get Users - No Auth",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"url": {
-											"raw": "{{base_url}}/users",
-											"host": ["{{base_url}}"],
-											"path": ["users"]
-										}
-									}
-								},
-								{
-									"name": "❌ Get User By ID - No Auth",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "GET",
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Update User (PUT) - No Auth",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [{"key": "Content-Type", "value": "application/json"}],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}} Updated\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Update User (PATCH) - No Auth",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [{"key": "Content-Type", "value": "application/json"}],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Delete User - No Auth",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "DELETE",
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}"]
-										}
-									}
-								},
-								{
-									"name": "❌ Change User Role - No Auth",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"pm.test(\"Status code is 401\", function () {",
-													"    pm.response.to.have.status(401);",
-													"});",
-													"pm.test(\"Response time is less than 6000ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PATCH",
-										"header": [{"key": "Content-Type", "value": "application/json"}],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n  \"role\": \"admin\"\n}"
-										},
-										"url": {
-											"raw": "{{base_url}}/users/{{admin_user_id}}/role",
-											"host": ["{{base_url}}"],
-											"path": ["users", "{{admin_user_id}}", "role"]
-										}
-									}
-								}
-							]
-						}
-					]
-				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"exec": [
-					"// Generate unique data for testing",
-					"const timestamp = Date.now();",
-					"const random = Math.floor(Math.random() * 10000);",
-					"const uniqueEmail = `test.user.${timestamp}.${random}@example.com`;",
-					"const uniqueName = `Test User ${timestamp}`;",
-					"const uniquePhone = `310${random.toString().padStart(7, '0')}`;",
-					"",
-					"// Set environment variables",
-					"pm.environment.set('unique_email', uniqueEmail);",
-					"pm.environment.set('unique_name', uniqueName);",
-					"pm.environment.set('unique_phone', uniquePhone);",
-					"",
-					"console.log('Generated unique data:', { uniqueEmail, uniqueName, uniquePhone });"
-				],
-				"type": "text/javascript"
-			}
-		}
-	]
-} 
+  "info": {
+    "_postman_id": "api-complete-collection-2024",
+    "name": "API Complete Collection - Role-Based Testing",
+    "description": "Colección completa de la API con tests organizados por roles: Admin, User y Anonymous. Incluye todos los endpoints de auth y users con validaciones exhaustivas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "28076391"
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Admin",
+          "item": [
+            {
+              "name": "✅ Login Admin - Success",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"Response time is less than 6000ms\", function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                      "});",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    ",
+                      "    pm.test(\"User role is admin\", function () {",
+                      "        pm.expect(response.user.role).to.equal('admin');",
+                      "    });",
+                      "    ",
+                      "    pm.environment.set('admin_token', response.token);",
+                      "    pm.environment.set('admin_user_id', response.user.id);",
+                      "    pm.environment.set('admin_user_email', response.user.email);",
+                      "    ",
+                      "    console.log('✅ Admin login successful - Token saved');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "🔍 Get Admin Assigned Task ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    const adminId = pm.environment.get('admin_user_id');",
+                      "    ",
+                      "    // Buscar una tarea asignada al admin",
+                      "    const assignedTask = response.data.find(task => task.assignedTo === adminId);",
+                      "    ",
+                      "    if (assignedTask) {",
+                      "        pm.environment.set('admin_assigned_task_id', assignedTask.id);",
+                      "        console.log('✅ Admin assigned task ID captured:', assignedTask.id);",
+                      "    } else {",
+                      "        console.log('⚠️ No assigned task found for admin');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "❌ Login Admin - Invalid Password",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "",
+                      "pm.test(\"Response time is less than 6000ms\", function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                      "});",
+                      "",
+                      "if (pm.response.code === 401) {",
+                      "    const response = pm.response.json();",
+                      "    ",
+                      "    pm.test(\"Error response has correct structure\", function () {",
+                      "        pm.expect(response).to.have.property('error');",
+                      "        pm.expect(response.error).to.have.property('code');",
+                      "        pm.expect(response.error.code).to.equal('INVALID_CREDENTIALS');",
+                      "    });",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"WrongPassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "User",
+          "item": [
+            {
+              "name": "✅ Login User - Success",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test(\"Response time is less than 6000ms\", function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                      "});",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    ",
+                      "    pm.test(\"User role is user\", function () {",
+                      "        pm.expect(response.user.role).to.equal('user');",
+                      "    });",
+                      "    ",
+                      "    pm.environment.set('user_token', response.token);",
+                      "    pm.environment.set('user_user_id', response.user.id);",
+                      "    pm.environment.set('user_user_email', response.user.email);",
+                      "    ",
+                      "    console.log('✅ User login successful - Token saved');",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{test_regular_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "🔍 Get User Assigned Task ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    const userId = pm.environment.get('user_user_id');",
+                      "    ",
+                      "    // Buscar una tarea asignada al usuario",
+                      "    const assignedTask = response.data.find(task => task.assignedTo === userId);",
+                      "    ",
+                      "    if (assignedTask) {",
+                      "        pm.environment.set('user_assigned_task_id', assignedTask.id);",
+                      "        console.log('✅ User assigned task ID captured:', assignedTask.id);",
+                      "    } else {",
+                      "        console.log('⚠️ No assigned task found for user');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anonymous",
+          "item": [
+            {
+              "name": "❌ Login - No Credentials",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400\", function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(\"Response time is less than 6000ms\", function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                      "});",
+                      "",
+                      "if (pm.response.code === 400) {",
+                      "    const response = pm.response.json();",
+                      "    ",
+                      "    pm.test(\"Error response indicates missing fields\", function () {",
+                      "        pm.expect(response).to.have.property('error');",
+                      "        pm.expect(response).to.have.property('message');",
+                      "    });",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "❌ Login - Invalid Email Format",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400\", function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(\"Response time is less than 6000ms\", function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                      "});",
+                      "",
+                      "if (pm.response.code === 400) {",
+                      "    const response = pm.response.json();",
+                      "    ",
+                      "    pm.test(\"Error message mentions email validation\", function () {",
+                      "        pm.expect(response.message).to.include('email');",
+                      "    });",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"ValidPass123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👥 Users Management",
+      "item": [
+        {
+          "name": "Admin",
+          "item": [
+            {
+              "name": "✅ Success",
+              "item": [
+                {
+                  "name": "✅ Get Users - Success",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});",
+                          "pm.test(\"Response has users array\", function () {",
+                          "    const response = pm.response.json();",
+                          "    pm.expect(response).to.have.property('data');",
+                          "    pm.expect(response.data).to.be.an('array');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                },
+                {
+                  "name": "✅ Create User - Success",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 201\", function () {",
+                          "    pm.response.to.have.status(201);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});",
+                          "",
+                          "if (pm.response.code === 201) {",
+                          "    const response = pm.response.json();",
+                          "    ",
+                          "    pm.test(\"Response has correct structure\", function () {",
+                          "        pm.expect(response).to.have.property('data');",
+                          "        pm.expect(response.data).to.have.property('id');",
+                          "        pm.expect(response.data).to.have.property('email');",
+                          "        pm.expect(response.data).to.have.property('name');",
+                          "    });",
+                          "    ",
+                          "    pm.environment.set('created_user_id', response.data.id);",
+                          "    console.log('✅ User created successfully, ID saved:', response.data.id);",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                },
+                {
+                  "name": "✅ Get User By ID - Success",
+                  "event": [
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Validate created_user_id exists",
+                          "const createdUserId = pm.environment.get('created_user_id');",
+                          "if (!createdUserId) {",
+                          "    pm.test('SKIP: created_user_id no está disponible', function () {",
+                          "        pm.test.skip();",
+                          "    });",
+                          "    return;",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    },
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users/{{created_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{created_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "✅ Update User (PUT) - Success",
+                  "event": [
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "const createdUserId = pm.environment.get('created_user_id');",
+                          "if (!createdUserId) {",
+                          "    pm.test('SKIP: created_user_id no está disponible', function () {",
+                          "        pm.test.skip();",
+                          "    });",
+                          "    return;",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    },
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}} Updated\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"address\": {\n    \"addressLine1\": \"Calle 456 #89-10\",\n    \"addressLine2\": \"Apto 9C\",\n    \"city\": \"Bogotá\",\n    \"stateOrProvince\": \"Cundinamarca\",\n    \"postalCode\": \"110111\",\n    \"country\": \"CO\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{created_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{created_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "✅ Update User (PATCH) - Success",
+                  "event": [
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "const createdUserId = pm.environment.get('created_user_id');",
+                          "if (!createdUserId) {",
+                          "    pm.test('SKIP: created_user_id no está disponible', function () {",
+                          "        pm.test.skip();",
+                          "    });",
+                          "    return;",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    },
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{created_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{created_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "✅ Change User Role - Success",
+                  "event": [
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "const createdUserId = pm.environment.get('created_user_id');",
+                          "if (!createdUserId) {",
+                          "    pm.test('SKIP: created_user_id no está disponible', function () {",
+                          "        pm.test.skip();",
+                          "    });",
+                          "    return;",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    },
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});",
+                          "pm.test(\"Role was changed successfully\", function () {",
+                          "    const response = pm.response.json();",
+                          "    pm.expect(response).to.have.property('data');",
+                          "    pm.expect(response.data).to.have.property('role');",
+                          "    pm.expect(response.data.role).to.equal('admin');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"role\": \"admin\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{created_user_id}}/role",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{created_user_id}}", "role"]
+                    }
+                  }
+                },
+                {
+                  "name": "✅ Delete User - Success",
+                  "event": [
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "const createdUserId = pm.environment.get('created_user_id');",
+                          "if (!createdUserId) {",
+                          "    pm.test('SKIP: created_user_id no está disponible', function () {",
+                          "        pm.test.skip();",
+                          "    });",
+                          "    return;",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    },
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});",
+                          "// Clear the created_user_id after successful deletion",
+                          "pm.environment.unset('created_user_id');",
+                          "console.log('✅ User deleted successfully, ID cleared');"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users/{{created_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{created_user_id}}"]
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Failure",
+              "item": [
+                {
+                  "name": "❌ Create User - Invalid Email",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 400\", function () {",
+                          "    pm.response.to.have.status(400);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});",
+                          "pm.test(\"Error mentions email validation\", function () {",
+                          "    const response = pm.response.json();",
+                          "    pm.expect(response.message).to.include('email');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"invalid-email-format\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Get User By ID - Not Found",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 404\", function () {",
+                          "    pm.response.to.have.status(404);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users/00000000-0000-0000-0000-000000000000",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "00000000-0000-0000-0000-000000000000"]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "User",
+          "item": [
+            {
+              "name": "✅ Success",
+              "item": [
+                {
+                  "name": "✅ Get Own User By ID - Success",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 200\", function () {",
+                          "    pm.response.to.have.status(200);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users/{{user_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{user_user_id}}"]
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Failure",
+              "item": [
+                {
+                  "name": "❌ Get Users - Unauthorized",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Create User - Unauthorized",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Get Another User By ID - Forbidden",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401 or 403\", function () {",
+                          "    pm.expect([401, 403]).to.include(pm.response.code);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Update Another User (PUT) - Unauthorized",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401 or 403\", function () {",
+                          "    pm.expect([401, 403]).to.include(pm.response.code);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}} Updated\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Update Another User (PATCH) - Unauthorized",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401 or 403\", function () {",
+                          "    pm.expect([401, 403]).to.include(pm.response.code);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Delete Another User - Unauthorized",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401 or 403\", function () {",
+                          "    pm.expect([401, 403]).to.include(pm.response.code);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Change Another User Role - Unauthorized",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401 or 403\", function () {",
+                          "    pm.expect([401, 403]).to.include(pm.response.code);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{user_token}}"
+                      },
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"role\": \"admin\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}/role",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}", "role"]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Anonymous",
+          "item": [
+            {
+              "name": "✅ Success",
+              "item": [
+                {
+                  "name": "✅ Register User (Anonymous) - Success",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 201\", function () {",
+                          "    pm.response.to.have.status(201);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});",
+                          "",
+                          "// Save the created user ID for other tests that need it",
+                          "if (pm.response.code === 201) {",
+                          "    const response = pm.response.json();",
+                          "    if (response.data && response.data.id) {",
+                          "        pm.environment.set('anonymous_created_user_id', response.data.id);",
+                          "        console.log('✅ Anonymous user created, ID saved:', response.data.id);",
+                          "    }",
+                          "}"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "❌ Failure",
+              "item": [
+                {
+                  "name": "❌ Get Users - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{base_url}}/users",
+                      "host": ["{{base_url}}"],
+                      "path": ["users"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Get User By ID - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Update User (PUT) - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}} Updated\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Update User (PATCH) - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Delete User - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Change User Role - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Response time is less than 6000ms\", function () {",
+                          "    pm.expect(pm.response.responseTime).to.be.below(6000);",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      { "key": "Content-Type", "value": "application/json" }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"role\": \"admin\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/users/{{admin_user_id}}/role",
+                      "host": ["{{base_url}}"],
+                      "path": ["users", "{{admin_user_id}}", "role"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Update Task - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Error message indicates authentication required\", function () {",
+                          "    const response = pm.response.json();",
+                          "    pm.expect(response).to.have.property('error');",
+                          "    pm.expect(response.error).to.include('Usuario no autenticado');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"title\": \"Tarea sin autenticación\",\n  \"description\": \"Esta tarea no debería actualizarse\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{base_url}}/tasks/00000000-0000-0000-0000-000000000000",
+                      "host": ["{{base_url}}"],
+                      "path": ["tasks", "00000000-0000-0000-0000-000000000000"]
+                    }
+                  }
+                },
+                {
+                  "name": "❌ Delete Task - No Auth",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "pm.test(\"Status code is 401\", function () {",
+                          "    pm.response.to.have.status(401);",
+                          "});",
+                          "pm.test(\"Error message indicates authentication required\", function () {",
+                          "    const response = pm.response.json();",
+                          "    pm.expect(response).to.have.property('error');",
+                          "    pm.expect(response.error).to.include('Usuario no autenticado');",
+                          "});"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "DELETE",
+                    "url": {
+                      "raw": "{{base_url}}/tasks/00000000-0000-0000-0000-000000000000",
+                      "host": ["{{base_url}}"],
+                      "path": ["tasks", "00000000-0000-0000-0000-000000000000"]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📝 Tasks Management",
+      "item": [
+        {
+          "name": "Admin",
+          "item": [
+            {
+              "name": "✅ Get Tasks - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "pm.test(\"Admin puede ver tareas de cualquier usuario\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const users = response.data.map(t => t.createdBy);",
+                      "    pm.expect(users).to.include(pm.environment.get('admin_user_id'));",
+                      "    pm.expect(users).to.include(pm.environment.get('user_user_id'));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "✅ Create Task - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "pm.test(\"Response has task data\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.have.property('id');",
+                      "    pm.expect(response.data).to.have.property('title');",
+                      "    pm.expect(response.data).to.have.property('description');",
+                      "});",
+                      "pm.test(\"Task created by admin\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.createdBy).to.equal(pm.environment.get('admin_user_id'));",
+                      "});",
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.environment.set('admin_created_task_id', response.data.id);",
+                      "    console.log('✅ Admin task created, ID saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea creada por Admin\",\n  \"description\": \"Esta tarea fue creada por un administrador\",\n  \"status\": \"PENDING\",\n  \"priority\": \"HIGH\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Task by ID - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has task data\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.have.property('id');",
+                      "    pm.expect(response.data).to.have.property('title');",
+                      "});",
+                      "pm.test(\"Admin puede ver cualquier tarea\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.id).to.equal(pm.environment.get('admin_created_task_id'));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{admin_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{admin_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Tasks - Admin con filtros",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "pm.test(\"Response has pagination\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('pagination');",
+                      "    pm.expect(response.pagination).to.have.property('total');",
+                      "    pm.expect(response.pagination).to.have.property('page');",
+                      "    pm.expect(response.pagination).to.have.property('limit');",
+                      "});",
+                      "pm.test(\"Filtra por estado PENDING\", function () {",
+                      "    const response = pm.response.json();",
+                      "    response.data.forEach(task => {",
+                      "        pm.expect(task.status).to.equal('PENDING');",
+                      "    });",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks?status=PENDING&priority=HIGH&page=1&limit=5",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"],
+                  "query": [
+                    { "key": "status", "value": "PENDING" },
+                    { "key": "priority", "value": "HIGH" },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "5" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Tasks - Admin filtro por creador",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Filtra por creador (admin)\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const adminId = pm.environment.get('admin_user_id');",
+                      "    response.data.forEach(task => {",
+                      "        pm.expect(task.createdBy).to.equal(adminId);",
+                      "    });",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks?createdBy={{admin_user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"],
+                  "query": [
+                    { "key": "createdBy", "value": "{{admin_user_id}}" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "🔧 Setup - Obtener ID de tarea sin asignar",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    // Buscar la tarea 'Tarea sin asignar'",
+                      "    const unassignedTask = response.data.find(task => task.title === 'Tarea sin asignar');",
+                      "    if (unassignedTask) {",
+                      "        pm.environment.set('unassigned_task_id', unassignedTask.id);",
+                      "        console.log('✅ Tarea sin asignar encontrada, ID guardado:', unassignedTask.id);",
+                      "    } else {",
+                      "        console.log('❌ No se encontró la tarea sin asignar');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "❌ Get Task by ID - User (no asignada)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Mensaje de error de autorización\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('No tienes permisos');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Update Task - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has updated task data\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.have.property('id');",
+                      "    pm.expect(response.data).to.have.property('title');",
+                      "    pm.expect(response.data).to.have.property('description');",
+                      "});",
+                      "pm.test(\"Task was updated correctly\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.title).to.equal('Tarea actualizada por Admin');",
+                      "    pm.expect(response.data.status).to.equal('IN_PROGRESS');",
+                      "    pm.expect(response.data.priority).to.equal('HIGH');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea actualizada por Admin\",\n  \"description\": \"Esta tarea fue actualizada por un administrador\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"HIGH\",\n  \"dueDate\": \"2024-12-31T23:59:59.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{admin_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{admin_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Update Task - Admin (cualquier tarea)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Admin puede actualizar cualquier tarea\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.title).to.equal('Tarea de user actualizada por admin');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea de user actualizada por admin\",\n  \"description\": \"Admin puede actualizar tareas de otros usuarios\",\n  \"status\": \"COMPLETED\",\n  \"priority\": \"LOW\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Delete Task - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 204\", function () {",
+                      "    pm.response.to.have.status(204);",
+                      "});",
+                      "pm.test(\"Response body is empty\", function () {",
+                      "    pm.expect(pm.response.text()).to.be.empty;",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{admin_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{admin_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Delete Task - Admin (cualquier tarea)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 204\", function () {",
+                      "    pm.response.to.have.status(204);",
+                      "});",
+                      "pm.test(\"Admin puede eliminar cualquier tarea\", function () {",
+                      "    pm.expect(pm.response.text()).to.be.empty;",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Assign Task - Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has task data\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.have.property('id');",
+                      "    pm.expect(response.data).to.have.property('assignedTo');",
+                      "    pm.expect(response.data.assignedTo).to.equal(pm.environment.get('user_user_id'));",
+                      "});",
+                      "pm.test(\"Message confirms assignment\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('message');",
+                      "    pm.expect(response.message).to.include('asignada exitosamente');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{user_user_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}/assign",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}", "assign"]
+                }
+              }
+            },
+            {
+              "name": "❌ Assign Task - Admin to Invalid User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400\", function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test(\"Error message for invalid user\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('ID de usuario inválido');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}/assign",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}", "assign"]
+                }
+              }
+            },
+            {
+              "name": "❌ Assign Task - Admin to Completed Task",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400\", function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test(\"Error message for completed task\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('no puede ser asignada');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{user_user_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{completed_task_id}}/assign",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{completed_task_id}}", "assign"]
+                }
+              }
+            },
+            {
+              "name": "❌ Assign Task - Missing userId",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400\", function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test(\"Error message for missing userId\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('userId es requerido');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}/assign",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}", "assign"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "User",
+          "item": [
+            {
+              "name": "✅ Get Tasks - User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "pm.test(\"Solo ve tareas propias o asignadas\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const userId = pm.environment.get('user_user_id');",
+                      "    response.data.forEach(t => {",
+                      "        pm.expect([t.createdBy, t.assignedTo]).to.include(userId);",
+                      "    });",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "✅ Create Task - User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 201\", function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "pm.test(\"Response has task data\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.have.property('id');",
+                      "    pm.expect(response.data).to.have.property('title');",
+                      "    pm.expect(response.data).to.have.property('description');",
+                      "});",
+                      "pm.test(\"Task created by user\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.createdBy).to.equal(pm.environment.get('user_user_id'));",
+                      "});",
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.environment.set('user_created_task_id', response.data.id);",
+                      "    console.log('✅ User task created, ID saved:', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea creada por User\",\n  \"description\": \"Esta tarea fue creada por un usuario regular\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"MEDIUM\",\n  \"dueDate\": \"2024-11-30T23:59:59.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Task by ID - User (asignada)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"La respuesta es un objeto de tarea\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('object');",
+                      "});",
+                      "pm.test(\"El id de la tarea es el esperado\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.id).to.equal(pm.environment.get('user_assigned_task_id'));",
+                      "});",
+                      "pm.test(\"El campo assignedTo es correcto\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.assignedTo).to.equal(pm.environment.get('user_user_id'));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_assigned_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_assigned_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Task by ID - User (creada por user)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"User puede ver tarea creada por él\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const userId = pm.environment.get('user_user_id');",
+                      "    pm.expect(response.data.createdBy).to.equal(userId);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Tasks - User con filtros",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "pm.test(\"Filtra por estado IN_PROGRESS\", function () {",
+                      "    const response = pm.response.json();",
+                      "    response.data.forEach(task => {",
+                      "        pm.expect(task.status).to.equal('IN_PROGRESS');",
+                      "    });",
+                      "});",
+                      "pm.test(\"Solo ve tareas propias o asignadas\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const userId = pm.environment.get('user_user_id');",
+                      "    response.data.forEach(t => {",
+                      "        pm.expect([t.createdBy, t.assignedTo]).to.include(userId);",
+                      "    });",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks?status=IN_PROGRESS&priority=MEDIUM&page=1&limit=3",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"],
+                  "query": [
+                    { "key": "status", "value": "IN_PROGRESS" },
+                    { "key": "priority", "value": "MEDIUM" },
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "3" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "✅ Get Tasks - User filtro por creador propio",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Filtra por creador propio\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const userId = pm.environment.get('user_user_id');",
+                      "    response.data.forEach(task => {",
+                      "        pm.expect(task.createdBy).to.equal(userId);",
+                      "    });",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks?createdBy={{user_user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"],
+                  "query": [{ "key": "createdBy", "value": "{{user_user_id}}" }]
+                }
+              }
+            },
+            {
+              "name": "❌ Get Task by ID - User (no asignada)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Mensaje de error de autorización\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('No tienes permisos');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "❌ Create Task - Missing Fields",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400\", function () {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "pm.test(\"Error message mentions missing fields\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('Faltan campos');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"\",\n  \"description\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "❌ Get Tasks - User intenta ver tareas de otro",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Mensaje de error\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks?createdBy={{admin_user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"],
+                  "query": [
+                    { "key": "createdBy", "value": "{{admin_user_id}}" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "✅ Update Task - User (su propia tarea)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"User puede actualizar su propia tarea\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.title).to.equal('Mi tarea actualizada');",
+                      "    pm.expect(response.data.status).to.equal('COMPLETED');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Mi tarea actualizada\",\n  \"description\": \"Actualicé mi propia tarea\",\n  \"status\": \"COMPLETED\",\n  \"priority\": \"HIGH\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Update Task - User (tarea asignada)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"User puede actualizar tarea asignada\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response.data.title).to.equal('Tarea asignada actualizada');",
+                      "    pm.expect(response.data.priority).to.equal('MEDIUM');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea asignada actualizada\",\n  \"description\": \"Actualicé una tarea que me fue asignada\",\n  \"priority\": \"MEDIUM\",\n  \"dueDate\": \"2024-11-15T23:59:59.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_assigned_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_assigned_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "❌ Update Task - User (tarea de otro)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Mensaje de error de autorización\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('No tienes permisos');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Intento actualizar tarea de otro\",\n  \"description\": \"Esto debería fallar\",\n  \"status\": \"IN_PROGRESS\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{admin_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{admin_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "✅ Delete Task - User (su propia tarea)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 204\", function () {",
+                      "    pm.response.to.have.status(204);",
+                      "});",
+                      "pm.test(\"User puede eliminar su propia tarea\", function () {",
+                      "    pm.expect(pm.response.text()).to.be.empty;",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{user_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{user_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "❌ Delete Task - User (tarea de otro)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Mensaje de error de autorización\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('No tienes permisos');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{admin_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{admin_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "❌ Assign Task - User Forbidden",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Error message for forbidden\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('Solo los administradores pueden asignar tareas');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{user_token}}" },
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{user_user_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}/assign",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}", "assign"]
+                }
+              }
+            },
+            {
+              "name": "✅ Get User Tasks - User (propias)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response has tasks array\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('data');",
+                      "    pm.expect(response.data).to.be.an('array');",
+                      "});",
+                      "pm.test(\"User solo ve sus propias tareas\", function () {",
+                      "    const response = pm.response.json();",
+                      "    const userId = pm.environment.get('user_user_id');",
+                      "    response.data.forEach(task => {",
+                      "        pm.expect([task.createdBy, task.assignedTo]).to.include(userId);",
+                      "    });",
+                      "    console.log('✅ User puede ver sus propias tareas');",
+                      "});"
+                    ],
+                    "type": "text-javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users/{{user_user_id}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "{{user_user_id}}", "tasks"]
+                }
+              }
+            },
+            {
+              "name": "❌ Get User Tasks - User (otro usuario)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 403\", function () {",
+                      "    pm.response.to.have.status(403);",
+                      "});",
+                      "pm.test(\"Error message for forbidden access\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('No tienes permisos para ver tareas de otros usuarios');",
+                      "});"
+                    ],
+                    "type": "text-javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{user_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/users/{{admin_user_id}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "{{admin_user_id}}", "tasks"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anonymous",
+          "item": [
+            {
+              "name": "❌ Create Task - No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "pm.test(\"Error message indicates authentication required\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('Usuario no autenticado');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea sin autenticación\",\n  \"description\": \"Esta tarea no debería crearse\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "❌ Get Tasks - No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/tasks",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks"]
+                }
+              }
+            },
+            {
+              "name": "❌ Get Task by ID - No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{admin_created_task_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{admin_created_task_id}}"]
+                }
+              }
+            },
+            {
+              "name": "❌ Update Task - No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "pm.test(\"Error message indicates authentication required\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('Usuario no autenticado');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tarea sin autenticación\",\n  \"description\": \"Esta tarea no debería actualizarse\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/00000000-0000-0000-0000-000000000000",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "00000000-0000-0000-0000-000000000000"]
+                }
+              }
+            },
+            {
+              "name": "❌ Delete Task - No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "pm.test(\"Error message indicates authentication required\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('Usuario no autenticado');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{base_url}}/tasks/00000000-0000-0000-0000-000000000000",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "00000000-0000-0000-0000-000000000000"]
+                }
+              }
+            },
+            {
+              "name": "❌ Assign Task - No Auth",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 401\", function () {",
+                      "    pm.response.to.have.status(401);",
+                      "});",
+                      "pm.test(\"Error message for unauthenticated\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('error');",
+                      "    pm.expect(response.error).to.include('Usuario no autenticado');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"{{user_user_id}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/tasks/{{unassigned_task_id}}/assign",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "{{unassigned_task_id}}", "assign"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Generate unique data for testing",
+          "const timestamp = Date.now();",
+          "const random = Math.floor(Math.random() * 10000);",
+          "const uniqueEmail = `test.user.${timestamp}.${random}@example.com`;",
+          "const uniqueName = `Test User ${timestamp}`;",
+          "const uniquePhone = `310${random.toString().padStart(7, '0')}`;",
+          "",
+          "// Set environment variables",
+          "pm.environment.set('unique_email', uniqueEmail);",
+          "pm.environment.set('unique_name', uniqueName);",
+          "pm.environment.set('unique_phone', uniquePhone);",
+          "",
+          "console.log('Generated unique data:', { uniqueEmail, uniqueName, uniquePhone });"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}

@@ -26,6 +26,8 @@ model User {
 
   // Relations
   address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  assignedTasks Task[] @relation("AssignedTasks")
+  createdTasks  Task[] @relation("CreatedTasks")
 
   // Optimized indexes for ALL possible queries
   @@index([email]) // Login lookups
@@ -90,4 +92,60 @@ model Address {
 enum UserRole {
   ADMIN
   USER
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Task {
+  id          String      @id @default(uuid())
+  title       String      @db.VarChar(255)
+  description String      @db.Text
+  status      TaskStatus  @default(PENDING)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  assignedTo  String?     // User ID (nullable)
+  createdBy   String      // User ID
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  assignedUser User? @relation("AssignedTasks", fields: [assignedTo], references: [id], onDelete: SetNull)
+  creator      User  @relation("CreatedTasks", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  // Optimized indexes for ALL possible queries
+  @@index([status]) // Status-based filtering
+  @@index([priority]) // Priority-based filtering
+  @@index([assignedTo]) // Assigned user lookups
+  @@index([createdBy]) // Creator lookups
+  @@index([dueDate]) // Due date filtering
+  @@index([createdAt]) // Temporal ordering
+  @@index([updatedAt]) // Recent changes tracking
+  
+  // Composite indexes for complex queries
+  @@index([status, priority]) // Status + priority filtering
+  @@index([assignedTo, status]) // User's tasks by status
+  @@index([createdBy, status]) // Creator's tasks by status
+  @@index([dueDate, status]) // Due date + status filtering
+  @@index([assignedTo, priority]) // User's tasks by priority
+  @@index([createdBy, priority]) // Creator's tasks by priority
+  @@index([status, createdAt]) // Status + temporal ordering
+  @@index([priority, createdAt]) // Priority + temporal ordering
+  
+  // Performance indexes for analytics
+  @@index([createdAt, status]) // Task creation analytics
+  @@index([updatedAt, status]) // Task update analytics
+  @@index([dueDate, priority]) // Due date + priority analytics
+  @@index([assignedTo, createdBy]) // Assignment analytics
+  @@index([status, priority, dueDate]) // Comprehensive task filtering
+  @@map("tasks")
 }

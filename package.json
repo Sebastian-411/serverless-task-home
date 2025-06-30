@@ -1,49 +1,91 @@
 {
   "name": "serverless-task-home",
   "version": "1.0.0",
-  "description": "",
+  "description": "API REST serverless con autenticación basada en roles, gestión de tareas y usuarios usando Next.js, Prisma y Supabase",
   "main": "index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
-    "db:push": "npx prisma db push",
-    "db:migrate": "npx prisma migrate dev",
-    "db:generate": "npx prisma generate",
-    "db:studio": "npx prisma studio",
-    "db:reset": "npx prisma migrate reset",
-    "db:seed": "npx ts-node prisma/seed.ts",
+    "start:dev": "vercel dev",
+    "build": "tsc && vercel build",
+    "deploy": "vercel --prod",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "db:seed:dev": "npm run db:reset && npm run db:seed",
-    "cleanup:storage": "npx tsx scripts/cleanup-supabase.ts storage",
-    "cleanup:auth": "npx tsx scripts/cleanup-supabase.ts auth",
-    "cleanup:all": "npx tsx scripts/cleanup-supabase.ts all",
-    "compile": "tsc",
-    "start": "vercel dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:coverage:html": "jest --coverage --coverageReporters=html",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:api": "jest --testPathPattern=tests/unit/api",
     "test:core": "jest tests/unit/core --coverage --collectCoverageFrom='core/**/*.{ts,js}' --coverageDirectory=coverage/core",
     "test:core:watch": "jest tests/unit/core --watch --coverage --collectCoverageFrom='core/**/*.{ts,js}' --coverageDirectory=coverage/core",
-    "test:core:ci": "jest tests/unit/core --coverage --collectCoverageFrom='core/**/*.{ts,js}' --coverageDirectory=coverage/core --coverageReporters=text --coverageReporters=lcov --coverageReporters=html --coverageThreshold='{\"global\":{\"branches\":90,\"functions\":90,\"lines\":90,\"statements\":90}}'",
-    "test:coverage:html": "jest --coverage --coverageReporters=html",
-    "test:unit": "jest --testPathPatterns=tests/unit",
-    "coverage:check": "jest --coverage --coverageThreshold='{}'",
-    "lint": "eslint . --ext .ts,.js",
-    "lint:fix": "eslint . --ext .ts,.js --fix",
-    "prepare": "husky"
+    "test:core:ci": "jest tests/unit/core --coverage --collectCoverageFrom='core/**/*.{ts,js}' --coverageDirectory=coverage/core --coverageReporters=text,lcov,html --coverageThreshold='{\"global\":{\"branches\":90,\"functions\":90,\"lines\":90,\"statements\":90}}'",
+    "test:ci": "jest --ci --coverage --coverageReporters=text,lcov,html --coverageThreshold='{\"global\":{\"branches\":80,\"functions\":80,\"lines\":80,\"statements\":80}}'",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "lint:check": "eslint . --ext .ts,.js,.tsx,.jsx --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "cleanup:storage": "tsx scripts/cleanup-supabase.ts storage",
+    "cleanup:auth": "tsx scripts/cleanup-supabase.ts auth",
+    "cleanup:all": "tsx scripts/cleanup-supabase.ts all",
+    "type-check": "tsc --noEmit",
+    "compile": "tsc",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Sebastian-411/serverless-task-home.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "keywords": [
+    "serverless",
+    "api",
+    "nextjs",
+    "prisma",
+    "supabase",
+    "typescript",
+    "authentication",
+    "authorization",
+    "tasks",
+    "users",
+    "role-based",
+    "vercel"
+  ],
+  "author": {
+    "name": "Sebastian",
+    "email": "sebastian@example.com",
+    "url": "https://github.com/Sebastian-411"
+  },
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Sebastian-411/serverless-task-home/issues"
   },
   "homepage": "https://github.com/Sebastian-411/serverless-task-home#readme",
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "@supabase/supabase-js": "^2.50.2",
+    "axios": "^1.10.0",
+    "dotenv": "^16.5.0",
+    "prisma": "^6.10.1",
+    "swagger-ui-dist": "^5.25.3",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
+  },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
     "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
@@ -57,24 +99,49 @@
     "jest-environment-node": "^30.0.2",
     "lint-staged": "^16.1.2",
     "nyc": "^17.1.0",
+    "prettier": "^3.3.3",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
     "typescript-eslint": "^8.35.0",
     "vercel": "^44.2.6"
   },
-  "dependencies": {
-    "@prisma/client": "^6.10.1",
-    "@supabase/supabase-js": "^2.50.2",
-    "axios": "^1.10.0",
-    "dotenv": "^16.5.0",
-    "prisma": "^6.10.1",
-    "swagger-ui-dist": "^5.25.3",
-    "uuid": "^11.1.0",
-    "zod": "^3.25.67"
-  },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix"
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
     ]
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "collectCoverageFrom": [
+      "core/**/*.ts",
+      "api/**/*.ts",
+      "!**/*.d.ts",
+      "!**/node_modules/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
   }
 }
