@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "API REST serverless con autenticación basada en roles, gestión de tareas y usuarios usando Next.js, Prisma y Supabase",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
   "scripts": {
     "start:dev": "vercel dev",
-    "build": "tsc && vercel build",
+    "build": "tsc",
     "deploy": "vercel --prod",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -75,10 +75,14 @@
   "dependencies": {
     "@prisma/client": "^6.10.1",
     "@supabase/supabase-js": "^2.50.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "axios": "^1.10.0",
     "dotenv": "^16.5.0",
     "prisma": "^6.10.1",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-dist": "^5.25.3",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
     "zod": "^3.25.67"
   },
