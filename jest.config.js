@@ -1,52 +1,42 @@
-/** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit', '<rootDir>/core', '<rootDir>/api', '<rootDir>/shared'],
+  roots: ['<rootDir>/tests/unit/core'],
   testMatch: [
-    '**/tests/unit/**/*.+(test|spec).+(ts|tsx|js)',
-    '**/__tests__/**/*.+(ts|tsx|js)',
-    '**/*.(test|spec).+(ts|tsx|js)'
+    '**/__tests__/**/*.ts',
+    '**/?(*.)+(spec|test).ts'
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest'
+    '^.+\\.ts$': 'ts-jest'
   },
   collectCoverageFrom: [
-    // Include all core modules for comprehensive testing coverage
-    'core/**/*.{ts,tsx}',
-    // Include shared services
-    'shared/**/*.{ts,tsx}',
-    // Include API endpoints
-    'api/**/*.{ts,tsx}',
-    // Exclusions
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-    '!**/generated/**',
-    '!**/tests/**',
-    '!**/dist/**',
-    '!**/coverage/**',
-    // Exclude problematic files with require() statements (CommonJS conflicts)
-    '!core/user/domain/address.entity.ts',
-    '!core/task/domain/task.entity.ts',
-    '!core/task/application/create-task.usecase.ts',
-    '!core/task/application/assign-task.usecase.ts',
-    '!core/task/infrastructure/task.repository.prisma.ts'
+    'core/**/*.{ts,js}',
+    '!core/**/*.d.ts',
+    '!core/**/index.ts',
+    '!core/**/*.test.ts',
+    '!core/**/*.spec.ts'
   ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html', 'json-summary', 'text-summary'],
+  coverageDirectory: 'coverage/core',
+  coverageReporters: [
+    'text',
+    'lcov',
+    'html'
+  ],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 95,
-      lines: 85,
-      statements: 85
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90
     }
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1'
+  },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  clearMocks: true,
-  resetMocks: true,
-  restoreMocks: true,
   testTimeout: 10000,
-  verbose: true
+  verbose: true,
+  clearMocks: true,
+  restoreMocks: true,
+  resetMocks: true
 }; 

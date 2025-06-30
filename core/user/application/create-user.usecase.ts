@@ -1,7 +1,10 @@
-import { SupabaseService } from '../../../shared/auth/supabase.service';
-import type { CreateUserData } from '../infrastructure/user.repository.prisma';
-import type { UserRepository } from '../domain/user.entity';
-import type { Address } from '../domain/address.entity';
+import type { UserRepositoryPort } from '../domain/ports/out/user-repository.port';
+import type { AuthServicePort } from '../../auth/domain/ports/out/auth-service.port';
+import type { AuthContext } from '../../common/config/middlewares/auth.middleware';
+import type { CreateUserData } from '../domain/entities/user.entity';
+import { Address } from '../domain/entities/address.entity';
+import { UserAlreadyExistsError } from '../domain/user-errors';
+import { UnauthorizedError } from '../../common/domain/exceptions/unauthorized.error';
 
 // Create User Use Case
 export interface CreateUserRequest {
@@ -28,22 +31,14 @@ export interface CreateUserResponse {
   role: string;
   address?: any;
   createdAt: Date;
-}
-
-export interface AuthContext {
-  user?: {
-    id: string;
-    email: string;
-    role: 'admin' | 'user';
-  };
-  isAuthenticated: boolean;
+  updatedAt: Date;
 }
 
 export class CreateUserUseCase {
-  private userRepository: UserRepository;
-  constructor(userRepository: UserRepository) {
-    this.userRepository = userRepository;
-  }
+  constructor(
+    private userRepository: UserRepositoryPort,
+    private authService: AuthServicePort
+  ) {}
 
   async execute(request: CreateUserRequest, authContext: AuthContext): Promise<CreateUserResponse> {
     // Step 1: Normalize input data
@@ -52,18 +47,14 @@ export class CreateUserUseCase {
     // Step 2: Validate authorization scenarios
     this.validateAuthorization(normalizedRequest, authContext);
 
-    // Step 3: Create user in Supabase Auth
-    const { user: supabaseUser, error } = await SupabaseService.createUser(
-      normalizedRequest.email, 
+    // Step 3: Create user in Auth Service
+    const authUser = await this.authService.createUser(
+      normalizedRequest.email,
       normalizedRequest.password
     );
 
-    if (error) {
-      // Check if it's a duplicate email error
-      if (error.message && (error.message.includes('already') || error.message.includes('exists'))) {
-        throw new Error('User with this email already exists');
-      }
-      throw new Error(`Error creating user in Supabase: ${error.message}`);
+    if (!authUser) {
+      throw new UserAlreadyExistsError(normalizedRequest.email);
     }
 
     try {
@@ -72,8 +63,9 @@ export class CreateUserUseCase {
       if (normalizedRequest.address) {
         address = new Address(normalizedRequest.address);
       }
+      
       const userData: CreateUserData = {
-        id: supabaseUser.id, // Use Supabase ID
+        id: authUser.id,
         name: normalizedRequest.name,
         email: normalizedRequest.email,
         phoneNumber: normalizedRequest.phoneNumber,
@@ -85,7 +77,7 @@ export class CreateUserUseCase {
           stateOrProvince: address.stateOrProvince,
           postalCode: address.postalCode,
           country: address.country
-        } : null
+        } : undefined
       };
 
       const createdUser = await this.userRepository.create(userData);
@@ -94,9 +86,9 @@ export class CreateUserUseCase {
       return this.formatResponse(createdUser);
 
     } catch (dbError) {
-      // If there's an error in the DB, try to delete the user from Supabase
+      // If there's an error in the DB, try to delete the user from Auth Service
       // (manual rollback since we don't have distributed transactions)
-      console.error('Database error, user created in Supabase but not in DB:', dbError);
+      console.error('Database error, user created in Auth Service but not in DB:', dbError);
       throw new Error('Error creating user in database');
     }
   }
@@ -142,11 +134,12 @@ export class CreateUserUseCase {
     return {
       id: user.id,
       email: user.email,
-      name: user.name,
-      phoneNumber: user.phoneNumber,
+      name: user.name || '',
+      phoneNumber: user.phoneNumber || '',
       role: user.role.toLowerCase(), // Return in lowercase for the API
       address: user.address,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     };
   }
 
@@ -163,18 +156,18 @@ export class CreateUserUseCase {
       // Normalize role if present to make validation case-insensitive
       const normalizedRole = request.role?.toLowerCase().trim();
       if (normalizedRole && normalizedRole !== 'user') {
-        throw new Error('Anonymous users can only register as regular users');
+        throw new UnauthorizedError('Anonymous users can only register as regular users');
       }
       return;
     }
 
     // Scenario 3: Regular user tries to create another user
     if (authContext.isAuthenticated && authContext.user?.role === 'user') {
-      throw new Error('Regular users cannot create other users');
+      throw new UnauthorizedError('Regular users cannot create other users');
     }
 
     // Any other unauthorized case
-    throw new Error('Unauthorized to create user');
+    throw new UnauthorizedError('Unauthorized to create user');
   }
 
   private determineUserRole(request: CreateUserRequest, authContext: AuthContext): 'admin' | 'user' {

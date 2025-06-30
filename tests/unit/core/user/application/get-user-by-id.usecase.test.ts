@@ -3,15 +3,13 @@
  * Comprehensive testing for user retrieval with >80% coverage
  */
 
-import type { AuthContext} from '../../../../../core/user/application/get-user-by-id.usecase';
 import { GetUserByIdUseCase } from '../../../../../core/user/application/get-user-by-id.usecase';
-import { UserRepository } from '../../../../../core/user/domain/user.repository';
-import { User } from '../../../../../core/user/domain/user.entity';
-import { createMockUserRepository } from '../../../mocks/repositories/user.repository.mock';
+import type { UserRepositoryPort } from '../../../../../core/user/domain/ports/out/user-repository.port';
+import type { AuthContext } from '../../../../../core/common/config/middlewares/auth.middleware';
 
 describe('GetUserByIdUseCase Application Tests', () => {
   let getUserByIdUseCase: GetUserByIdUseCase;
-  let mockUserRepository: any;
+  let mockUserRepository: jest.Mocked<UserRepositoryPort>;
 
   beforeEach(() => {
     mockUserRepository = {
@@ -20,7 +18,11 @@ describe('GetUserByIdUseCase Application Tests', () => {
       findAll: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      delete: jest.fn()
+      delete: jest.fn(),
+      findAllPaginated: jest.fn(),
+      count: jest.fn(),
+      findByIdMinimal: jest.fn(),
+      validateUsersForAssignment: jest.fn()
     };
     
     getUserByIdUseCase = new GetUserByIdUseCase(mockUserRepository);
@@ -79,9 +81,9 @@ describe('GetUserByIdUseCase Application Tests', () => {
 
   describe('Admin User Access', () => {
     it('should allow admin to access any user profile', async () => {
-      mockUserRepository.findById.mockResolvedValueOnce(mockUser);
+      mockUserRepository.findById.mockResolvedValueOnce(mockUser as any);
 
-      const result = await getUserByIdUseCase.execute('user-1', adminAuthContext);
+      const result = await getUserByIdUseCase.execute({ id: 'user-1' }, adminAuthContext);
 
       expect(mockUserRepository.findById).toHaveBeenCalledWith('user-1');
       expect(result).toEqual({
@@ -91,15 +93,16 @@ describe('GetUserByIdUseCase Application Tests', () => {
         phoneNumber: mockUser.phoneNumber,
         role: 'user', // Returned in lowercase
         address: mockUser.address,
-        createdAt: mockUser.createdAt
+        createdAt: mockUser.createdAt,
+        updatedAt: expect.any(Date)
       });
     });
 
     it('should allow admin to access user profile without address', async () => {
       const userWithoutAddress = { ...mockUser, address: null };
-      mockUserRepository.findById.mockResolvedValueOnce(userWithoutAddress);
+      mockUserRepository.findById.mockResolvedValueOnce(userWithoutAddress as any);
 
-      const result = await getUserByIdUseCase.execute('user-1', adminAuthContext);
+      const result = await getUserByIdUseCase.execute({ id: 'user-1' }, adminAuthContext);
 
       expect(result).toEqual({
         id: userWithoutAddress.id,
@@ -108,15 +111,16 @@ describe('GetUserByIdUseCase Application Tests', () => {
         phoneNumber: userWithoutAddress.phoneNumber,
         role: 'user',
         address: undefined,
-        createdAt: userWithoutAddress.createdAt
+        createdAt: userWithoutAddress.createdAt,
+        updatedAt: expect.any(Date)
       });
     });
 
     it('should handle admin role case conversion correctly', async () => {
       const adminUser = { ...mockUser, role: 'ADMIN' };
-      mockUserRepository.findById.mockResolvedValueOnce(adminUser);
+      mockUserRepository.findById.mockResolvedValueOnce(adminUser as any);
 
-      const result = await getUserByIdUseCase.execute('admin-1', adminAuthContext);
+      const result = await getUserByIdUseCase.execute({ id: 'admin-1' }, adminAuthContext);
 
       expect(result.role).toBe('admin');
     });
@@ -124,9 +128,9 @@ describe('GetUserByIdUseCase Application Tests', () => {
 
   describe('User Self-Access', () => {
     it('should allow user to access their own profile', async () => {
-      mockUserRepository.findById.mockResolvedValueOnce(mockUser);
+      mockUserRepository.findById.mockResolvedValueOnce(mockUser as any);
 
-      const result = await getUserByIdUseCase.execute('user-1', userAuthContext);
+      const result = await getUserByIdUseCase.execute({ id: 'user-1' }, userAuthContext);
 
       expect(mockUserRepository.findById).toHaveBeenCalledWith('user-1');
       expect(result).toEqual({
@@ -136,21 +140,22 @@ describe('GetUserByIdUseCase Application Tests', () => {
         phoneNumber: mockUser.phoneNumber,
         role: 'user',
         address: mockUser.address,
-        createdAt: mockUser.createdAt
+        createdAt: mockUser.createdAt,
+        updatedAt: expect.any(Date)
       });
     });
   });
 
   describe('Access Control Validation', () => {
     it('should prevent regular user from accessing another user profile', async () => {
-      await expect(getUserByIdUseCase.execute('user-1', anotherUserAuthContext))
+      await expect(getUserByIdUseCase.execute({ id: 'user-1' }, anotherUserAuthContext))
         .rejects.toThrow('Users can only access their own profile');
 
       expect(mockUserRepository.findById).not.toHaveBeenCalled();
     });
 
     it('should require authentication', async () => {
-      await expect(getUserByIdUseCase.execute('user-1', unauthenticatedContext))
+      await expect(getUserByIdUseCase.execute({ id: 'user-1' }, unauthenticatedContext))
         .rejects.toThrow('Authentication required to access user information');
 
       expect(mockUserRepository.findById).not.toHaveBeenCalled();
@@ -161,7 +166,7 @@ describe('GetUserByIdUseCase Application Tests', () => {
         isAuthenticated: true
       };
 
-      await expect(getUserByIdUseCase.execute('user-1', contextWithoutUser))
+      await expect(getUserByIdUseCase.execute({ id: 'user-1' }, contextWithoutUser))
         .rejects.toThrow('Authentication required to access user information');
 
       expect(mockUserRepository.findById).not.toHaveBeenCalled();
@@ -172,8 +177,8 @@ describe('GetUserByIdUseCase Application Tests', () => {
     it('should handle user not found', async () => {
       mockUserRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(getUserByIdUseCase.execute('non-existent-id', adminAuthContext))
-        .rejects.toThrow('User not found');
+      await expect(getUserByIdUseCase.execute({ id: 'non-existent-id' }, adminAuthContext))
+        .rejects.toThrow('User with id non-existent-id not found');
 
       expect(mockUserRepository.findById).toHaveBeenCalledWith('non-existent-id');
     });
@@ -182,7 +187,7 @@ describe('GetUserByIdUseCase Application Tests', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockUserRepository.findById.mockRejectedValueOnce(new Error('Database connection failed'));
 
-      await expect(getUserByIdUseCase.execute('user-1', adminAuthContext))
+      await expect(getUserByIdUseCase.execute({ id: 'user-1' }, adminAuthContext))
         .rejects.toThrow('Error retrieving user information');
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -199,8 +204,8 @@ describe('GetUserByIdUseCase Application Tests', () => {
       // Test that specific error messages are preserved
       mockUserRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(getUserByIdUseCase.execute('user-1', adminAuthContext))
-        .rejects.toThrow('User not found');
+      await expect(getUserByIdUseCase.execute({ id: 'user-1' }, adminAuthContext))
+        .rejects.toThrow('User with id user-1 not found');
 
       consoleSpy.mockRestore();
     });
@@ -211,7 +216,7 @@ describe('GetUserByIdUseCase Application Tests', () => {
       // Simulate a non-Error object being thrown
       mockUserRepository.findById.mockRejectedValueOnce('String error');
 
-      await expect(getUserByIdUseCase.execute('user-1', adminAuthContext))
+      await expect(getUserByIdUseCase.execute({ id: 'user-1' }, adminAuthContext))
         .rejects.toThrow('Error retrieving user information');
 
       consoleSpy.mockRestore();

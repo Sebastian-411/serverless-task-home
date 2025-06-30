@@ -1,24 +1,25 @@
+import type { UserRepositoryPort } from '../../../../../core/user/domain/ports/out/user-repository.port';
 import { ChangeUserRoleUseCase } from '../../../../../core/user/application/change-user-role.usecase';
-import type { UserRepository } from '../../../../../core/user/infrastructure/user.repository.prisma';
-import type { PrismaClient } from '../../../../../lib/generated/prisma';
 
 // Mock dependencies
-const mockUserRepository = {
+const mockUserRepository: jest.Mocked<UserRepositoryPort> = {
   findById: jest.fn(),
   update: jest.fn(),
-} as unknown as UserRepository;
-
-const mockPrisma = {
-  user: {
-    count: jest.fn(),
-  },
-} as unknown as PrismaClient;
+  create: jest.fn(),
+  findByEmail: jest.fn(),
+  findAll: jest.fn(),
+  findAllPaginated: jest.fn(),
+  count: jest.fn(),
+  delete: jest.fn(),
+  findByIdMinimal: jest.fn(),
+  validateUsersForAssignment: jest.fn()
+};
 
 describe('ChangeUserRoleUseCase Application Tests', () => {
   let changeUserRoleUseCase: ChangeUserRoleUseCase;
 
   beforeEach(() => {
-    changeUserRoleUseCase = new ChangeUserRoleUseCase(mockUserRepository, mockPrisma);
+    changeUserRoleUseCase = new ChangeUserRoleUseCase(mockUserRepository);
     jest.clearAllMocks();
   });
 
@@ -52,8 +53,8 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
 
       const result = await changeUserRoleUseCase.execute(
         {
-          targetUserId: 'target-user-id',
-          newRole: 'admin'
+          id: 'target-user-id',
+          role: 'admin'
         },
         adminAuthContext
       );
@@ -84,8 +85,8 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
 
       const result = await changeUserRoleUseCase.execute(
         {
-          targetUserId: 'target-user-id',
-          newRole: 'user'
+          id: 'target-user-id',
+          role: 'user'
         },
         adminAuthContext
       );
@@ -111,8 +112,8 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'target-user-id',
-            newRole: 'admin'
+            id: 'target-user-id',
+            role: 'admin'
           },
           userAuthContext
         )
@@ -132,12 +133,12 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'target-user-id',
-            newRole: 'admin'
+            id: 'target-user-id',
+            role: 'admin'
           },
           unauthenticatedContext
         )
-      ).rejects.toThrow('Only administrators can change user roles');
+      ).rejects.toThrow('Authentication required');
     });
   });
 
@@ -151,7 +152,7 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       }
     };
 
-    it('should prevent last admin from removing their own admin role', async () => {
+    it('should prevent admin from changing their own role', async () => {
       const targetUser = {
         id: 'admin-id',
         email: 'admin@test.com',
@@ -161,47 +162,45 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       };
 
       (mockUserRepository.findById as jest.Mock).mockResolvedValue(targetUser);
-      (mockPrisma.user.count as jest.Mock).mockResolvedValue(1); // Only 1 admin
 
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'admin-id', // Same as auth context user
-            newRole: 'user'
+            id: 'admin-id', // Same as auth context user
+            role: 'user'
           },
           adminAuthContext
         )
-      ).rejects.toThrow('Cannot remove admin role from the last administrator in the system');
+      ).rejects.toThrow('Role change to user is not allowed for user admin-id');
     });
 
-    it('should allow admin to change their own role when there are other admins', async () => {
+    it('should allow admin to change other user roles', async () => {
       const targetUser = {
-        id: 'admin-id',
-        email: 'admin@test.com',
-        name: 'Admin',
-        role: 'ADMIN',
+        id: 'other-user-id',
+        email: 'other@test.com',
+        name: 'Other User',
+        role: 'USER',
         updatedAt: new Date()
       };
 
       const updatedUser = {
         ...targetUser,
-        role: 'USER',
+        role: 'ADMIN',
         updatedAt: new Date()
       };
 
       (mockUserRepository.findById as jest.Mock).mockResolvedValue(targetUser);
-      (mockPrisma.user.count as jest.Mock).mockResolvedValue(2); // Multiple admins
       (mockUserRepository.update as jest.Mock).mockResolvedValue(updatedUser);
 
       const result = await changeUserRoleUseCase.execute(
         {
-          targetUserId: 'admin-id',
-          newRole: 'user'
+          id: 'other-user-id',
+          role: 'admin'
         },
         adminAuthContext
       );
 
-      expect(result.role).toBe('user');
+      expect(result.role).toBe('admin');
     });
   });
 
@@ -221,12 +220,12 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'non-existent-id',
-            newRole: 'user'
+            id: 'non-existent-id',
+            role: 'user'
           },
           adminAuthContext
         )
-      ).rejects.toThrow('User not found');
+      ).rejects.toThrow('User with id non-existent-id not found');
     });
 
     it('should handle repository errors', async () => {
@@ -235,8 +234,8 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'target-user-id',
-            newRole: 'user'
+            id: 'target-user-id',
+            role: 'user'
           },
           adminAuthContext
         )
@@ -258,12 +257,12 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'target-user-id',
-            newRole: 'admin'
+            id: 'target-user-id',
+            role: 'admin'
           },
           adminAuthContext
         )
-      ).rejects.toThrow('User not found');
+      ).rejects.toThrow('Error changing user role');
     });
 
     it('should handle unknown errors gracefully', async () => {
@@ -272,8 +271,8 @@ describe('ChangeUserRoleUseCase Application Tests', () => {
       await expect(
         changeUserRoleUseCase.execute(
           {
-            targetUserId: 'target-user-id',
-            newRole: 'user'
+            id: 'target-user-id',
+            role: 'user'
           },
           adminAuthContext
         )

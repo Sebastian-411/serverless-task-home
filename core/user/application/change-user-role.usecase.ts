@@ -1,89 +1,66 @@
-import type { PrismaClient } from '@prisma/client';
-
-import type { UserRepository } from '../domain/user.entity';
+import type { UserRepositoryPort } from '../domain/ports/out/user-repository.port';
+import type { AuthContext } from '../../common/config/middlewares/auth.middleware';
+import { UserNotFoundError, UserRoleChangeNotAllowedError } from '../domain/user-errors';
+import { UnauthorizedError } from '../../common/domain/exceptions/unauthorized.error';
 
 export interface ChangeUserRoleRequest {
-  targetUserId: string;
-  newRole: 'admin' | 'user';
+  id: string;
+  role: 'admin' | 'user';
 }
 
 export interface ChangeUserRoleResponse {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: string;
   updatedAt: Date;
 }
 
-export interface AuthContext {
-  isAuthenticated: boolean;
-  user: {
-    id: string;
-    email: string;
-    role: 'admin' | 'user';
-  };
-}
-
 export class ChangeUserRoleUseCase {
-  constructor(
-    private userRepository: UserRepository,
-    private prisma: PrismaClient
-  ) {}
+  constructor(private userRepository: UserRepositoryPort) {}
 
   async execute(request: ChangeUserRoleRequest, authContext: AuthContext): Promise<ChangeUserRoleResponse> {
     try {
-      // Validate authorization - only admins can change roles
-      if (!authContext.isAuthenticated || !authContext.user || authContext.user.role !== 'admin') {
-        throw new Error('Only administrators can change user roles');
+      // Step 1: Authentication check
+      if (!authContext.isAuthenticated || !authContext.user) {
+        throw new UnauthorizedError('Authentication required');
       }
 
-      // Normalize role input
-      const normalizedRole = request.newRole.toLowerCase().trim() as 'admin' | 'user';
-
-      // Check if target user exists
-      const targetUser = await this.userRepository.findById(request.targetUserId);
-      if (!targetUser) {
-        throw new Error('User not found');
+      // Step 2: Authorization check - Only administrators can change user roles
+      if (authContext.user.role !== 'admin') {
+        throw new UnauthorizedError('Only administrators can change user roles');
       }
 
-      // Business rule: Prevent last admin from removing their own admin role
-      if (authContext.user.id === request.targetUserId && 
-          targetUser.role.toLowerCase() === 'admin' && 
-          normalizedRole === 'user') {
-        
-        const adminCount = await this.prisma.user.count({ 
-          where: { role: 'ADMIN' } 
-        });
-        
-        if (adminCount <= 1) {
-          throw new Error('Cannot remove admin role from the last administrator in the system');
-        }
+      // Step 3: Check if user exists
+      const existingUser = await this.userRepository.findById(request.id);
+      if (!existingUser) {
+        throw new UserNotFoundError(request.id);
       }
 
-      // Update user role
-      const updatedUser = await this.userRepository.update(request.targetUserId, {
-        role: normalizedRole.toUpperCase() as 'ADMIN' | 'USER'
+      // Step 4: Prevent administrators from changing their own role
+      if (authContext.user.id === request.id) {
+        throw new UserRoleChangeNotAllowedError(request.id, request.role);
+      }
+
+      // Step 5: Update user role
+      const updatedUser = await this.userRepository.update(request.id, {
+        role: request.role.toUpperCase() as 'ADMIN' | 'USER'
       });
 
-      // Return formatted response
+      // Step 6: Return formatted response
       return {
         id: updatedUser.id,
         email: updatedUser.email,
-        name: updatedUser.name,
-        role: updatedUser.role.toLowerCase() as 'admin' | 'user',
-        updatedAt: updatedUser.updatedAt
+        name: `${updatedUser.name}`,
+        role: updatedUser.role.toLowerCase(),
+        updatedAt: new Date(updatedUser.updatedAt)
       };
-
     } catch (error) {
       console.error('Error in ChangeUserRoleUseCase:', error);
       
-      // Re-throw specific errors to preserve their messages
-      if (error instanceof Error) {
-        if (error.message === 'User not found' ||
-            error.message === 'Only administrators can change user roles' ||
-            error.message === 'Cannot remove admin role from the last administrator in the system') {
-          throw error;
-        }
+      // Re-throw domain errors to preserve specific messages
+      if (error instanceof UnauthorizedError || error instanceof UserNotFoundError || error instanceof UserRoleChangeNotAllowedError) {
+        throw error;
       }
       
       throw new Error('Error changing user role');

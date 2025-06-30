@@ -1,14 +1,7 @@
-import type { UserRepository } from '../infrastructure/user.repository.prisma';
-import { get, set, Keys } from '../../../shared/cache/cache.service';
-
-export interface AuthContext {
-  isAuthenticated: boolean;
-  user?: {
-    id: string;
-    email: string;
-    role: 'admin' | 'user';
-  };
-}
+import type { UserRepositoryPort } from '../domain/ports/out/user-repository.port';
+import type { AuthContext } from '../../common/config/middlewares/auth.middleware';
+import { get, set, Keys } from '../../common/config/cache/cache.service';
+import { UnauthorizedError } from '../../common/domain/exceptions/unauthorized.error';
 
 export interface PaginationOptions {
   page: number;
@@ -36,13 +29,18 @@ export interface GetUsersResponse {
 }
 
 export class GetUsersUseCase {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: UserRepositoryPort) {}
 
   async execute(authContext: AuthContext, pagination?: PaginationOptions): Promise<GetUsersResponse> {
     try {
-      // Only administrators can view all users
-      if (!authContext.isAuthenticated || authContext.user?.role !== 'admin') {
-        throw new Error('Only administrators can access the users list');
+      // Step 1: Authentication check
+      if (!authContext.isAuthenticated || !authContext.user) {
+        throw new UnauthorizedError('Authentication required');
+      }
+
+      // Step 2: Authorization check - Only administrators can view all users
+      if (authContext.user.role !== 'admin') {
+        throw new UnauthorizedError('Only administrators can access the users list');
       }
 
       const page = pagination?.page || 1;
@@ -104,8 +102,8 @@ export class GetUsersUseCase {
     } catch (error) {
       console.error('Error in GetUsersUseCase:', error);
       
-      // If it's the authorization error we threw, re-throw it to preserve the specific message
-      if (error instanceof Error && error.message === 'Only administrators can access the users list') {
+      // Re-throw domain errors to preserve specific messages
+      if (error instanceof UnauthorizedError) {
         throw error;
       }
       

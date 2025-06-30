@@ -1,0 +1,1 @@
+export { HttpAuthController } from './http-auth-controller'; 

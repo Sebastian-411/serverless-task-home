@@ -1,14 +1,20 @@
 import { PrismaClient, UserRole } from '../lib/generated/prisma';
-import { SupabaseService } from '../shared/auth/supabase.service';
+import { SupabaseAuthService } from '../core/auth/infrastructure/adapters/out/supabase-auth.service';
 import 'dotenv/config';
 
 const prisma = new PrismaClient();
+
+// Initialize Supabase service
+const supabaseService = new SupabaseAuthService({
+  url: process.env.SUPABASE_URL!,
+  key: process.env.SUPABASE_ANON_KEY!
+});
 
 // Admin user credentials
 const ADMIN_CREDENTIALS = {
   name: 'Admin User',
   email: 'admin@test.com',
-  password: 'admin123',
+  password: 'Juansebastia4231',
   phoneNumber: '+1234567890',
   role: UserRole.ADMIN,
 };
@@ -17,31 +23,25 @@ async function createAdminInSupabase() {
   console.log('🔐 Creating admin user in Supabase Auth...');
   
   try {
-    const { user, error } = await SupabaseService.createUser(
+    const user = await supabaseService.createUser(
       ADMIN_CREDENTIALS.email,
       ADMIN_CREDENTIALS.password
     );
 
-    if (error) {
-      // If user already exists, try to login to get their ID
-      if (error.message?.includes('already registered') || 
-          error.message?.includes('already been registered') ||
-          error.message?.includes('User already registered')) {
-        console.log('⚠️  User already exists in Supabase, getting ID...');
-        
-        const { data, error: loginError } = await SupabaseService.signIn(
-          ADMIN_CREDENTIALS.email,
-          ADMIN_CREDENTIALS.password
-        );
-        
-        if (loginError) {
-          throw new Error(`Error getting existing user: ${loginError.message}`);
-        }
-        
-        return data.user;
+    if (!user) {
+      // If user already exists, try to authenticate to get their ID
+      console.log('⚠️  User already exists in Supabase, getting ID...');
+      
+      const authUser = await supabaseService.authenticateUser(
+        ADMIN_CREDENTIALS.email,
+        ADMIN_CREDENTIALS.password
+      );
+      
+      if (!authUser) {
+        throw new Error('Error getting existing user from Supabase');
       }
       
-      throw new Error(`Error creating user in Supabase: ${error.message}`);
+      return authUser;
     }
 
     console.log(`✅ Admin user created in Supabase: ${user.id}`);

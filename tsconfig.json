@@ -17,7 +17,6 @@
     "baseUrl": ".",
     "paths": {
       "@/core/*": ["core/*"],
-      "@/shared/*": ["shared/*"],
       "@/api/*": ["api/*"],
       "@/tests/*": ["tests/*"]
     },
@@ -30,7 +29,6 @@
   "include": [
     "api/**/*",
     "core/**/*",
-    "shared/**/*",
     "tests/**/*",
     "prisma/**/*"
   ],

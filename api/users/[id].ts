@@ -1,33 +1,22 @@
-// GET /users/:id
+// GET /users/[id], PUT /users/[id], DELETE /users/[id]
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Dependencies } from '../../core/common/config/dependencies';
 
-  import { Dependencies } from '../../shared/config/dependencies';
-  import { handleError } from '../../shared/middlewares/error-handler.middleware';
-
-// Simple handler for getting user by ID
-const handleGetUserById = async (req: VercelRequest, res: VercelResponse) => {
-  try {
-    const { id } = req.query;
-    
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Valid user ID is required'
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const userController = Dependencies.userController;
+  
+  switch (req.method) {
+    case 'GET': 
+      return userController.getUserById(req, res);
+    case 'PUT': 
+    case 'PATCH': 
+      return userController.updateUser(req, res);
+    case 'DELETE': 
+      return userController.deleteUser(req, res);
+    default: 
+      return res.status(405).json({
+        error: 'Method not allowed',
+        message: 'Only GET, PUT, PATCH, and DELETE methods are allowed'
       });
-    }
-
-    // TODO: Implement authentication and authorization
-    const authContext = { isAuthenticated: true, user: { id: 'admin', email: 'admin@example.com', role: 'admin' as const } };
-    
-    const user = await Dependencies.getUserByIdUseCase.execute(id, authContext);
-    
-    return res.status(200).json({
-      data: user,
-      message: 'User retrieved successfully'
-    });
-  } catch (error) {
-    handleError(error as Error, req, res);
   }
-};
-
-export default handleGetUserById; 
+} 

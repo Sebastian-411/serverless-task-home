@@ -10,33 +10,26 @@ import handler from '../../../../api/users/index';
 // Mock dependencies
 jest.mock('../../../../shared/config/dependencies', () => ({
   Dependencies: {
-    createAuthenticatedEndpoint: jest.fn(),
     getUsersUseCase: {
       execute: jest.fn()
-    },
-    authMiddleware: {
-      authenticate: jest.fn()
     }
   }
 }));
 
-jest.mock('../../../../shared/middlewares/validation.middleware', () => ({
-  ValidationMiddleware: {
-    validate: jest.fn()
-  }
+jest.mock('../../../../shared/middlewares/auth.middleware', () => ({
+  authenticate: jest.fn()
 }));
 
 jest.mock('../../../../shared/middlewares/error-handler.middleware', () => ({
-  ErrorHandler: {
-    handle: jest.fn()
-  }
+  handleError: jest.fn()
 }));
 
 describe('GET /users API Tests', () => {
   let mockReq: Partial<VercelRequest>;
   let mockRes: Partial<VercelResponse>;
-  let mockCreateAuthenticatedEndpoint: jest.Mock;
   let mockGetUsersUseCase: jest.Mock;
+  let mockAuthenticate: jest.Mock;
+  let mockHandleError: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -44,7 +37,7 @@ describe('GET /users API Tests', () => {
     mockReq = {
       method: 'GET',
       headers: {
-        authorization: 'Bearer valid-token'
+        authorization: 'Bearer valid-admin-token'
       },
       query: {}
     };
@@ -55,13 +48,18 @@ describe('GET /users API Tests', () => {
       setHeader: jest.fn().mockReturnThis()
     };
 
-    // Mock the authenticated endpoint factory
-    mockCreateAuthenticatedEndpoint = jest.fn();
+    // Mock dependencies
     mockGetUsersUseCase = jest.fn();
+    mockAuthenticate = jest.fn();
+    mockHandleError = jest.fn();
     
     const { Dependencies } = require('../../../../shared/config/dependencies');
-    Dependencies.createAuthenticatedEndpoint.mockReturnValue(mockCreateAuthenticatedEndpoint);
+    const { authenticate } = require('../../../../shared/middlewares/auth.middleware');
+    const { handleError } = require('../../../../shared/middlewares/error-handler.middleware');
+    
     Dependencies.getUsersUseCase.execute = mockGetUsersUseCase;
+    authenticate.mockImplementation(mockAuthenticate);
+    handleError.mockImplementation(mockHandleError);
   });
 
   describe('Success Cases', () => {
@@ -90,22 +88,11 @@ describe('GET /users API Tests', () => {
         total: 2
       };
 
-      mockGetUsersUseCase.mockResolvedValue(mockResult);
-
-      // Mock the endpoint handler
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          const context = {
-            authContext: {
-              isAuthenticated: true,
-              user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
-            },
-            validatedQuery: { page: 1, limit: 10 }
-          };
-          const result = await handler(context);
-          res.status(200).json(result);
-        };
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
       });
+      mockGetUsersUseCase.mockResolvedValue(mockResult);
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
@@ -142,21 +129,11 @@ describe('GET /users API Tests', () => {
         total: 11
       };
 
-      mockGetUsersUseCase.mockResolvedValue(mockResult);
-
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          const context = {
-            authContext: {
-              isAuthenticated: true,
-              user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
-            },
-            validatedQuery: { page: 2, limit: 5 }
-          };
-          const result = await handler(context);
-          res.status(200).json(result);
-        };
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
       });
+      mockGetUsersUseCase.mockResolvedValue(mockResult);
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
@@ -177,23 +154,9 @@ describe('GET /users API Tests', () => {
 
   describe('Authorization Validation', () => {
     it('should reject non-admin users', async () => {
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          const context = {
-            authContext: {
-              isAuthenticated: true,
-              user: { id: 'user-1', email: 'user@example.com', role: 'user' }
-            }
-          };
-          try {
-            await handler(context);
-          } catch (error) {
-            res.status(403).json({
-              error: 'Forbidden',
-              message: 'Only administrators can access the users list'
-            });
-          }
-        };
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'user-1', email: 'user@example.com', role: 'user' }
       });
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
@@ -206,33 +169,23 @@ describe('GET /users API Tests', () => {
     });
 
     it('should reject unauthenticated requests', async () => {
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          const context = {
-            authContext: {
-              isAuthenticated: false
-            }
-          };
-          try {
-            await handler(context);
-          } catch (error) {
-            res.status(401).json({
-              error: 'Unauthorized',
-              message: 'Authentication required'
-            });
-          }
-        };
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: false
       });
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Unauthorized',
+        message: 'Authentication required'
+      });
     });
   });
 
   describe('Method Validation', () => {
-    it('should reject non-GET methods', async () => {
-      mockReq.method = 'POST';
+    it('should reject non-GET/POST methods', async () => {
+      mockReq.method = 'PUT';
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
@@ -241,14 +194,6 @@ describe('GET /users API Tests', () => {
         error: 'Method not allowed',
         message: 'Only GET and POST methods are allowed'
       });
-    });
-
-    it('should reject PUT method', async () => {
-      mockReq.method = 'PUT';
-
-      await handler(mockReq as VercelRequest, mockRes as VercelResponse);
-
-      expect(mockRes.status).toHaveBeenCalledWith(405);
     });
 
     it('should reject DELETE method', async () => {
@@ -262,73 +207,53 @@ describe('GET /users API Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle use case errors gracefully', async () => {
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
+      });
       mockGetUsersUseCase.mockRejectedValue(new Error('Database connection failed'));
 
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          try {
-            const context = {
-              authContext: {
-                isAuthenticated: true,
-                user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
-              }
-            };
-            await handler(context);
-          } catch (error) {
-            res.status(500).json({
-              error: 'Internal server error',
-              message: 'Error retrieving users list'
-            });
-          }
-        };
-      });
-
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Internal server error',
-        message: 'Error retrieving users list'
-      });
-    });
-
-    it('should return 500 when repository throws error', async () => {
-      mockGetUsersUseCase.mockRejectedValue(new Error('Database error'));
-
-      await handler(mockReq as VercelRequest, mockRes as VercelResponse);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Internal server error'
-        })
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        mockReq,
+        mockRes
       );
     });
 
     it('should return 400 for invalid pagination parameters', async () => {
-      mockReq.query = { page: 'invalid', limit: 'invalid' };
+      mockReq.query = { page: '0', limit: '200' };
+
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
+      });
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Validation error'
-        })
-      );
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Validation error',
+        message: 'Page must be between 1 and 1000'
+      });
     });
 
-    it('should return 403 for unauthorized access', async () => {
-      mockReq.headers.authorization = 'Bearer invalid-token';
+    it('should return 400 for invalid limit parameter', async () => {
+      mockReq.query = { page: '1', limit: '200' };
+
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
+      });
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
-      expect(mockRes.status).toHaveBeenCalledWith(403);
-      expect(mockRes.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Forbidden'
-        })
-      );
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Validation error',
+        message: 'Limit must be between 1 and 100'
+      });
     });
   });
 
@@ -350,20 +275,11 @@ describe('GET /users API Tests', () => {
         total: 1
       };
 
-      mockGetUsersUseCase.mockResolvedValue(mockResult);
-
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          const context = {
-            authContext: {
-              isAuthenticated: true,
-              user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
-            }
-          };
-          const result = await handler(context);
-          res.status(200).json(result);
-        };
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
       });
+      mockGetUsersUseCase.mockResolvedValue(mockResult);
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
@@ -395,20 +311,11 @@ describe('GET /users API Tests', () => {
         total: 1
       };
 
-      mockGetUsersUseCase.mockResolvedValue(mockResult);
-
-      mockCreateAuthenticatedEndpoint.mockImplementation((config, handler) => {
-        return async (req: VercelRequest, res: VercelResponse) => {
-          const context = {
-            authContext: {
-              isAuthenticated: true,
-              user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
-            }
-          };
-          const result = await handler(context);
-          res.status(200).json(result);
-        };
+      mockAuthenticate.mockResolvedValue({
+        isAuthenticated: true,
+        user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' }
       });
+      mockGetUsersUseCase.mockResolvedValue(mockResult);
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 

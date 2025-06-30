@@ -3,23 +3,23 @@
  * Comprehensive testing for User repository with >80% coverage
  */
 
-import type { CreateUserData } from '../../../../../core/user/infrastructure/user.repository.prisma';
-import { UserRepositoryPrisma } from '../../../../../core/user/infrastructure/user.repository.prisma';
-import { Cache } from '../../../../../shared/cache/cache.service';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import type { PrismaClient } from '@prisma/client';
+import type { CreateUserData } from '../../../../../core/user/domain/entities/user.entity';
+import { UserRepositoryPrisma } from '../../../../../core/user/infrastructure/adapters/out/user-repository-prisma';
+import * as Cache from '../../../../../core/common/config/cache/cache.service';
 
 // Mock the cache service
-jest.mock('../../../../../shared/cache/cache.service', () => ({
-  Cache: {
-    set: jest.fn(),
-    get: jest.fn(),
-    delete: jest.fn(),
-    getOrSet: jest.fn(),
-    invalidatePattern: jest.fn()
-  },
-  CacheKeys: {
+jest.mock('../../../../../core/common/config/cache/cache.service', () => ({
+  get: jest.fn(),
+  set: jest.fn(),
+  remove: jest.fn(),
+  getOrSet: jest.fn(),
+  invalidatePattern: jest.fn(),
+  Keys: {
     user: (id: string) => `user:${id}`,
     userByEmail: (email: string) => `user:email:${email}`,
-    userList: () => 'users:list'
+    users: () => 'users:list'
   }
 }));
 
@@ -77,7 +77,7 @@ describe('UserRepositoryPrisma Infrastructure Tests', () => {
     jest.clearAllMocks();
     
     // Default cache behavior - call the factory function (which makes the DB call)
-    (Cache.getOrSet as jest.Mock).mockImplementation(async (key, factory) => await factory());
+    (Cache.getOrSet as jest.Mock).mockImplementation(async (key: string, factory: () => any) => await factory());
   });
 
   describe('create', () => {
@@ -105,7 +105,7 @@ describe('UserRepositoryPrisma Infrastructure Tests', () => {
       };
       
       // Mock cache getOrSet to return null (no existing user) then the created user
-      (Cache.getOrSet as jest.Mock).mockResolvedValueOnce(null); // For findByEmail check
+      (Cache.getOrSet as any).mockResolvedValueOnce(null); // For findByEmail check
       mockPrisma.user.create.mockResolvedValueOnce(expectedUser);
 
       const result = await userRepository.create(validCreateUserData);
@@ -133,7 +133,7 @@ describe('UserRepositoryPrisma Infrastructure Tests', () => {
       const userDataWithoutAddress = { ...validCreateUserData };
       delete userDataWithoutAddress.address;
 
-      (Cache.getOrSet as jest.Mock).mockResolvedValueOnce(null); // For findByEmail check
+      (Cache.getOrSet as any).mockResolvedValueOnce(null); // For findByEmail check
       
       const expectedUser = {
         ...userDataWithoutAddress,
@@ -166,7 +166,7 @@ describe('UserRepositoryPrisma Infrastructure Tests', () => {
     it('should throw error if user with email already exists', async () => {
       const existingUser = { ...mockUserData[0] };
       // Mock the cache getOrSet to return the existing user (simulating cache hit)
-      (Cache.getOrSet as jest.Mock).mockResolvedValueOnce(existingUser);
+      (Cache.getOrSet as any).mockResolvedValueOnce(existingUser);
 
       await expect(userRepository.create(validCreateUserData))
         .rejects.toThrow('User with this email already exists');

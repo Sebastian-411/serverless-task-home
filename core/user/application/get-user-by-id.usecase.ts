@@ -1,13 +1,10 @@
-import type { UserRepository} from '../domain/user.entity';
-import { UserData } from '../domain/user.entity';
+import type { UserRepositoryPort } from '../domain/ports/out/user-repository.port';
+import type { AuthContext } from '../../common/config/middlewares/auth.middleware';
+import { UserNotFoundError } from '../domain/user-errors';
+import { UnauthorizedError } from '../../common/domain/exceptions/unauthorized.error';
 
-export interface AuthContext {
-  isAuthenticated: boolean;
-  user?: {
-    id: string;
-    email: string;
-    role: 'admin' | 'user';
-  };
+export interface GetUserByIdRequest {
+  id: string;
 }
 
 export interface GetUserByIdResponse {
@@ -15,7 +12,7 @@ export interface GetUserByIdResponse {
   email: string;
   name: string;
   phoneNumber: string;
-  role: 'admin' | 'user';
+  role: string;
   address?: {
     addressLine1: string;
     addressLine2?: string;
@@ -25,58 +22,59 @@ export interface GetUserByIdResponse {
     country: string;
   };
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export class GetUserByIdUseCase {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: UserRepositoryPort) {}
 
-  async execute(userId: string, authContext: AuthContext): Promise<GetUserByIdResponse> {
+  async execute(request: GetUserByIdRequest, authContext: AuthContext): Promise<GetUserByIdResponse> {
     try {
-      // Verify that the user is authenticated
+      // Step 1: Authentication check
       if (!authContext.isAuthenticated || !authContext.user) {
-        throw new Error('Authentication required to access user information');
+        throw new UnauthorizedError('Authentication required to access user information');
       }
 
       const authenticatedUser = authContext.user;
 
+      // Step 2: Authorization check
       // Regular users can only view their own profile
       // Administrators can view any profile
-      if (authenticatedUser.role === 'user' && authenticatedUser.id !== userId) {
-        throw new Error('Users can only access their own profile');
+      if (authenticatedUser.role === 'user' && authenticatedUser.id !== request.id) {
+        throw new UnauthorizedError('Users can only access their own profile');
       }
 
-      const user = await this.userRepository.findById(userId);
+      // Step 3: Get user from repository
+      const user = await this.userRepository.findById(request.id);
       
       if (!user) {
-        throw new Error('User not found');
+        throw new UserNotFoundError(request.id);
       }
 
+      // Step 4: Return formatted response
       return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phoneNumber: user.phoneNumber,
-        role: user.role.toLowerCase() as 'admin' | 'user',
-        address: user.address ? {
-          addressLine1: user.address.addressLine1,
-          addressLine2: user.address.addressLine2,
-          city: user.address.city,
-          stateOrProvince: user.address.stateOrProvince,
-          postalCode: user.address.postalCode,
-          country: user.address.country
+        id: (user as any).id,
+        email: (user as any).email,
+        name: (user as any).name,
+        phoneNumber: (user as any).phoneNumber || '',
+        role: (user as any).role.toLowerCase(),
+        address: (user as any).address ? {
+          addressLine1: (user as any).address.addressLine1,
+          addressLine2: (user as any).address.addressLine2,
+          city: (user as any).address.city,
+          stateOrProvince: (user as any).address.stateOrProvince,
+          postalCode: (user as any).address.postalCode,
+          country: (user as any).address.country
         } : undefined,
-        createdAt: user.createdAt
+        createdAt: new Date((user as any).createdAt),
+        updatedAt: new Date((user as any).updatedAt)
       };
     } catch (error) {
       console.error('Error in GetUserByIdUseCase:', error);
       
-      // Re-throw specific errors to preserve their messages
-      if (error instanceof Error) {
-        if (error.message === 'User not found' ||
-            error.message === 'Authentication required to access user information' ||
-            error.message === 'Users can only access their own profile') {
-          throw error;
-        }
+      // Re-throw domain errors to preserve specific messages
+      if (error instanceof UnauthorizedError || error instanceof UserNotFoundError) {
+        throw error;
       }
       
       throw new Error('Error retrieving user information');
