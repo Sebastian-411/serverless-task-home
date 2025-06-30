@@ -14,6 +14,11 @@ import { TaskRepositoryPrisma } from "../../../infrastructure/task.repository.pr
 import { PrismaClient } from "../../../../../lib/generated/prisma";
 import { authenticate } from "../../../../common/config/middlewares/auth.middleware";
 
+/**
+ * HTTP controller for task-related operations.
+ * Handles all HTTP requests for task management including CRUD operations,
+ * task assignment, and user-specific task queries.
+ */
 export class HttpTaskController {
   private getTasksUseCase: GetTasksUseCase;
   private getTaskByIdUseCase: GetTaskByIdUseCase;
@@ -23,8 +28,16 @@ export class HttpTaskController {
   private assignTaskUseCase: AssignTaskUseCase;
   private getUserTasksUseCase: GetUserTasksUseCase;
 
+  /**
+   * Initializes the HTTP task controller with all required use cases.
+   * Creates Prisma client and task repository instances.
+   */
   constructor() {
-    console.log("[HttpTaskController] Inicializando controlador de tareas");
+    console.log("HttpTaskController.constructor called", {
+      method: "constructor",
+      component: "HttpTaskController",
+    });
+
     const prisma = new PrismaClient();
     const taskRepository = new TaskRepositoryPrisma(prisma);
     this.getTasksUseCase = new GetTasksUseCase(taskRepository);
@@ -34,43 +47,66 @@ export class HttpTaskController {
     this.deleteTaskUseCase = new DeleteTaskUseCase(taskRepository);
     this.assignTaskUseCase = new AssignTaskUseCase(taskRepository);
     this.getUserTasksUseCase = new GetUserTasksUseCase(taskRepository);
-    console.log(
-      "[HttpTaskController] Controlador de tareas inicializado correctamente",
-    );
+
+    console.log("HttpTaskController.constructor completed", {
+      method: "constructor",
+      component: "HttpTaskController",
+      useCasesInitialized: 7,
+    });
   }
 
   /**
-   * Maneja la petición GET /tasks/:id
+   * Handles GET request to retrieve a specific task by ID.
+   *
+   * @param req - Vercel request object containing task ID in query parameters
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, or database errors
    */
   async getTaskById(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
     const taskId = req.query.id as string;
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición GET /tasks/${taskId}`,
-    );
+
+    console.log("HttpTaskController.getTaskById called", {
+      method: "getTaskById",
+      requestId,
+      taskId,
+      endpoint: "GET /tasks/:id",
+    });
 
     try {
-      // Obtener información del usuario autenticado desde el middleware
-      console.log(`[HttpTaskController:${requestId}] Autenticando usuario...`);
+      // Get authenticated user information from middleware
+      console.log("HttpTaskController.getTaskById - Authenticating user", {
+        method: "getTaskById",
+        requestId,
+      });
       const authContext = await authenticate(req, res);
 
-      // Verificar autenticación
+      // Verify authentication
       if (!authContext.isAuthenticated || !authContext.user) {
         console.warn(
-          `[HttpTaskController:${requestId}] Usuario no autenticado`,
+          "HttpTaskController.getTaskById - User not authenticated",
+          {
+            method: "getTaskById",
+            requestId,
+          },
         );
-        res.status(401).json({ error: "Usuario no autenticado" });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Usuario autenticado - ID: ${authContext.user.id}, Role: ${authContext.user.role}`,
-      );
+      console.log("HttpTaskController.getTaskById - User authenticated", {
+        method: "getTaskById",
+        requestId,
+        userId: authContext.user.id,
+        userRole: authContext.user.role,
+      });
 
-      // Ejecutar caso de uso
-      console.log(
-        `[HttpTaskController:${requestId}] Ejecutando caso de uso getTaskById...`,
-      );
+      // Execute use case
+      console.log("HttpTaskController.getTaskById - Executing use case", {
+        method: "getTaskById",
+        requestId,
+      });
       const task = await this.getTaskByIdUseCase.getTaskById(
         taskId,
         authContext.user.id,
@@ -78,128 +114,171 @@ export class HttpTaskController {
       );
 
       if (!task) {
-        console.log(
-          `[HttpTaskController:${requestId}] Tarea no encontrada: ${taskId}`,
-        );
-        res.status(404).json({ error: "Tarea no encontrada" });
+        console.log("HttpTaskController.getTaskById - Task not found", {
+          method: "getTaskById",
+          requestId,
+          taskId,
+        });
+        res.status(404).json({ error: "Task not found" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Tarea encontrada: ${taskId}`,
-      );
+      console.log("HttpTaskController.getTaskById - Task found", {
+        method: "getTaskById",
+        requestId,
+        taskId,
+      });
       res.status(200).json({ data: task });
     } catch (error) {
-      console.error(
-        `[HttpTaskController:${requestId}] Error en getTaskById:`,
-        error,
-      );
+      console.error("HttpTaskController.getTaskById failed", {
+        method: "getTaskById",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       if (error instanceof Error) {
-        // Errores de autorización
-        if (error.message.includes("No tienes permisos")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de autorización: ${error.message}`,
-          );
+        // Authorization errors
+        if (error.message.includes("You don't have permission")) {
+          console.warn("HttpTaskController.getTaskById - Authorization error", {
+            method: "getTaskById",
+            requestId,
+            error: error.message,
+          });
           res.status(403).json({ error: error.message });
           return;
         }
       }
 
-      // Error interno del servidor
-      console.error(
-        `[HttpTaskController:${requestId}] Error interno del servidor:`,
-        error,
-      );
-      res.status(500).json({ error: "Error interno del servidor" });
+      // Internal server error
+      console.error("HttpTaskController.getTaskById - Internal server error", {
+        method: "getTaskById",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 
   /**
-   * Maneja la petición GET /tasks
+   * Handles GET request to retrieve tasks with filtering and pagination.
+   *
+   * @param req - Vercel request object containing query parameters for filters and pagination
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, validation, or database errors
    */
   async getTasks(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición GET /tasks`,
-    );
+
+    console.log("HttpTaskController.getTasks called", {
+      method: "getTasks",
+      requestId,
+      endpoint: "GET /tasks",
+      queryParams: req.query,
+    });
 
     try {
-      // Obtener información del usuario autenticado desde el middleware
-      console.log(`[HttpTaskController:${requestId}] Autenticando usuario...`);
+      // Get authenticated user information from middleware
+      console.log("HttpTaskController.getTasks - Authenticating user", {
+        method: "getTasks",
+        requestId,
+      });
       const authContext = await authenticate(req, res);
 
-      // Verificar autenticación
+      // Verify authentication
       if (!authContext.isAuthenticated || !authContext.user) {
-        console.warn(
-          `[HttpTaskController:${requestId}] Usuario no autenticado`,
-        );
-        res.status(401).json({ error: "Usuario no autenticado" });
+        console.warn("HttpTaskController.getTasks - User not authenticated", {
+          method: "getTasks",
+          requestId,
+        });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Usuario autenticado - ID: ${authContext.user.id}, Role: ${authContext.user.role}`,
-      );
+      console.log("HttpTaskController.getTasks - User authenticated", {
+        method: "getTasks",
+        requestId,
+        userId: authContext.user.id,
+        userRole: authContext.user.role,
+      });
 
-      // Obtener filtros de la query string
+      // Get filters from query string
       const filters: GetTasksFilters = {};
 
       if (req.query.status) {
         filters.status = req.query.status as string;
-        console.log(
-          `[HttpTaskController:${requestId}] Filtro status: ${filters.status}`,
-        );
+        console.log("HttpTaskController.getTasks - Status filter applied", {
+          method: "getTasks",
+          requestId,
+          status: filters.status,
+        });
       }
 
       if (req.query.priority) {
         filters.priority = req.query.priority as string;
-        console.log(
-          `[HttpTaskController:${requestId}] Filtro priority: ${filters.priority}`,
-        );
+        console.log("HttpTaskController.getTasks - Priority filter applied", {
+          method: "getTasks",
+          requestId,
+          priority: filters.priority,
+        });
       }
 
       if (req.query.assignedTo) {
         filters.assignedTo = req.query.assignedTo as string;
-        console.log(
-          `[HttpTaskController:${requestId}] Filtro assignedTo: ${filters.assignedTo}`,
-        );
+        console.log("HttpTaskController.getTasks - AssignedTo filter applied", {
+          method: "getTasks",
+          requestId,
+          assignedTo: filters.assignedTo,
+        });
       }
 
       if (req.query.createdBy) {
         filters.createdBy = req.query.createdBy as string;
-        console.log(
-          `[HttpTaskController:${requestId}] Filtro createdBy: ${filters.createdBy}`,
-        );
+        console.log("HttpTaskController.getTasks - CreatedBy filter applied", {
+          method: "getTasks",
+          requestId,
+          createdBy: filters.createdBy,
+        });
       }
 
       if (req.query.dueDateFrom) {
         const dueDateFrom = req.query.dueDateFrom as string;
         filters.dueDateFrom = new Date(dueDateFrom);
         console.log(
-          `[HttpTaskController:${requestId}] Filtro dueDateFrom: ${filters.dueDateFrom}`,
+          "HttpTaskController.getTasks - DueDateFrom filter applied",
+          {
+            method: "getTasks",
+            requestId,
+            dueDateFrom: filters.dueDateFrom,
+          },
         );
       }
 
       if (req.query.dueDateTo) {
         const dueDateTo = req.query.dueDateTo as string;
         filters.dueDateTo = new Date(dueDateTo);
-        console.log(
-          `[HttpTaskController:${requestId}] Filtro dueDateTo: ${filters.dueDateTo}`,
-        );
+        console.log("HttpTaskController.getTasks - DueDateTo filter applied", {
+          method: "getTasks",
+          requestId,
+          dueDateTo: filters.dueDateTo,
+        });
       }
 
-      // Obtener parámetros de paginación
+      // Get pagination parameters
       const page = parseInt((req.query.page as string) || "1");
       const limit = parseInt((req.query.limit as string) || "10");
-      console.log(
-        `[HttpTaskController:${requestId}] Paginación - page: ${page}, limit: ${limit}`,
-      );
+      console.log("HttpTaskController.getTasks - Pagination parameters", {
+        method: "getTasks",
+        requestId,
+        page,
+        limit,
+      });
 
-      // Ejecutar caso de uso
-      console.log(
-        `[HttpTaskController:${requestId}] Ejecutando caso de uso getTasks...`,
-      );
+      // Execute use case
+      console.log("HttpTaskController.getTasks - Executing use case", {
+        method: "getTasks",
+        requestId,
+      });
       const result = await this.getTasksUseCase.getTasks(
         filters,
         authContext.user.id,
@@ -207,11 +286,14 @@ export class HttpTaskController {
         page,
         limit,
       );
-      console.log(
-        `[HttpTaskController:${requestId}] Caso de uso completado - Tareas encontradas: ${result.tasks.length}, Total: ${result.total}`,
-      );
+      console.log("HttpTaskController.getTasks - Use case completed", {
+        method: "getTasks",
+        requestId,
+        tasksFound: result.tasks.length,
+        total: result.total,
+      });
 
-      // Construir respuesta con metadatos de paginación
+      // Build response with pagination metadata
       const response = {
         data: result.tasks,
         pagination: {
@@ -224,67 +306,88 @@ export class HttpTaskController {
         },
       };
 
-      console.log(
-        `[HttpTaskController:${requestId}] Respuesta construida - Status: 200, TotalPages: ${response.pagination.totalPages}`,
-      );
+      console.log("HttpTaskController.getTasks - Response built", {
+        method: "getTasks",
+        requestId,
+        status: 200,
+        totalPages: response.pagination.totalPages,
+      });
       res.status(200).json(response);
     } catch (error) {
-      console.error(
-        `[HttpTaskController:${requestId}] Error en getTasks:`,
-        error,
-      );
+      console.error("HttpTaskController.getTasks failed", {
+        method: "getTasks",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       if (error instanceof Error) {
-        // Errores de autorización
-        if (error.message.includes("No tienes permisos")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de autorización: ${error.message}`,
-          );
+        // Authorization errors
+        if (error.message.includes("You don't have permission")) {
+          console.warn("HttpTaskController.getTasks - Authorization error", {
+            method: "getTasks",
+            requestId,
+            error: error.message,
+          });
           res.status(403).json({ error: error.message });
           return;
         }
 
-        // Errores de validación
+        // Validation errors
         if (
           error.message.includes("validation") ||
           error.message.includes("invalid")
         ) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de validación: ${error.message}`,
-          );
+          console.warn("HttpTaskController.getTasks - Validation error", {
+            method: "getTasks",
+            requestId,
+            error: error.message,
+          });
           res.status(400).json({ error: error.message });
           return;
         }
       }
 
-      // Error interno del servidor
-      console.error(
-        `[HttpTaskController:${requestId}] Error interno del servidor:`,
-        error,
-      );
-      res.status(500).json({ error: "Error interno del servidor" });
+      // Internal server error
+      console.error("HttpTaskController.getTasks - Internal server error", {
+        method: "getTasks",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 
   /**
-   * Maneja la petición POST /tasks
+   * Handles POST request to create a new task.
+   *
+   * @param req - Vercel request object containing task data in body
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, validation, or database errors
    */
   async createTask(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición POST /tasks`,
-    );
+
+    console.log("HttpTaskController.createTask called", {
+      method: "createTask",
+      requestId,
+      endpoint: "POST /tasks",
+      body: req.body,
+    });
+
     try {
-      // Autenticación
+      // Authentication
       const authContext = await authenticate(req, res);
       if (!authContext.isAuthenticated || !authContext.user) {
-        console.warn(
-          `[HttpTaskController:${requestId}] Usuario no autenticado`,
-        );
-        res.status(401).json({ error: "Usuario no autenticado" });
+        console.warn("HttpTaskController.createTask - User not authenticated", {
+          method: "createTask",
+          requestId,
+        });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
-      // Crear tarea (permitido para admin y user)
+
+      // Create task (allowed for admin and user)
       const { title, description, status, priority, dueDate, assignedTo } =
         req.body;
       const input = {
@@ -294,43 +397,95 @@ export class HttpTaskController {
         priority,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         assignedTo,
-        createdBy: authContext.user.id, // SIEMPRE el usuario autenticado
+        createdBy: authContext.user.id, // ALWAYS the authenticated user
       };
+
+      console.log("HttpTaskController.createTask - Creating task", {
+        method: "createTask",
+        requestId,
+        createdBy: authContext.user.id,
+        userRole: authContext.user.role,
+      });
+
       const task = await this.createTaskUseCase.createTask(
         input,
         authContext.user.role.toUpperCase(),
       );
+
+      console.log("HttpTaskController.createTask - Task created successfully", {
+        method: "createTask",
+        requestId,
+        taskId: task.id,
+      });
+
       res.status(201).json({ data: task });
     } catch (error) {
-      console.error(
-        `[HttpTaskController:${requestId}] Error en createTask:`,
-        error,
-      );
+      console.error("HttpTaskController.createTask failed", {
+        method: "createTask",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
       if (error instanceof Error) {
-        if (error.message.includes("Faltan campos")) {
+        if (error.message.includes("Missing fields")) {
+          console.warn("HttpTaskController.createTask - Validation error", {
+            method: "createTask",
+            requestId,
+            error: error.message,
+          });
           res.status(400).json({ error: error.message });
           return;
         }
       }
-      res.status(500).json({ error: "Error interno del servidor" });
+
+      console.error("HttpTaskController.createTask - Internal server error", {
+        method: "createTask",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 
   /**
-   * Maneja la petición PUT /tasks/:id
+   * Handles PUT request to update an existing task.
+   *
+   * @param req - Vercel request object containing task ID in query parameters and update data in body
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, validation, or database errors
    */
   async updateTask(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
     const taskId = req.query.id as string;
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición PUT /tasks/${taskId}`,
-    );
+
+    console.log("HttpTaskController.updateTask called", {
+      method: "updateTask",
+      requestId,
+      taskId,
+      endpoint: "PUT /tasks/:id",
+      body: req.body,
+    });
+
     try {
       const authContext = await authenticate(req, res);
       if (!authContext.isAuthenticated || !authContext.user) {
-        res.status(401).json({ error: "Usuario no autenticado" });
+        console.warn("HttpTaskController.updateTask - User not authenticated", {
+          method: "updateTask",
+          requestId,
+        });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
+
+      console.log("HttpTaskController.updateTask - Updating task", {
+        method: "updateTask",
+        requestId,
+        taskId,
+        userId: authContext.user.id,
+        userRole: authContext.user.role,
+      });
+
       const data = req.body;
       const updated = await this.updateTaskUseCase.updateTask(
         taskId,
@@ -338,45 +493,88 @@ export class HttpTaskController {
         authContext.user.id,
         authContext.user.role.toUpperCase(),
       );
+
+      console.log("HttpTaskController.updateTask - Task updated successfully", {
+        method: "updateTask",
+        requestId,
+        taskId,
+      });
+
       res.status(200).json({ data: updated });
     } catch (error) {
+      console.error("HttpTaskController.updateTask failed", {
+        method: "updateTask",
+        requestId,
+        taskId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
       if (error instanceof Error) {
-        if (error.message.includes("No tienes permisos")) {
+        if (error.message.includes("You don't have permission")) {
+          console.warn("HttpTaskController.updateTask - Authorization error", {
+            method: "updateTask",
+            requestId,
+            error: error.message,
+          });
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message.includes("Tarea no encontrada")) {
+        if (error.message.includes("Task not found")) {
+          console.warn("HttpTaskController.updateTask - Task not found", {
+            method: "updateTask",
+            requestId,
+            taskId,
+          });
           res.status(404).json({ error: error.message });
           return;
         }
       }
-      res.status(500).json({ error: "Error interno del servidor" });
+
+      console.error("HttpTaskController.updateTask - Internal server error", {
+        method: "updateTask",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 
   /**
-   * Maneja la petición DELETE /tasks/:id
+   * Handles DELETE request to remove a task.
+   *
+   * @param req - Vercel request object containing task ID in query parameters
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, or database errors
    */
   async deleteTask(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
     const taskId = req.query.id as string;
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición DELETE /tasks/${taskId}`,
-    );
+
+    console.log("HttpTaskController.deleteTask called", {
+      method: "deleteTask",
+      requestId,
+      taskId,
+      endpoint: "DELETE /tasks/:id",
+    });
 
     try {
       const authContext = await authenticate(req, res);
       if (!authContext.isAuthenticated || !authContext.user) {
-        console.warn(
-          `[HttpTaskController:${requestId}] Usuario no autenticado`,
-        );
-        res.status(401).json({ error: "Usuario no autenticado" });
+        console.warn("HttpTaskController.deleteTask - User not authenticated", {
+          method: "deleteTask",
+          requestId,
+        });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Usuario autenticado - ID: ${authContext.user.id}, Role: ${authContext.user.role}`,
-      );
+      console.log("HttpTaskController.deleteTask - User authenticated", {
+        method: "deleteTask",
+        requestId,
+        userId: authContext.user.id,
+        userRole: authContext.user.role,
+      });
 
       await this.deleteTaskUseCase.deleteTask(
         taskId,
@@ -384,88 +582,119 @@ export class HttpTaskController {
         authContext.user.role.toUpperCase(),
       );
 
-      console.log(
-        `[HttpTaskController:${requestId}] Tarea eliminada exitosamente: ${taskId}`,
-      );
+      console.log("HttpTaskController.deleteTask - Task deleted successfully", {
+        method: "deleteTask",
+        requestId,
+        taskId,
+      });
       res.status(204).end();
     } catch (error) {
-      console.error(
-        `[HttpTaskController:${requestId}] Error en deleteTask:`,
-        error,
-      );
+      console.error("HttpTaskController.deleteTask failed", {
+        method: "deleteTask",
+        requestId,
+        taskId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       if (error instanceof Error) {
-        if (error.message.includes("No tienes permisos")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de autorización: ${error.message}`,
-          );
+        if (error.message.includes("You don't have permission")) {
+          console.warn("HttpTaskController.deleteTask - Authorization error", {
+            method: "deleteTask",
+            requestId,
+            error: error.message,
+          });
           res.status(403).json({ error: error.message });
           return;
         }
-        if (error.message.includes("Tarea no encontrada")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Tarea no encontrada: ${error.message}`,
-          );
+        if (error.message.includes("Task not found")) {
+          console.warn("HttpTaskController.deleteTask - Task not found", {
+            method: "deleteTask",
+            requestId,
+            taskId,
+          });
           res.status(404).json({ error: error.message });
           return;
         }
       }
 
-      console.error(
-        `[HttpTaskController:${requestId}] Error interno del servidor:`,
-        error,
-      );
-      res.status(500).json({ error: "Error interno del servidor" });
+      console.error("HttpTaskController.deleteTask - Internal server error", {
+        method: "deleteTask",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 
   /**
-   * Maneja la petición POST /tasks/:id/assign
+   * Handles POST request to assign a task to a user.
+   *
+   * @param req - Vercel request object containing task ID in query parameters and user ID in body
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, validation, or database errors
    */
   async assignTask(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
     const taskId = req.query.id as string;
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición POST /tasks/${taskId}/assign`,
-    );
+
+    console.log("HttpTaskController.assignTask called", {
+      method: "assignTask",
+      requestId,
+      taskId,
+      endpoint: "POST /tasks/:id/assign",
+      body: req.body,
+    });
 
     try {
-      // Obtener información del usuario autenticado desde el middleware
-      console.log(`[HttpTaskController:${requestId}] Autenticando usuario...`);
+      // Get authenticated user information from middleware
+      console.log("HttpTaskController.assignTask - Authenticating user", {
+        method: "assignTask",
+        requestId,
+      });
       const authContext = await authenticate(req, res);
 
-      // Verificar autenticación
+      // Verify authentication
       if (!authContext.isAuthenticated || !authContext.user) {
-        console.warn(
-          `[HttpTaskController:${requestId}] Usuario no autenticado`,
-        );
-        res.status(401).json({ error: "Usuario no autenticado" });
+        console.warn("HttpTaskController.assignTask - User not authenticated", {
+          method: "assignTask",
+          requestId,
+        });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Usuario autenticado - ID: ${authContext.user.id}, Role: ${authContext.user.role}`,
-      );
+      console.log("HttpTaskController.assignTask - User authenticated", {
+        method: "assignTask",
+        requestId,
+        userId: authContext.user.id,
+        userRole: authContext.user.role,
+      });
 
-      // Obtener el ID del usuario al que se asignará la tarea
+      // Get the user ID to assign the task to
       const { userId } = req.body;
 
       if (!userId) {
-        console.warn(
-          `[HttpTaskController:${requestId}] Falta el campo userId en el body`,
-        );
-        res.status(400).json({ error: "El campo userId es requerido" });
+        console.warn("HttpTaskController.assignTask - Missing userId field", {
+          method: "assignTask",
+          requestId,
+        });
+        res.status(400).json({ error: "The userId field is required" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Asignando tarea ${taskId} al usuario ${userId}`,
-      );
+      console.log("HttpTaskController.assignTask - Assigning task", {
+        method: "assignTask",
+        requestId,
+        taskId,
+        targetUserId: userId,
+      });
 
-      // Ejecutar caso de uso
-      console.log(
-        `[HttpTaskController:${requestId}] Ejecutando caso de uso assignTask...`,
-      );
+      // Execute use case
+      console.log("HttpTaskController.assignTask - Executing use case", {
+        method: "assignTask",
+        requestId,
+      });
       const result = await this.assignTaskUseCase.assignTask(
         taskId,
         userId,
@@ -474,129 +703,178 @@ export class HttpTaskController {
       );
 
       console.log(
-        `[HttpTaskController:${requestId}] Tarea asignada exitosamente`,
+        "HttpTaskController.assignTask - Task assigned successfully",
+        {
+          method: "assignTask",
+          requestId,
+          taskId,
+        },
       );
       res.status(200).json({
         data: result.task,
         message: result.message,
       });
     } catch (error) {
-      console.error(
-        `[HttpTaskController:${requestId}] Error en assignTask:`,
-        error,
-      );
+      console.error("HttpTaskController.assignTask failed", {
+        method: "assignTask",
+        requestId,
+        taskId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       if (error instanceof Error) {
-        // Errores de autorización
-        if (
-          error.message.includes(
-            "Solo los administradores pueden asignar tareas",
-          )
-        ) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de autorización: ${error.message}`,
-          );
+        // Authorization errors
+        if (error.message.includes("Only administrators can assign tasks")) {
+          console.warn("HttpTaskController.assignTask - Authorization error", {
+            method: "assignTask",
+            requestId,
+            error: error.message,
+          });
           res.status(403).json({ error: error.message });
           return;
         }
 
-        // Errores de validación
+        // Validation errors
         if (
-          error.message.includes("ID de tarea inválido") ||
-          error.message.includes("ID de usuario inválido") ||
-          error.message.includes("El campo userId es requerido")
+          error.message.includes("Invalid task ID") ||
+          error.message.includes("Invalid user ID") ||
+          error.message.includes("The userId field is required")
         ) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de validación: ${error.message}`,
-          );
+          console.warn("HttpTaskController.assignTask - Validation error", {
+            method: "assignTask",
+            requestId,
+            error: error.message,
+          });
           res.status(400).json({ error: error.message });
           return;
         }
 
-        // Tarea no encontrada
-        if (error.message.includes("Tarea no encontrada")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Tarea no encontrada: ${error.message}`,
-          );
+        // Task not found
+        if (error.message.includes("Task not found")) {
+          console.warn("HttpTaskController.assignTask - Task not found", {
+            method: "assignTask",
+            requestId,
+            taskId,
+          });
           res.status(404).json({ error: error.message });
           return;
         }
 
-        // Error de lógica de negocio
-        if (error.message.includes("no puede ser asignada")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de lógica de negocio: ${error.message}`,
-          );
+        // Business logic error
+        if (error.message.includes("cannot be assigned")) {
+          console.warn("HttpTaskController.assignTask - Business logic error", {
+            method: "assignTask",
+            requestId,
+            error: error.message,
+          });
           res.status(400).json({ error: error.message });
           return;
         }
       }
 
-      // Error interno del servidor
-      console.error(
-        `[HttpTaskController:${requestId}] Error interno del servidor:`,
-        error,
-      );
-      res.status(500).json({ error: "Error interno del servidor" });
+      // Internal server error
+      console.error("HttpTaskController.assignTask - Internal server error", {
+        method: "assignTask",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 
   /**
-   * Maneja la petición GET /users/:id/tasks
+   * Handles GET request to retrieve tasks for a specific user.
+   *
+   * @param req - Vercel request object containing user ID in query parameters and optional filters
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, validation, or database errors
    */
   async getUserTasks(req: VercelRequest, res: VercelResponse): Promise<void> {
     const requestId = Math.random().toString(36).substring(7);
     const userId = req.query.id as string;
-    console.log(
-      `[HttpTaskController:${requestId}] Iniciando petición GET /users/${userId}/tasks`,
-    );
+
+    console.log("HttpTaskController.getUserTasks called", {
+      method: "getUserTasks",
+      requestId,
+      userId,
+      endpoint: "GET /users/:id/tasks",
+      queryParams: req.query,
+    });
 
     try {
-      // Obtener información del usuario autenticado desde el middleware
-      console.log(`[HttpTaskController:${requestId}] Autenticando usuario...`);
+      // Get authenticated user information from middleware
+      console.log("HttpTaskController.getUserTasks - Authenticating user", {
+        method: "getUserTasks",
+        requestId,
+      });
       const authContext = await authenticate(req, res);
 
-      // Verificar autenticación
+      // Verify authentication
       if (!authContext.isAuthenticated || !authContext.user) {
         console.warn(
-          `[HttpTaskController:${requestId}] Usuario no autenticado`,
+          "HttpTaskController.getUserTasks - User not authenticated",
+          {
+            method: "getUserTasks",
+            requestId,
+          },
         );
-        res.status(401).json({ error: "Usuario no autenticado" });
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
 
-      console.log(
-        `[HttpTaskController:${requestId}] Usuario autenticado - ID: ${authContext.user.id}, Role: ${authContext.user.role}`,
-      );
+      console.log("HttpTaskController.getUserTasks - User authenticated", {
+        method: "getUserTasks",
+        requestId,
+        userId: authContext.user.id,
+        userRole: authContext.user.role,
+      });
 
-      // Obtener filtros de la query string
+      // Get filters from query string
       const filters: GetTasksFilters = {};
 
       if (req.query.status) {
         filters.status = req.query.status as string;
-        console.log(
-          `[HttpTaskController:${requestId}] Filtro status: ${filters.status}`,
-        );
+        console.log("HttpTaskController.getUserTasks - Status filter applied", {
+          method: "getUserTasks",
+          requestId,
+          status: filters.status,
+        });
       }
 
       if (req.query.priority) {
         filters.priority = req.query.priority as string;
         console.log(
-          `[HttpTaskController:${requestId}] Filtro priority: ${filters.priority}`,
+          "HttpTaskController.getUserTasks - Priority filter applied",
+          {
+            method: "getUserTasks",
+            requestId,
+            priority: filters.priority,
+          },
         );
       }
 
       if (req.query.assignedTo) {
         filters.assignedTo = req.query.assignedTo as string;
         console.log(
-          `[HttpTaskController:${requestId}] Filtro assignedTo: ${filters.assignedTo}`,
+          "HttpTaskController.getUserTasks - AssignedTo filter applied",
+          {
+            method: "getUserTasks",
+            requestId,
+            assignedTo: filters.assignedTo,
+          },
         );
       }
 
       if (req.query.createdBy) {
         filters.createdBy = req.query.createdBy as string;
         console.log(
-          `[HttpTaskController:${requestId}] Filtro createdBy: ${filters.createdBy}`,
+          "HttpTaskController.getUserTasks - CreatedBy filter applied",
+          {
+            method: "getUserTasks",
+            requestId,
+            createdBy: filters.createdBy,
+          },
         );
       }
 
@@ -604,7 +882,12 @@ export class HttpTaskController {
         const dueDateFrom = req.query.dueDateFrom as string;
         filters.dueDateFrom = new Date(dueDateFrom);
         console.log(
-          `[HttpTaskController:${requestId}] Filtro dueDateFrom: ${filters.dueDateFrom}`,
+          "HttpTaskController.getUserTasks - DueDateFrom filter applied",
+          {
+            method: "getUserTasks",
+            requestId,
+            dueDateFrom: filters.dueDateFrom,
+          },
         );
       }
 
@@ -612,21 +895,30 @@ export class HttpTaskController {
         const dueDateTo = req.query.dueDateTo as string;
         filters.dueDateTo = new Date(dueDateTo);
         console.log(
-          `[HttpTaskController:${requestId}] Filtro dueDateTo: ${filters.dueDateTo}`,
+          "HttpTaskController.getUserTasks - DueDateTo filter applied",
+          {
+            method: "getUserTasks",
+            requestId,
+            dueDateTo: filters.dueDateTo,
+          },
         );
       }
 
-      // Obtener parámetros de paginación
+      // Get pagination parameters
       const page = parseInt((req.query.page as string) || "1");
       const limit = parseInt((req.query.limit as string) || "10");
-      console.log(
-        `[HttpTaskController:${requestId}] Paginación - page: ${page}, limit: ${limit}`,
-      );
+      console.log("HttpTaskController.getUserTasks - Pagination parameters", {
+        method: "getUserTasks",
+        requestId,
+        page,
+        limit,
+      });
 
-      // Ejecutar caso de uso
-      console.log(
-        `[HttpTaskController:${requestId}] Ejecutando caso de uso getUserTasks...`,
-      );
+      // Execute use case
+      console.log("HttpTaskController.getUserTasks - Executing use case", {
+        method: "getUserTasks",
+        requestId,
+      });
       const result = await this.getUserTasksUseCase.getUserTasks(
         {
           userId,
@@ -638,11 +930,14 @@ export class HttpTaskController {
         authContext.user.role.toUpperCase(),
       );
 
-      console.log(
-        `[HttpTaskController:${requestId}] Caso de uso completado - Tareas encontradas: ${result.tasks.length}, Total: ${result.total}`,
-      );
+      console.log("HttpTaskController.getUserTasks - Use case completed", {
+        method: "getUserTasks",
+        requestId,
+        tasksFound: result.tasks.length,
+        total: result.total,
+      });
 
-      // Construir respuesta con metadatos de paginación
+      // Build response with pagination metadata
       const response = {
         data: result.tasks,
         userId: result.userId,
@@ -656,51 +951,66 @@ export class HttpTaskController {
         },
       };
 
-      console.log(
-        `[HttpTaskController:${requestId}] Respuesta construida - Status: 200, TotalPages: ${response.pagination.totalPages}`,
-      );
+      console.log("HttpTaskController.getUserTasks - Response built", {
+        method: "getUserTasks",
+        requestId,
+        status: 200,
+        totalPages: response.pagination.totalPages,
+      });
       res.status(200).json(response);
     } catch (error) {
-      console.error(
-        `[HttpTaskController:${requestId}] Error en getUserTasks:`,
-        error,
-      );
+      console.error("HttpTaskController.getUserTasks failed", {
+        method: "getUserTasks",
+        requestId,
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       if (error instanceof Error) {
-        // Errores de autorización
-        if (error.message.includes("No tienes permisos")) {
+        // Authorization errors
+        if (error.message.includes("You don't have permission")) {
           console.warn(
-            `[HttpTaskController:${requestId}] Error de autorización: ${error.message}`,
+            "HttpTaskController.getUserTasks - Authorization error",
+            {
+              method: "getUserTasks",
+              requestId,
+              error: error.message,
+            },
           );
           res.status(403).json({ error: error.message });
           return;
         }
 
-        // Errores de validación
-        if (error.message.includes("ID de usuario inválido")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Error de validación: ${error.message}`,
-          );
+        // Validation errors
+        if (error.message.includes("Invalid user ID")) {
+          console.warn("HttpTaskController.getUserTasks - Validation error", {
+            method: "getUserTasks",
+            requestId,
+            error: error.message,
+          });
           res.status(400).json({ error: error.message });
           return;
         }
 
-        // Usuario no encontrado
-        if (error.message.includes("Usuario no encontrado")) {
-          console.warn(
-            `[HttpTaskController:${requestId}] Usuario no encontrado: ${error.message}`,
-          );
+        // User not found
+        if (error.message.includes("User not found")) {
+          console.warn("HttpTaskController.getUserTasks - User not found", {
+            method: "getUserTasks",
+            requestId,
+            userId,
+          });
           res.status(404).json({ error: error.message });
           return;
         }
       }
 
-      // Error interno del servidor
-      console.error(
-        `[HttpTaskController:${requestId}] Error interno del servidor:`,
-        error,
-      );
-      res.status(500).json({ error: "Error interno del servidor" });
+      // Internal server error
+      console.error("HttpTaskController.getUserTasks - Internal server error", {
+        method: "getUserTasks",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 }
