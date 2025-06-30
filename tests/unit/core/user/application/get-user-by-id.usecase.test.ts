@@ -191,8 +191,11 @@ describe('GetUserByIdUseCase Application Tests', () => {
         .rejects.toThrow('Error retrieving user information');
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error in GetUserByIdUseCase:',
-        expect.any(Error)
+        '[GetUserByIdUseCase][execute] Unexpected error retrieving user by ID',
+        expect.objectContaining({
+          error: expect.any(Error),
+          requestedUserId: 'user-1'
+        })
       );
 
       consoleSpy.mockRestore();

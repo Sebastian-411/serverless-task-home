@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+
 import { LoginUseCase } from '../../../../../core/auth/application/login.usecase';
 import type { UserRepositoryPrisma } from '../../../../../core/user/infrastructure/adapters/out/user-repository-prisma';
 import { SupabaseAuthService } from '../../../../../core/auth/infrastructure/adapters/out/supabase-auth.service';
@@ -72,15 +73,18 @@ describe('LoginUseCase Application Tests', () => {
         password: 'securepassword123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'john@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'john@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
       const mockUser = createMockUser();
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
       const result = await loginUseCase.execute(loginRequest);
@@ -104,10 +108,13 @@ describe('LoginUseCase Application Tests', () => {
         password: 'adminpass123'
       };
 
-      const mockAuthUser = {
-        id: 'admin-123',
-        email: 'admin@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'admin-123',
+          email: 'admin@example.com',
+          emailVerified: true
+        },
+        token: 'token_admin-123'
       };
 
       const mockAdminUser = createMockUser({
@@ -117,7 +124,7 @@ describe('LoginUseCase Application Tests', () => {
         role: 'ADMIN'
       });
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockAdminUser);
 
       const result = await loginUseCase.execute(loginRequest);
@@ -132,15 +139,18 @@ describe('LoginUseCase Application Tests', () => {
         password: 'securepassword123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'john@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'john@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
       const mockUser = createMockUser();
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
       await loginUseCase.execute(loginRequest);
@@ -154,15 +164,18 @@ describe('LoginUseCase Application Tests', () => {
         password: 'securepassword123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'john@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'john@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
       const mockUser = createMockUser();
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
       await loginUseCase.execute(loginRequest);
@@ -190,13 +203,16 @@ describe('LoginUseCase Application Tests', () => {
         password: 'password123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'nonexistent@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'nonexistent@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
       await expect(loginUseCase.execute(loginRequest))
@@ -223,13 +239,16 @@ describe('LoginUseCase Application Tests', () => {
         password: 'password123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'john@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'john@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockRejectedValue(new Error('Database connection failed'));
 
       await expect(loginUseCase.execute(loginRequest))
@@ -257,13 +276,16 @@ describe('LoginUseCase Application Tests', () => {
         password: 'password123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'nonexistent@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'nonexistent@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
       try {
@@ -281,10 +303,13 @@ describe('LoginUseCase Application Tests', () => {
         password: 'adminpass123'
       };
 
-      const mockAuthUser = {
-        id: 'admin-123',
-        email: 'admin@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'admin-123',
+          email: 'admin@example.com',
+          emailVerified: true
+        },
+        token: 'token_admin-123'
       };
 
       const mockAdminUser = createMockUser({
@@ -294,7 +319,7 @@ describe('LoginUseCase Application Tests', () => {
         role: 'ADMIN'
       });
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockAdminUser);
 
       const result = await loginUseCase.execute(loginRequest);
@@ -308,15 +333,18 @@ describe('LoginUseCase Application Tests', () => {
         password: 'password123'
       };
 
-      const mockAuthUser = {
-        id: 'user-123',
-        email: 'john@example.com',
-        emailVerified: true
+      const mockAuthResult = {
+        user: {
+          id: 'user-123',
+          email: 'john@example.com',
+          emailVerified: true
+        },
+        token: 'token_user-123'
       };
 
       const mockUser = createMockUser();
 
-      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockSupabaseService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
       const result = await loginUseCase.execute(loginRequest);

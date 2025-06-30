@@ -28,30 +28,46 @@ export interface GetUserByIdResponse {
 export class GetUserByIdUseCase {
   constructor(private userRepository: UserRepositoryPort) {}
 
+  /**
+   * Retrieves a user by their ID, enforcing authentication and authorization rules.
+   *
+   * - Regular users can only view their own profile.
+   * - Administrators can view any profile.
+   * - Throws if the user does not exist or if permissions are insufficient.
+   *
+   * @param {GetUserByIdRequest} request - The request containing the user ID to retrieve.
+   * @param {AuthContext} authContext - The authentication context of the current request.
+   * @returns {Promise<GetUserByIdResponse>} The user data in response format.
+   * @throws {UnauthorizedError} If authentication or authorization fails.
+   * @throws {UserNotFoundError} If the user does not exist.
+   * @throws {Error} For unexpected repository or system errors.
+   */
   async execute(request: GetUserByIdRequest, authContext: AuthContext): Promise<GetUserByIdResponse> {
+    console.log('[GetUserByIdUseCase][execute] Get user by ID request received', { requestedUserId: request.id, authUserId: authContext?.user?.id, authUserRole: authContext?.user?.role });
     try {
       // Step 1: Authentication check
       if (!authContext.isAuthenticated || !authContext.user) {
+        console.warn('[GetUserByIdUseCase][execute] Validation failed: Authentication required');
         throw new UnauthorizedError('Authentication required to access user information');
       }
 
       const authenticatedUser = authContext.user;
 
       // Step 2: Authorization check
-      // Regular users can only view their own profile
-      // Administrators can view any profile
       if (authenticatedUser.role === 'user' && authenticatedUser.id !== request.id) {
+        console.warn('[GetUserByIdUseCase][execute] ACCESS DENIED: User tried to access another user profile', { authUserId: authenticatedUser.id, requestedUserId: request.id });
         throw new UnauthorizedError('Users can only access their own profile');
       }
 
       // Step 3: Get user from repository
       const user = await this.userRepository.findById(request.id);
-      
       if (!user) {
+        console.warn('[GetUserByIdUseCase][execute] Validation failed: User not found', { requestedUserId: request.id });
         throw new UserNotFoundError(request.id);
       }
 
       // Step 4: Return formatted response
+      console.log('[GetUserByIdUseCase][execute] User retrieved successfully', { requestedUserId: request.id });
       return {
         id: (user as any).id,
         email: (user as any).email,
@@ -70,13 +86,11 @@ export class GetUserByIdUseCase {
         updatedAt: new Date((user as any).updatedAt)
       };
     } catch (error) {
-      console.error('Error in GetUserByIdUseCase:', error);
-      
+      console.error('[GetUserByIdUseCase][execute] Unexpected error retrieving user by ID', { requestedUserId: request.id, error });
       // Re-throw domain errors to preserve specific messages
       if (error instanceof UnauthorizedError || error instanceof UserNotFoundError) {
         throw error;
       }
-      
       throw new Error('Error retrieving user information');
     }
   }

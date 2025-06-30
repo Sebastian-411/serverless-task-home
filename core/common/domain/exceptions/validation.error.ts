@@ -11,7 +11,7 @@ export class ValidationError extends Error {
     this.name = 'ValidationError';
     this.details = details;
     
-    // Mantiene el stack trace adecuado
+    // keep the appropriate stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ValidationError);
     }

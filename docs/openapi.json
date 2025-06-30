@@ -1,0 +1,92 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Autenticación",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Iniciar sesión de usuario",
+        "description": "Autentica a un usuario y devuelve un token JWT y los datos del usuario.",
+        "tags": ["Autenticación"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@test.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Juansebastia4231"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autenticación exitosa. Devuelve el usuario y el token JWT.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid", "example": "1a2b3c4d-5e6f-7g8h-9i0j-1234567890ab" },
+                        "email": { "type": "string", "format": "email", "example": "admin@test.com" },
+                        "name": { "type": "string", "example": "Admin User" },
+                        "role": { "type": "string", "enum": ["admin", "user"], "example": "admin" }
+                      }
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Token JWT válido para autenticación.",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "Credenciales inválidas" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "Error inesperado en el servidor" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 

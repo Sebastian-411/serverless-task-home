@@ -22,7 +22,7 @@ export class Name {
       throw new ValidationError('Name must not exceed 100 characters');
     }
 
-    // Validar que solo contenga letras, espacios, guiones y apóstrofes
+    // validate that only contains letters, spaces, hyphens and apostrophes
     const nameRegex = /^[a-zA-ZÀ-ÿ\u00f1\u00d1\s\-']+$/;
     if (!nameRegex.test(trimmed)) {
       throw new ValidationError('Name can only contain letters, spaces, hyphens and apostrophes');
@@ -32,7 +32,7 @@ export class Name {
   private _normalize(value: string): string {
     return value
       .trim()
-      .replace(/\s+/g, ' ') // Reemplazar múltiples espacios con uno solo
+      .replace(/\s+/g, ' ') // replace multiple spaces with one single space
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');

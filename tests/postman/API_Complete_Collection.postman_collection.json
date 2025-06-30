@@ -1,0 +1,1243 @@
+{
+	"info": {
+		"_postman_id": "api-complete-collection-2024",
+		"name": "API Complete Collection - Role-Based Testing",
+		"description": "Colección completa de la API con tests organizados por roles: Admin, User y Anonymous. Incluye todos los endpoints de auth y users con validaciones exhaustivas.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28076391"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "✅ Login Admin - Success",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time is less than 6000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+											"});",
+											"",
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    ",
+											"    pm.test(\"User role is admin\", function () {",
+											"        pm.expect(response.user.role).to.equal('admin');",
+											"    });",
+											"    ",
+											"    pm.environment.set('admin_token', response.token);",
+											"    pm.environment.set('admin_user_id', response.user.id);",
+											"    pm.environment.set('admin_user_email', response.user.email);",
+											"    ",
+											"    console.log('✅ Admin login successful - Token saved');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "❌ Login Admin - Invalid Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 401\", function () {",
+											"    pm.response.to.have.status(401);",
+											"});",
+											"",
+											"pm.test(\"Response time is less than 6000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+											"});",
+											"",
+											"if (pm.response.code === 401) {",
+											"    const response = pm.response.json();",
+											"    ",
+											"    pm.test(\"Error response has correct structure\", function () {",
+											"        pm.expect(response).to.have.property('error');",
+											"        pm.expect(response.error).to.have.property('code');",
+											"        pm.expect(response.error.code).to.equal('INVALID_CREDENTIALS');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"WrongPassword123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "✅ Login User - Success",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time is less than 6000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+											"});",
+											"",
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    ",
+											"    pm.test(\"User role is user\", function () {",
+											"        pm.expect(response.user.role).to.equal('user');",
+											"    });",
+											"    ",
+											"    pm.environment.set('user_token', response.token);",
+											"    pm.environment.set('user_user_id', response.user.id);",
+											"    pm.environment.set('user_user_email', response.user.email);",
+											"    ",
+											"    console.log('✅ User login successful - Token saved');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"{{test_regular_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Anonymous",
+					"item": [
+						{
+							"name": "❌ Login - No Credentials",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Response time is less than 6000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+											"});",
+											"",
+											"if (pm.response.code === 400) {",
+											"    const response = pm.response.json();",
+											"    ",
+											"    pm.test(\"Error response indicates missing fields\", function () {",
+											"        pm.expect(response).to.have.property('error');",
+											"        pm.expect(response).to.have.property('message');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "❌ Login - Invalid Email Format",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Response time is less than 6000ms\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+											"});",
+											"",
+											"if (pm.response.code === 400) {",
+											"    const response = pm.response.json();",
+											"    ",
+											"    pm.test(\"Error message mentions email validation\", function () {",
+											"        pm.expect(response.message).to.include('email');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"ValidPass123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "👥 Users Management",
+			"item": [
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "✅ Success",
+							"item": [
+								{
+									"name": "✅ Get Users - Success",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});",
+													"pm.test(\"Response has users array\", function () {",
+													"    const response = pm.response.json();",
+													"    pm.expect(response).to.have.property('data');",
+													"    pm.expect(response.data).to.be.an('array');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{admin_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								},
+								{
+									"name": "✅ Create User - Success",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});",
+													"",
+													"if (pm.response.code === 201) {",
+													"    const response = pm.response.json();",
+													"    ",
+													"    pm.test(\"Response has correct structure\", function () {",
+													"        pm.expect(response).to.have.property('data');",
+													"        pm.expect(response.data).to.have.property('id');",
+													"        pm.expect(response.data).to.have.property('email');",
+													"        pm.expect(response.data).to.have.property('name');",
+													"    });",
+													"    ",
+													"    pm.environment.set('created_user_id', response.data.id);",
+													"    console.log('✅ User created successfully, ID saved:', response.data.id);",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{admin_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								},
+								{
+									"name": "✅ Get User By ID - Success",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Validate created_user_id exists",
+													"const createdUserId = pm.environment.get('created_user_id');",
+													"if (!createdUserId) {",
+													"    pm.test('SKIP: created_user_id no está disponible', function () {",
+													"        pm.test.skip();",
+													"    });",
+													"    return;",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [{
+											"key": "Authorization",
+											"value": "Bearer {{admin_token}}"
+										}],
+										"url": {
+											"raw": "{{base_url}}/users/{{created_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{created_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "✅ Update User (PUT) - Success",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"const createdUserId = pm.environment.get('created_user_id');",
+													"if (!createdUserId) {",
+													"    pm.test('SKIP: created_user_id no está disponible', function () {",
+													"        pm.test.skip();",
+													"    });",
+													"    return;",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}} Updated\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"address\": {\n    \"addressLine1\": \"Calle 456 #89-10\",\n    \"addressLine2\": \"Apto 9C\",\n    \"city\": \"Bogotá\",\n    \"stateOrProvince\": \"Cundinamarca\",\n    \"postalCode\": \"110111\",\n    \"country\": \"CO\"\n  }\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{created_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{created_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "✅ Update User (PATCH) - Success",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"const createdUserId = pm.environment.get('created_user_id');",
+													"if (!createdUserId) {",
+													"    pm.test('SKIP: created_user_id no está disponible', function () {",
+													"        pm.test.skip();",
+													"    });",
+													"    return;",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{created_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{created_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "✅ Change User Role - Success",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"const createdUserId = pm.environment.get('created_user_id');",
+													"if (!createdUserId) {",
+													"    pm.test('SKIP: created_user_id no está disponible', function () {",
+													"        pm.test.skip();",
+													"    });",
+													"    return;",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});",
+													"pm.test(\"Role was changed successfully\", function () {",
+													"    const response = pm.response.json();",
+													"    pm.expect(response).to.have.property('data');",
+													"    pm.expect(response.data).to.have.property('role');",
+													"    pm.expect(response.data.role).to.equal('admin');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"role\": \"admin\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{created_user_id}}/role",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{created_user_id}}", "role"]
+										}
+									}
+								},
+								{
+									"name": "✅ Delete User - Success",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"const createdUserId = pm.environment.get('created_user_id');",
+													"if (!createdUserId) {",
+													"    pm.test('SKIP: created_user_id no está disponible', function () {",
+													"        pm.test.skip();",
+													"    });",
+													"    return;",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});",
+													"// Clear the created_user_id after successful deletion",
+													"pm.environment.unset('created_user_id');",
+													"console.log('✅ User deleted successfully, ID cleared');"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+										"url": {
+											"raw": "{{base_url}}/users/{{created_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{created_user_id}}"]
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "❌ Failure",
+							"item": [
+								{
+									"name": "❌ Create User - Invalid Email",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 400\", function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});",
+													"pm.test(\"Error mentions email validation\", function () {",
+													"    const response = pm.response.json();",
+													"    pm.expect(response.message).to.include('email');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{admin_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"invalid-email-format\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								},
+								{
+									"name": "❌ Get User By ID - Not Found",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 404\", function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [{"key": "Authorization", "value": "Bearer {{admin_token}}"}],
+										"url": {
+											"raw": "{{base_url}}/users/00000000-0000-0000-0000-000000000000",
+											"host": ["{{base_url}}"],
+											"path": ["users", "00000000-0000-0000-0000-000000000000"]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "✅ Success",
+							"item": [
+								{
+									"name": "✅ Get Own User By ID - Success",
+									"event": [{
+										"listen": "test",
+										"script": {
+											"exec": [
+												"pm.test(\"Status code is 200\", function () {",
+												"    pm.response.to.have.status(200);",
+												"});",
+												"pm.test(\"Response time is less than 6000ms\", function () {",
+												"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+												"});"
+											],
+											"type": "text/javascript"
+										}
+									}],
+									"request": {
+										"method": "GET",
+										"header": [{
+											"key": "Authorization",
+											"value": "Bearer {{user_token}}"
+										}],
+										"url": {
+											"raw": "{{base_url}}/users/{{user_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{user_user_id}}"]
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "❌ Failure",
+							"item": [
+								{
+									"name": "❌ Get Users - Unauthorized",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{user_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								},
+								{
+									"name": "❌ Create User - Unauthorized",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{user_token}}"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								},
+								{
+									"name": "❌ Get Another User By ID - Forbidden",
+									"event": [{
+										"listen": "test",
+										"script": {
+											"exec": [
+												"pm.test(\"Status code is 401 or 403\", function () {",
+												"    pm.expect([401, 403]).to.include(pm.response.code);",
+												"});",
+												"pm.test(\"Response time is less than 6000ms\", function () {",
+												"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+												"});"
+											],
+											"type": "text/javascript"
+										}
+									}],
+									"request": {
+										"method": "GET",
+										"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Update Another User (PUT) - Unauthorized",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401 or 403\", function () {",
+													"    pm.expect([401, 403]).to.include(pm.response.code);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{user_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}} Updated\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Update Another User (PATCH) - Unauthorized",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401 or 403\", function () {",
+													"    pm.expect([401, 403]).to.include(pm.response.code);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{user_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Delete Another User - Unauthorized",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401 or 403\", function () {",
+													"    pm.expect([401, 403]).to.include(pm.response.code);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [{"key": "Authorization", "value": "Bearer {{user_token}}"}],
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Change Another User Role - Unauthorized",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401 or 403\", function () {",
+													"    pm.expect([401, 403]).to.include(pm.response.code);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{"key": "Authorization", "value": "Bearer {{user_token}}"},
+											{"key": "Content-Type", "value": "application/json"}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"role\": \"admin\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}/role",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}", "role"]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Anonymous",
+					"item": [
+						{
+							"name": "✅ Success",
+							"item": [
+								{
+									"name": "✅ Register User (Anonymous) - Success",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});",
+													"",
+													"// Save the created user ID for other tests that need it",
+													"if (pm.response.code === 201) {",
+													"    const response = pm.response.json();",
+													"    if (response.data && response.data.id) {",
+													"        pm.environment.set('anonymous_created_user_id', response.data.id);",
+													"        console.log('✅ Anonymous user created, ID saved:', response.data.id);",
+													"    }",
+													"}"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}}\",\n  \"email\": \"{{unique_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"phoneNumber\": \"{{unique_phone}}\",\n  \"role\": \"user\",\n  \"address\": {\n    \"addressLine1\": \"Calle 123 #45-67\",\n    \"addressLine2\": \"Apto 8B\",\n    \"city\": \"Medellín\",\n    \"stateOrProvince\": \"Antioquia\",\n    \"postalCode\": \"050001\",\n    \"country\": \"CO\"\n  }\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "❌ Failure",
+							"item": [
+								{
+									"name": "❌ Get Users - No Auth",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"url": {
+											"raw": "{{base_url}}/users",
+											"host": ["{{base_url}}"],
+											"path": ["users"]
+										}
+									}
+								},
+								{
+									"name": "❌ Get User By ID - No Auth",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Update User (PUT) - No Auth",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [{"key": "Content-Type", "value": "application/json"}],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}} Updated\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Update User (PATCH) - No Auth",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [{"key": "Content-Type", "value": "application/json"}],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"{{unique_name}} Patched\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Delete User - No Auth",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}"]
+										}
+									}
+								},
+								{
+									"name": "❌ Change User Role - No Auth",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"pm.test(\"Response time is less than 6000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [{"key": "Content-Type", "value": "application/json"}],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"role\": \"admin\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/users/{{admin_user_id}}/role",
+											"host": ["{{base_url}}"],
+											"path": ["users", "{{admin_user_id}}", "role"]
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Generate unique data for testing",
+					"const timestamp = Date.now();",
+					"const random = Math.floor(Math.random() * 10000);",
+					"const uniqueEmail = `test.user.${timestamp}.${random}@example.com`;",
+					"const uniqueName = `Test User ${timestamp}`;",
+					"const uniquePhone = `310${random.toString().padStart(7, '0')}`;",
+					"",
+					"// Set environment variables",
+					"pm.environment.set('unique_email', uniqueEmail);",
+					"pm.environment.set('unique_name', uniqueName);",
+					"pm.environment.set('unique_phone', uniquePhone);",
+					"",
+					"console.log('Generated unique data:', { uniqueEmail, uniqueName, uniquePhone });"
+				],
+				"type": "text/javascript"
+			}
+		}
+	]
+} 

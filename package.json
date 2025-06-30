@@ -11,8 +11,10 @@
     "db:reset": "npx prisma migrate reset",
     "db:seed": "npx ts-node prisma/seed.ts",
     "db:seed:dev": "npm run db:reset && npm run db:seed",
-    "dev": "vercel dev",
-    "build": "tsc",
+    "cleanup:storage": "npx tsx scripts/cleanup-supabase.ts storage",
+    "cleanup:auth": "npx tsx scripts/cleanup-supabase.ts auth",
+    "cleanup:all": "npx tsx scripts/cleanup-supabase.ts all",
+    "compile": "tsc",
     "start": "vercel dev",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -23,6 +25,8 @@
     "test:coverage:html": "jest --coverage --coverageReporters=html",
     "test:unit": "jest --testPathPatterns=tests/unit",
     "coverage:check": "jest --coverage --coverageThreshold='{}'",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
     "prepare": "husky"
   },
   "repository": {
@@ -64,6 +68,7 @@
     "axios": "^1.10.0",
     "dotenv": "^16.5.0",
     "prisma": "^6.10.1",
+    "swagger-ui-dist": "^5.25.3",
     "uuid": "^11.1.0",
     "zod": "^3.25.67"
   },

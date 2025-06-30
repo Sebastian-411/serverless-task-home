@@ -41,10 +41,13 @@ describe('LoginUseCase', () => {
       password: 'Password123'
     };
 
-    const mockAuthUser = {
-      id: 'auth-user-123',
-      email: 'test@example.com',
-      emailVerified: true
+    const mockAuthResult = {
+      user: {
+        id: 'auth-user-123',
+        email: 'test@example.com',
+        emailVerified: true
+      },
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test'
     };
 
     const mockUser = {
@@ -61,7 +64,7 @@ describe('LoginUseCase', () => {
 
     it('should successfully authenticate and return user data with token', async () => {
       // Arrange
-      mockAuthService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockAuthService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
       // Act
@@ -80,7 +83,7 @@ describe('LoginUseCase', () => {
           name: mockUser.name,
           role: mockUser.role.toLowerCase()
         },
-        token: `token_${mockAuthUser.id}`
+        token: mockAuthResult.token // Real JWT token from Supabase!
       });
     });
 
@@ -99,7 +102,7 @@ describe('LoginUseCase', () => {
 
     it('should throw UserNotFoundError when user not found in repository', async () => {
       // Arrange
-      mockAuthService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockAuthService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
       // Act & Assert
@@ -116,7 +119,7 @@ describe('LoginUseCase', () => {
     it('should handle admin role correctly', async () => {
       // Arrange
       const adminUser = { ...mockUser, role: UserRole.ADMIN };
-      mockAuthService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockAuthService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(adminUser);
 
       // Act
@@ -136,7 +139,7 @@ describe('LoginUseCase', () => {
 
     it('should handle repository errors gracefully', async () => {
       // Arrange
-      mockAuthService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockAuthService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockRejectedValue(new Error('Repository error'));
 
       // Act & Assert
@@ -146,7 +149,7 @@ describe('LoginUseCase', () => {
     it('should handle user with missing name gracefully', async () => {
       // Arrange
       const userWithoutName = { ...mockUser, name: '' };
-      mockAuthService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockAuthService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(userWithoutName);
 
       // Act
@@ -159,7 +162,7 @@ describe('LoginUseCase', () => {
     it('should handle user with null name gracefully', async () => {
       // Arrange
       const userWithNullName = { ...mockUser, name: null as any };
-      mockAuthService.authenticateUser.mockResolvedValue(mockAuthUser);
+      mockAuthService.authenticateUser.mockResolvedValue(mockAuthResult);
       mockUserRepository.findByEmail.mockResolvedValue(userWithNullName);
 
       // Act
@@ -170,16 +173,5 @@ describe('LoginUseCase', () => {
     });
   });
 
-  describe('generateToken', () => {
-    it('should generate token with auth user id', async () => {
-      // Arrange
-      const mockAuthUser = { id: 'test-id' };
 
-      // Act
-      const token = await (loginUseCase as any).generateToken(mockAuthUser);
-
-      // Assert
-      expect(token).toBe('token_test-id');
-    });
-  });
 }); 

@@ -7,25 +7,34 @@ import prettier from 'eslint-config-prettier';
 const importPlugin = await import('eslint-plugin-import');
 
 export default defineConfig([
-  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js }, extends: ["js/recommended"] },
-  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], languageOptions: { globals: globals.browser } },
-  tseslint.configs.recommended,
-  tseslint.configs.strict,
+  // Global ignores first
   {
-    files: ['**/*.ts', '**/*.tsx'],
     ignores: [
       'lib/generated/**/*',
       'node_modules/**/*',
       'dist/**/*',
       'build/**/*',
       'coverage/**/*',
-    ],
+      '**/*.min.js',
+      '**/*.bundle.js',
+      '**/prisma/migrations/**/*',
+      '**/.vercel/**/*',
+      '**/.next/**/*',
+    ]
+  },
+  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js }, extends: ["js/recommended"] },
+  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], languageOptions: { globals: globals.node } },
+  ...tseslint.configs.recommended,
+  ...tseslint.configs.strict,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.json',
         sourceType: 'module',
         ecmaVersion: 2020,
+        tsconfigRootDir: process.cwd(),
       },
       globals: {
         // Node.js globals
@@ -115,12 +124,26 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
-  // Configuración específica para archivos de configuración
+  // Configuración específica para archivos de configuración y scripts
   {
-    files: ['**/setup.ts', '**/seed.ts', '**/config/**/*.ts'],
+    files: ['**/setup.ts', '**/seed.ts', '**/config/**/*.ts', 'scripts/**/*.ts'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: null, // Disable project for these files if they cause issues
+        sourceType: 'module',
+        ecmaVersion: 2020,
+      },
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
     rules: {
       'no-console': 'off',
       '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
     },
   },
 ]);

@@ -4,11 +4,11 @@ export { Name } from './name.vo';
 export { PhoneVO as Phone } from './phone.vo';
 export { Address, type AddressComponents } from './address.vo';
 
-// Tipos y constantes
+// types and constants
 export { 
   USER_ROLE, 
   VALIDATION_RULES 
 } from './constants';
 
-// Tipos avanzados
+// advanced types
 export * from './types'; 

@@ -12,15 +12,36 @@ const mockAuth = {
   resetPasswordForEmail: jest.fn(),
   admin: {
     updateUserById: jest.fn(),
-    deleteUser: jest.fn()
+    deleteUser: jest.fn(),
+    listUsers: jest.fn()
   }
 };
 
-const mockSupabaseClient = {
-  auth: mockAuth
+const mockStorage = {
+  listBuckets: jest.fn(),
+  from: jest.fn(() => ({
+    list: jest.fn(),
+    remove: jest.fn()
+  }))
 };
 
-const mockCreateClient = jest.fn(() => mockSupabaseClient);
+const mockSupabaseClient = {
+  auth: mockAuth,
+  storage: mockStorage
+};
+
+const mockAdminClient = {
+  auth: mockAuth,
+  storage: mockStorage
+};
+
+const mockCreateClient = jest.fn((url, key) => {
+  // Si es la service role key, devolver admin client
+  if (key === 'service-role-key') {
+    return mockAdminClient;
+  }
+  return mockSupabaseClient;
+});
 
 // 2. Mockea el módulo ANTES de los imports que lo usan
 jest.mock('@supabase/supabase-js', () => ({
@@ -28,22 +49,29 @@ jest.mock('@supabase/supabase-js', () => ({
 }));
 
 // 3. Ahora importa el servicio y los errores
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+
 import { SupabaseAuthService } from '@/core/auth/infrastructure/adapters/out/supabase-auth.service';
 import { InvalidCredentialsError } from '@/core/auth/domain/auth-errors';
 
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('SupabaseAuthService', () => {
   let authService: SupabaseAuthService;
   const mockConfig = {
     url: 'https://test.supabase.co',
-    key: 'test-key'
+    key: 'test-key',
+    serviceRoleKey: 'service-role-key'
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset the mock to return our mockSupabaseClient
-    mockCreateClient.mockReturnValue(mockSupabaseClient);
+    mockCreateClient.mockImplementation((url, key) => {
+      if (key === 'service-role-key') {
+        return mockAdminClient;
+      }
+      return mockSupabaseClient;
+    });
     authService = new SupabaseAuthService(mockConfig);
   });
 
@@ -162,8 +190,12 @@ describe('SupabaseAuthService', () => {
         email_confirmed_at: '2024-01-01T00:00:00Z'
       };
 
+      const mockSession = {
+        access_token: 'mock_access_token_123'
+      };
+
       (mockAuth.signInWithPassword as any).mockResolvedValue({
-        data: { user: mockUser },
+        data: { user: mockUser, session: mockSession },
         error: null
       });
 
@@ -176,16 +208,19 @@ describe('SupabaseAuthService', () => {
         password: 'password123'
       });
       expect(result).toEqual({
-        id: 'user-123',
-        email: 'test@example.com',
-        emailVerified: true
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          emailVerified: true
+        },
+        token: 'mock_access_token_123'
       });
     });
 
     it('should return null when authentication fails', async () => {
       // Arrange
       (mockAuth.signInWithPassword as any).mockResolvedValue({
-        data: { user: null },
+        data: { user: null, session: null },
         error: { message: 'Invalid credentials' }
       });
 
@@ -345,6 +380,12 @@ describe('SupabaseAuthService', () => {
   describe('deleteUser', () => {
     it('should successfully delete user', async () => {
       // Arrange
+      // Mock storage service
+      (mockStorage.listBuckets as any).mockResolvedValue({
+        data: [],
+        error: null
+      });
+      
       (mockAuth.admin.deleteUser as any).mockResolvedValue({
         error: null
       });
@@ -380,9 +421,59 @@ describe('SupabaseAuthService', () => {
     });
   });
 
+  describe('deleteAllUsers', () => {
+    it('should successfully delete all users', async () => {
+      // Arrange
+      const mockUsers = {
+        users: [
+          { id: 'user-1', email: 'user1@test.com' },
+          { id: 'user-2', email: 'user2@test.com' }
+        ]
+      };
+
+      (mockStorage.listBuckets as any).mockResolvedValue({
+        data: [],
+        error: null
+      });
+
+      (mockAuth.admin.listUsers as any).mockResolvedValue({
+        data: mockUsers,
+        error: null
+      });
+
+      (mockAuth.admin.deleteUser as any).mockResolvedValue({
+        error: null
+      });
+
+      // Act
+      const result = await authService.deleteAllUsers();
+
+      // Assert
+      expect(mockAuth.admin.listUsers).toHaveBeenCalled();
+      expect(mockAuth.admin.deleteUser).toHaveBeenCalledWith('user-1');
+      expect(mockAuth.admin.deleteUser).toHaveBeenCalledWith('user-2');
+      expect(result).toBe(true);
+    });
+
+    it('should return false when listing users fails', async () => {
+      // Arrange
+      (mockAuth.admin.listUsers as any).mockResolvedValue({
+        data: null,
+        error: { message: 'List failed' }
+      });
+
+      // Act
+      const result = await authService.deleteAllUsers();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
   describe('initialization', () => {
     it('should initialize with provided config', () => {
-      expect((mockCreateClient as any)).toHaveBeenCalledWith(mockConfig.url, mockConfig.key);
+      expect(mockCreateClient).toHaveBeenCalledWith(mockConfig.url, mockConfig.key);
+      expect(mockCreateClient).toHaveBeenCalledWith(mockConfig.url, mockConfig.serviceRoleKey);
     });
 
     it('should handle client not initialized gracefully', async () => {

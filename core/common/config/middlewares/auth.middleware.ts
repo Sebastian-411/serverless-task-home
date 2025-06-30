@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 import { UnauthorizedError } from '../../domain/exceptions/unauthorized.error';
 import type { UserId } from '../../domain/value-objects/types';
+import { Dependencies } from '../dependencies';
 
 export interface AuthContext {
   isAuthenticated: boolean;
@@ -29,20 +30,43 @@ function extractToken(req: VercelRequest): string | null {
 // Verify JWT token and extract user info
 async function verifyToken(token: string): Promise<AuthContext> {
   try {
-    // TODO: Implement real JWT verification
-    // For now, return mock data for testing
-    const mockUser = {
-      id: 'user-123',
-      email: 'admin@example.com',
-      role: 'admin' as const
-    };
+    // Step 1: Verify token with Supabase
+    const authService = Dependencies.authService;
+    const authUser = await authService.verifyToken(token);
+    
+    if (!authUser || !authUser.id || !authUser.email) {
+      console.log('🔐 Token verification failed: Invalid or expired token');
+      return {
+        isAuthenticated: false
+      };
+    }
+    
+    // Step 2: Get user details from database (including role)
+    const userRepository = Dependencies.userRepository;
+    const dbUser = await userRepository.findByEmail(authUser.email);
+    
+    if (!dbUser) {
+      console.log(`🔐 User not found in database: ${authUser.email}`);
+      return {
+        isAuthenticated: false
+      };
+    }
+    
+    // Step 3: Map database role to lowercase
+    const userRole = dbUser.role.toLowerCase() as 'admin' | 'user';
+    
+    console.log(`🔐 User authenticated: ${authUser.email} (role: ${userRole})`);
     
     return {
       isAuthenticated: true,
-      user: mockUser
+      user: {
+        id: dbUser.id,
+        email: dbUser.email,
+        role: userRole
+      }
     };
   } catch (error) {
-    console.log('Token verification failed:', error);
+    console.error('🔐 Token verification error:', error);
     return {
       isAuthenticated: false
     };
@@ -131,7 +155,11 @@ export function createAuthenticatedEndpoint(methods: string[] = ['GET'], allowed
         
         return res.status(200).json({ success: true });
       } catch (error) {
-        throw error;
+        console.error('🔐 Authenticated endpoint error:', error);
+        return res.status(500).json({
+          error: 'Internal server error',
+          message: 'An unexpected error occurred'
+        });
       }
     };
   };

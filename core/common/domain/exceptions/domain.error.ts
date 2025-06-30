@@ -21,7 +21,7 @@ export abstract class DomainError extends Error {
     this.statusCode = statusCode;
     this.details = details;
     
-    // Mantiene el stack trace adecuado
+    // keep the appropriate stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
     }

@@ -1,16 +1,13 @@
 {
   "version": 2,
+  "buildCommand": null,
+  "outputDirectory": null,
+  "installCommand": "npm install",
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 30
     }
   },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    }
-  ],
   "env": {
     "DATABASE_URL": "@database-url"
   }

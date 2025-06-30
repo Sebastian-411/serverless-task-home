@@ -89,7 +89,8 @@ class DependencyContainer {
     if (!this._authService) {
       this._authService = new SupabaseAuthService({
         url: process.env.SUPABASE_URL!,
-        key: process.env.SUPABASE_ANON_KEY!
+        key: process.env.SUPABASE_ANON_KEY!,
+        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
       });
     }
     return this._authService;
@@ -128,7 +129,7 @@ class DependencyContainer {
 
   get deleteUserUseCase(): DeleteUserUseCase {
     if (!this._deleteUserUseCase) {
-      this._deleteUserUseCase = new DeleteUserUseCase(this.userRepository);
+      this._deleteUserUseCase = new DeleteUserUseCase(this.userRepository, this.authService);
     }
     return this._deleteUserUseCase;
   }

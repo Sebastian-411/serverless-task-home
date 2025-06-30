@@ -40,12 +40,31 @@ export class CreateUserUseCase {
     private authService: AuthServicePort
   ) {}
 
+  /**
+   * Creates a new user, handling authorization, normalization, and persistence in Auth and DB.
+   *
+   * - Handles admin and self-registration scenarios.
+   * - Throws if the user already exists or if permissions are insufficient.
+   *
+   * @param {CreateUserRequest} request - The request containing user data to create.
+   * @param {AuthContext} authContext - The authentication context of the current request.
+   * @returns {Promise<CreateUserResponse>} The created user data in response format.
+   * @throws {UserAlreadyExistsError} If the user already exists.
+   * @throws {UnauthorizedError} If authentication or authorization fails.
+   * @throws {Error} For unexpected repository or system errors.
+   */
   async execute(request: CreateUserRequest, authContext: AuthContext): Promise<CreateUserResponse> {
+    console.log('[CreateUserUseCase][execute] Create user request received', { email: request.email, authUserId: authContext?.user?.id, authUserRole: authContext?.user?.role });
     // Step 1: Normalize input data
     const normalizedRequest = this.normalizeInputData(request);
 
     // Step 2: Validate authorization scenarios
-    this.validateAuthorization(normalizedRequest, authContext);
+    try {
+      this.validateAuthorization(normalizedRequest, authContext);
+    } catch (authError) {
+      console.warn('[CreateUserUseCase][execute] Validation failed: Authorization error', { email: request.email, error: authError });
+      throw authError;
+    }
 
     // Step 3: Create user in Auth Service
     const authUser = await this.authService.createUser(
@@ -54,6 +73,7 @@ export class CreateUserUseCase {
     );
 
     if (!authUser) {
+      console.warn('[CreateUserUseCase][execute] Validation failed: User already exists in Auth Service', { email: normalizedRequest.email });
       throw new UserAlreadyExistsError(normalizedRequest.email);
     }
 
@@ -63,7 +83,6 @@ export class CreateUserUseCase {
       if (normalizedRequest.address) {
         address = new Address(normalizedRequest.address);
       }
-      
       const userData: CreateUserData = {
         id: authUser.id,
         name: normalizedRequest.name,
@@ -79,41 +98,36 @@ export class CreateUserUseCase {
           country: address.country
         } : undefined
       };
-
       const createdUser = await this.userRepository.create(userData);
-
       // Step 5: Return formatted response
+      console.log('[CreateUserUseCase][execute] User created successfully', { userId: createdUser.id });
       return this.formatResponse(createdUser);
-
     } catch (dbError) {
-      // If there's an error in the DB, try to delete the user from Auth Service
-      // (manual rollback since we don't have distributed transactions)
-      console.error('Database error, user created in Auth Service but not in DB:', dbError);
+      console.error('[CreateUserUseCase][execute] Database error, user created in Auth Service but not in DB', { email: normalizedRequest.email, error: dbError });
       throw new Error('Error creating user in database');
     }
   }
 
   /**
-   * Normalize input data - Data transformation logic
+   * Normalizes input data for user creation (trims, lowercases, etc).
+   *
+   * @param {CreateUserRequest} request - The raw user creation request.
+   * @returns {CreateUserRequest} The normalized user creation request.
    */
   private normalizeInputData(request: CreateUserRequest): CreateUserRequest {
     const normalized = { ...request };
-
     // Normalize email
     normalized.email = normalized.email.trim().toLowerCase();
-
     // Normalize role
     if (normalized.role) {
       normalized.role = normalized.role.toLowerCase().trim() as 'admin' | 'user';
     }
-
     // Normalize text fields
     ['name', 'phoneNumber'].forEach(field => {
       if (normalized[field as keyof CreateUserRequest]) {
         (normalized as any)[field] = (normalized as any)[field].trim();
       }
     });
-
     // Normalize address fields
     if (normalized.address) {
       ['addressLine1', 'addressLine2', 'city', 'stateOrProvince', 'postalCode', 'country']
@@ -123,12 +137,14 @@ export class CreateUserUseCase {
           }
         });
     }
-
     return normalized;
   }
 
   /**
-   * Format response data for API consumption
+   * Formats the user entity into the API response structure.
+   *
+   * @param {any} user - The user entity from the database.
+   * @returns {CreateUserResponse} The formatted user response.
    */
   private formatResponse(user: any): CreateUserResponse {
     return {
@@ -136,52 +152,68 @@ export class CreateUserUseCase {
       email: user.email,
       name: user.name || '',
       phoneNumber: user.phoneNumber || '',
-      role: user.role.toLowerCase(), // Return in lowercase for the API
+      role: user.role.toLowerCase(),
       address: user.address,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
   }
 
+  /**
+   * Validates authorization for user creation scenarios.
+   * Throws if the current context is not allowed to create the user.
+   *
+   * @param {CreateUserRequest} request - The user creation request.
+   * @param {AuthContext} authContext - The authentication context.
+   * @throws {UnauthorizedError} If the context is not allowed to create the user.
+   */
   private validateAuthorization(request: CreateUserRequest, authContext: AuthContext): void {
     // Scenario 1: Admin creates user (can create admin or user)
     if (authContext.isAuthenticated && authContext.user?.role === 'admin') {
       // Admin can create any type of user
       return;
     }
-
     // Scenario 2: Self-register (anonymous user registers)
     if (!authContext.isAuthenticated) {
       // Anonymous user can only create user with 'user' role
-      // Normalize role if present to make validation case-insensitive
       const normalizedRole = request.role?.toLowerCase().trim();
       if (normalizedRole && normalizedRole !== 'user') {
+        console.warn('[CreateUserUseCase][validateAuthorization] Validation failed: Anonymous users can only register as regular users', { email: request.email });
         throw new UnauthorizedError('Anonymous users can only register as regular users');
       }
       return;
     }
-
     // Scenario 3: Regular user tries to create another user
     if (authContext.isAuthenticated && authContext.user?.role === 'user') {
+      console.warn('[CreateUserUseCase][validateAuthorization] Validation failed: Regular users cannot create other users', { authUserId: authContext.user.id });
       throw new UnauthorizedError('Regular users cannot create other users');
     }
-
     // Any other unauthorized case
+    console.warn('[CreateUserUseCase][validateAuthorization] Validation failed: Unauthorized to create user', { email: request.email });
     throw new UnauthorizedError('Unauthorized to create user');
   }
 
+  /**
+   * Determines the user role for creation based on request and context.
+   *
+   * @param {CreateUserRequest} request - The user creation request.
+   * @param {AuthContext} authContext - The authentication context.
+   * @returns {'admin' | 'user'} The determined user role.
+   */
   private determineUserRole(request: CreateUserRequest, authContext: AuthContext): 'admin' | 'user' {
-    // If it's admin creating user, can specify the role
     if (authContext.isAuthenticated && authContext.user?.role === 'admin') {
-      // Normalize the requested role to lowercase
       const normalizedRole = request.role?.toLowerCase().trim();
       return normalizedRole === 'admin' ? 'admin' : 'user';
     }
-
-    // In any other case (self-register), always 'user'
     return 'user';
   }
 
+  /**
+   * Maps the user role to the Prisma enum value.
+   *
+   * @param {'admin' | 'user'} role - The user role.
+   * @returns {'ADMIN' | 'USER'} The Prisma enum value.
+   */
   private mapRoleToPrisma(role: 'admin' | 'user'): 'ADMIN' | 'USER' {
     return role === 'admin' ? 'ADMIN' : 'USER';
   }

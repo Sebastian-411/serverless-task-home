@@ -20,9 +20,9 @@
       "@/api/*": ["api/*"],
       "@/tests/*": ["tests/*"]
     },
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
@@ -36,6 +36,8 @@
     "node_modules",
     ".vercel",
     "coverage",
-    "dist"
+    "lib/generated",
+    "dist",
+    "build"
   ]
 } 

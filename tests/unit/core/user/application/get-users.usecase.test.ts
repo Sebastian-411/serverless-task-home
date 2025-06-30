@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+
 import { GetUsersUseCase } from '../../../../../core/user/application/get-users.usecase';
 import type { UserRepositoryPort } from '../../../../../core/user/domain/ports/out/user-repository.port';
 import type { AuthContext } from '../../../../../core/common/config/middlewares/auth.middleware';
@@ -225,8 +226,10 @@ describe('GetUsersUseCase Application Tests', () => {
         .rejects.toThrow('Error retrieving users list');
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error in GetUsersUseCase:',
-        expect.any(Error)
+        '[GetUsersUseCase][execute] Unexpected error retrieving users list',
+        expect.objectContaining({
+          error: expect.any(Error)
+        })
       );
 
       consoleSpy.mockRestore();
@@ -240,8 +243,10 @@ describe('GetUsersUseCase Application Tests', () => {
 
       // Authorization errors are logged for security audit purposes
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error in GetUsersUseCase:',
-        expect.any(Error)
+        '[GetUsersUseCase][execute] Unexpected error retrieving users list',
+        expect.objectContaining({
+          error: expect.any(Error)
+        })
       );
 
       consoleSpy.mockRestore();
@@ -257,8 +262,10 @@ describe('GetUsersUseCase Application Tests', () => {
         .rejects.toThrow('Error retrieving users list');
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error in GetUsersUseCase:',
-        'String error'
+        '[GetUsersUseCase][execute] Unexpected error retrieving users list',
+        expect.objectContaining({
+          error: 'String error'
+        })
       );
 
       consoleSpy.mockRestore();

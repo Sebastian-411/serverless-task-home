@@ -2,11 +2,17 @@ import type { AuthServicePort } from '../domain/ports/out/auth-service.port';
 import type { UserRepositoryPort } from '../../user/domain/ports/out/user-repository.port';
 import { InvalidCredentialsError, UserNotFoundError } from '../domain/auth-errors';
 
+/**
+ * Data Transfer Object representing the request to log in.
+ */
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
+/**
+ * Data Transfer Object representing the response from a successful login.
+ */
 export interface LoginResponse {
   user: {
     id: string;
@@ -17,48 +23,58 @@ export interface LoginResponse {
   token: string;
 }
 
+/**
+ * LoginUseCase handles the user login process within the application layer.
+ * 
+ * This use case adheres to hexagonal architecture by interacting only with abstract ports:
+ * - `AuthServicePort`: for credential verification
+ * - `UserRepositoryPort`: for retrieving domain-level user data
+ * 
+ * Business rules:
+ * - Credentials must be verified through an external authentication service.
+ * - User data must exist in the local domain repository.
+ * - A valid token is returned upon successful authentication.
+ */
 export class LoginUseCase {
   constructor(
     private authService: AuthServicePort,
     private userRepository: UserRepositoryPort
   ) {}
 
+  /**
+   * Executes the login process with the provided credentials.
+   * 
+   * @param request - The login request containing email and password.
+   * @returns A `LoginResponse` containing user details and an access token.
+   * @throws InvalidCredentialsError - If authentication fails.
+   * @throws UserNotFoundError - If the user is not found in the domain.
+   */
   async execute(request: LoginRequest): Promise<LoginResponse> {
-    // Step 1: Authenticate with auth service
-    const authUser = await this.authService.authenticateUser(
+    const authResult = await this.authService.authenticateUser(
       request.email,
       request.password
     );
 
-    if (!authUser) {
+    if (!authResult) {
       throw new InvalidCredentialsError();
     }
 
-    // Step 2: Get user data from repository
     const user = await this.userRepository.findByEmail(request.email);
-    
+
     if (!user) {
       throw new UserNotFoundError(request.email);
     }
 
-    // Step 3: Generate token (this would be handled by the auth service in a real implementation)
-    const token = await this.generateToken(authUser);
-
-    // Step 4: Return response
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role.toLowerCase()
+        role: user.role.toLowerCase() // Ensure role is in lowercase
       },
-      token
+      token: authResult.token
     };
   }
 
-  private async generateToken(authUser: any): Promise<string> {
-    // This would typically be handled by the auth service
-    // For now, we'll return a placeholder
-    return `token_${authUser.id}`;
-  }
-} 
+
+}
