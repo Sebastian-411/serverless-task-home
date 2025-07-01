@@ -5,8 +5,7 @@ const swaggerSpec = {
   info: {
     title: "Serverless Task Management API",
     version: "1.0.0",
-    description:
-      "API REST serverless con autenticación basada en roles, gestión de tareas y usuarios usando Next.js, Prisma y Supabase",
+    description: `API REST serverless con autenticación basada en roles, gestión de tareas y usuarios usando Next.js, Prisma y Supabase ${process.env.SUPABASE_URL}`,
     contact: {
       name: "Sebastian",
       email: "sebastian@example.com",
