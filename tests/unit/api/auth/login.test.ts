@@ -3,29 +3,35 @@
  * Comprehensive testing for login endpoint with >90% coverage
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import handler from '../../../../api/auth/login';
+import handler from "../../../../api/auth/login";
 
 // Mock dependencies
-jest.mock('../../../../shared/config/dependencies', () => ({
+jest.mock("../../../../core/common/config/dependencies", () => ({
   Dependencies: {
     loginUseCase: {
-      execute: jest.fn()
-    }
-  }
+      execute: jest.fn(),
+    },
+  },
 }));
 
-jest.mock('../../../../shared/middlewares/validation.middleware', () => ({
-  validateEmail: jest.fn(),
-  validatePassword: jest.fn()
-}));
+jest.mock(
+  "../../../../core/common/config/middlewares/validation.middleware",
+  () => ({
+    validateEmail: jest.fn(),
+    validatePassword: jest.fn(),
+  }),
+);
 
-jest.mock('../../../../shared/middlewares/error-handler.middleware', () => ({
-  handleError: jest.fn()
-}));
+jest.mock(
+  "../../../../core/common/config/middlewares/error-handler.middleware",
+  () => ({
+    handleError: jest.fn(),
+  }),
+);
 
-describe('POST /auth/login API Tests', () => {
+describe("POST /auth/login API Tests", () => {
   let mockReq: Partial<VercelRequest>;
   let mockRes: Partial<VercelResponse>;
   let mockLoginUseCase: jest.Mock;
@@ -35,19 +41,19 @@ describe('POST /auth/login API Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockReq = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json'
+        "content-type": "application/json",
       },
-      body: {}
+      body: {},
     };
 
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
-      setHeader: jest.fn().mockReturnThis()
+      setHeader: jest.fn().mockReturnThis(),
     };
 
     // Mock dependencies
@@ -55,34 +61,41 @@ describe('POST /auth/login API Tests', () => {
     mockValidateEmail = jest.fn();
     mockValidatePassword = jest.fn();
     mockHandleError = jest.fn();
-    
-    const { Dependencies } = require('../../../../shared/config/dependencies');
-    const { validateEmail, validatePassword } = require('../../../../shared/middlewares/validation.middleware');
-    const { handleError } = require('../../../../shared/middlewares/error-handler.middleware');
-    
+
+    const {
+      Dependencies,
+    } = require("../../../../core/common/config/dependencies");
+    const {
+      validateEmail,
+      validatePassword,
+    } = require("../../../../core/common/config/middlewares/validation.middleware");
+    const {
+      handleError,
+    } = require("../../../../core/common/config/middlewares/error-handler.middleware");
+
     Dependencies.loginUseCase.execute = mockLoginUseCase;
     validateEmail.mockImplementation(mockValidateEmail);
     validatePassword.mockImplementation(mockValidatePassword);
     handleError.mockImplementation(mockHandleError);
   });
 
-  describe('Success Cases', () => {
-    it('should login successfully with valid credentials', async () => {
+  describe("Success Cases", () => {
+    it("should login successfully with valid credentials", async () => {
       const loginData = {
-        email: 'user@example.com',
-        password: 'password123'
+        email: "user@example.com",
+        password: "password123",
       };
 
       const loginResult = {
         user: {
-          id: 'user-123',
-          email: 'user@example.com',
-          name: 'Test User',
-          role: 'user'
+          id: "user-123",
+          email: "user@example.com",
+          name: "Test User",
+          role: "user",
         },
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        refreshToken: 'refresh-token-123',
-        expiresAt: 1640995200
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        refreshToken: "refresh-token-123",
+        expiresAt: 1640995200,
       };
 
       mockReq.body = loginData;
@@ -94,30 +107,30 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Login successful',
+        message: "Login successful",
         user: loginResult.user,
         accessToken: loginResult.accessToken,
         refreshToken: loginResult.refreshToken,
-        expiresAt: loginResult.expiresAt
+        expiresAt: loginResult.expiresAt,
       });
     });
 
-    it('should handle admin login successfully', async () => {
+    it("should handle admin login successfully", async () => {
       const loginData = {
-        email: 'admin@example.com',
-        password: 'adminpass123'
+        email: "admin@example.com",
+        password: "adminpass123",
       };
 
       const loginResult = {
         user: {
-          id: 'admin-123',
-          email: 'admin@example.com',
-          name: 'Admin User',
-          role: 'admin'
+          id: "admin-123",
+          email: "admin@example.com",
+          name: "Admin User",
+          role: "admin",
         },
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        refreshToken: 'refresh-token-456',
-        expiresAt: 1640995200
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        refreshToken: "refresh-token-456",
+        expiresAt: 1640995200,
       };
 
       mockReq.body = loginData;
@@ -129,19 +142,19 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Login successful',
+        message: "Login successful",
         user: loginResult.user,
         accessToken: loginResult.accessToken,
         refreshToken: loginResult.refreshToken,
-        expiresAt: loginResult.expiresAt
+        expiresAt: loginResult.expiresAt,
       });
     });
   });
 
-  describe('Validation Errors', () => {
-    it('should return 400 for missing email', async () => {
+  describe("Validation Errors", () => {
+    it("should return 400 for missing email", async () => {
       const loginData = {
-        password: 'password123'
+        password: "password123",
       };
 
       mockReq.body = loginData;
@@ -150,14 +163,14 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        message: 'Valid email is required'
+        error: "Validation error",
+        message: "Valid email is required",
       });
     });
 
-    it('should return 400 for missing password', async () => {
+    it("should return 400 for missing password", async () => {
       const loginData = {
-        email: 'user@example.com'
+        email: "user@example.com",
       };
 
       mockReq.body = loginData;
@@ -167,15 +180,15 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        message: 'Valid password is required'
+        error: "Validation error",
+        message: "Valid password is required",
       });
     });
 
-    it('should return 400 for invalid email format', async () => {
+    it("should return 400 for invalid email format", async () => {
       const loginData = {
-        email: 'invalid-email',
-        password: 'ValidPass123!'
+        email: "invalid-email",
+        password: "ValidPass123!",
       };
 
       mockReq.body = loginData;
@@ -185,15 +198,15 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        message: 'Valid email is required'
+        error: "Validation error",
+        message: "Valid email is required",
       });
     });
 
-    it('should return 400 for invalid password format', async () => {
+    it("should return 400 for invalid password format", async () => {
       const loginData = {
-        email: 'test@example.com',
-        password: 'weak'
+        email: "test@example.com",
+        password: "weak",
       };
 
       mockReq.body = loginData;
@@ -204,15 +217,15 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        message: 'Valid password is required'
+        error: "Validation error",
+        message: "Valid password is required",
       });
     });
 
-    it('should return 400 for empty password', async () => {
+    it("should return 400 for empty password", async () => {
       const loginData = {
-        email: 'user@example.com',
-        password: ''
+        email: "user@example.com",
+        password: "",
       };
 
       mockReq.body = loginData;
@@ -223,57 +236,57 @@ describe('POST /auth/login API Tests', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        message: 'Valid password is required'
+        error: "Validation error",
+        message: "Valid password is required",
       });
     });
   });
 
-  describe('Authentication Errors', () => {
-    it('should handle use case errors gracefully', async () => {
+  describe("Authentication Errors", () => {
+    it("should handle use case errors gracefully", async () => {
       const loginData = {
-        email: 'user@example.com',
-        password: 'password123'
+        email: "user@example.com",
+        password: "password123",
       };
 
       mockReq.body = loginData;
       mockValidateEmail.mockReturnValue(true);
       mockValidatePassword.mockReturnValue(true);
-      mockLoginUseCase.mockRejectedValue(new Error('Invalid credentials'));
+      mockLoginUseCase.mockRejectedValue(new Error("Invalid credentials"));
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockHandleError).toHaveBeenCalledWith(
         expect.any(Error),
         mockReq,
-        mockRes
+        mockRes,
       );
     });
   });
 
-  describe('Method Validation', () => {
-    it('should reject non-POST methods', async () => {
-      mockReq.method = 'GET';
+  describe("Method Validation", () => {
+    it("should reject non-POST methods", async () => {
+      mockReq.method = "GET";
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(405);
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: 'Method not allowed',
-        message: 'Only POST method is allowed'
+        error: "Method not allowed",
+        message: "Only POST method is allowed",
       });
     });
 
-    it('should reject PUT method', async () => {
-      mockReq.method = 'PUT';
+    it("should reject PUT method", async () => {
+      mockReq.method = "PUT";
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(405);
     });
 
-    it('should reject DELETE method', async () => {
-      mockReq.method = 'DELETE';
+    it("should reject DELETE method", async () => {
+      mockReq.method = "DELETE";
 
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
@@ -281,23 +294,23 @@ describe('POST /auth/login API Tests', () => {
     });
   });
 
-  describe('Response Format', () => {
-    it('should return correct response structure', async () => {
+  describe("Response Format", () => {
+    it("should return correct response structure", async () => {
       const loginData = {
-        email: 'user@example.com',
-        password: 'password123'
+        email: "user@example.com",
+        password: "password123",
       };
 
       const loginResult = {
         user: {
-          id: 'user-123',
-          email: 'user@example.com',
-          name: 'Test User',
-          role: 'user'
+          id: "user-123",
+          email: "user@example.com",
+          name: "Test User",
+          role: "user",
         },
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        refreshToken: 'refresh-token-123',
-        expiresAt: 1640995200
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        refreshToken: "refresh-token-123",
+        expiresAt: 1640995200,
       };
 
       mockReq.body = loginData;
@@ -308,33 +321,33 @@ describe('POST /auth/login API Tests', () => {
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       const responseCall = (mockRes.json as jest.Mock).mock.calls[0][0];
-      expect(responseCall).toHaveProperty('message', 'Login successful');
-      expect(responseCall).toHaveProperty('user');
-      expect(responseCall).toHaveProperty('accessToken');
-      expect(responseCall).toHaveProperty('refreshToken');
-      expect(responseCall).toHaveProperty('expiresAt');
-      expect(responseCall.user).toHaveProperty('id');
-      expect(responseCall.user).toHaveProperty('email');
-      expect(responseCall.user).toHaveProperty('name');
-      expect(responseCall.user).toHaveProperty('role');
+      expect(responseCall).toHaveProperty("message", "Login successful");
+      expect(responseCall).toHaveProperty("user");
+      expect(responseCall).toHaveProperty("accessToken");
+      expect(responseCall).toHaveProperty("refreshToken");
+      expect(responseCall).toHaveProperty("expiresAt");
+      expect(responseCall.user).toHaveProperty("id");
+      expect(responseCall.user).toHaveProperty("email");
+      expect(responseCall.user).toHaveProperty("name");
+      expect(responseCall.user).toHaveProperty("role");
     });
 
-    it('should not include password in response', async () => {
+    it("should not include password in response", async () => {
       const loginData = {
-        email: 'user@example.com',
-        password: 'password123'
+        email: "user@example.com",
+        password: "password123",
       };
 
       const loginResult = {
         user: {
-          id: 'user-123',
-          email: 'user@example.com',
-          name: 'Test User',
-          role: 'user'
+          id: "user-123",
+          email: "user@example.com",
+          name: "Test User",
+          role: "user",
         },
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        refreshToken: 'refresh-token-123',
-        expiresAt: 1640995200
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        refreshToken: "refresh-token-123",
+        expiresAt: 1640995200,
       };
 
       mockReq.body = loginData;
@@ -345,11 +358,11 @@ describe('POST /auth/login API Tests', () => {
       await handler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       const responseCall = (mockRes.json as jest.Mock).mock.calls[0][0];
-      
+
       // Should not include sensitive fields
-      expect(responseCall.user).not.toHaveProperty('password');
-      expect(responseCall.user).not.toHaveProperty('hashedPassword');
-      expect(responseCall.user).not.toHaveProperty('salt');
+      expect(responseCall.user).not.toHaveProperty("password");
+      expect(responseCall.user).not.toHaveProperty("hashedPassword");
+      expect(responseCall.user).not.toHaveProperty("salt");
     });
   });
-}); 
+});

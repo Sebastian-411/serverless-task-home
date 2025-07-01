@@ -18,7 +18,9 @@
     "paths": {
       "@/core/*": ["core/*"],
       "@/api/*": ["api/*"],
-      "@/tests/*": ["tests/*"]
+      "@/tests/*": ["tests/*"],
+      "@/swagger/*": ["swagger/*"],
+      "@/lib/*": ["lib/*"]
     },
     "declaration": false,
     "declarationMap": false,
