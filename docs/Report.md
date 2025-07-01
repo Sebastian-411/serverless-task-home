@@ -1,276 +1,278 @@
-# Diseño y evolución de una arquitectura serverless adaptable\*\*
+# **Design and Evolution of an Adaptable Serverless Architecture**
 
-Abordé este proyecto con la premisa de que el entorno de ejecución no debía condicionar la arquitectura. Aunque operativamente se construyó sobre un entorno serverless, el diseño debía ser agnóstico al hosting, resiliente al cambio e independiente del tiempo. Desde el principio me situé en un rol arquitectónico, donde las decisiones no se orientan a "resolver requerimientos", sino a **dar forma a una base evolutiva**.
-
----
-
-### 🏛️ Estructura como contrato de futuro
-
-La arquitectura fue concebida como un contrato: aquello que establece cómo las piezas se conectan sin conocerse. Bajo esa noción, separé explícitamente las responsabilidades entre la lógica del negocio y sus mecanismos de entrega. Las funciones serverless se asumieron como un tipo de adaptador, y no como el centro del diseño.
-
-> La aplicación no fue diseñada _para_ serverless. Fue diseñada _desde_ la lógica de dominio, y serverless simplemente fue un adaptador más.
-
-Esa separación me permitió formalizar el dominio sin contaminación externa, con capas que no dependen del transporte, la persistencia ni de frameworks. El dominio no conoce al mundo; solo se expresa mediante puertos.
+I started this project with the idea that the runtime environment should not define the architecture. Even though we used a serverless environment, the design needed to be independent of the hosting, flexible to changes, and able to last over time. From the beginning, I took the role of an architect, focusing not only on requirements but on **building a strong base for future growth**.
 
 ---
 
-### 🔄 Reversibilidad y desacoplamiento como principios
+### 🏛️ Structure as a Contract for the Future
 
-Cada decisión se midió bajo dos criterios:
+The architecture was designed like a contract — something that defines how parts connect without knowing each other. I clearly separated business logic from delivery mechanisms. Serverless functions were used only as **adapters**, not as the main part of the design.
 
-1. ¿Es reversible sin dolor?
-2. ¿Puede ser desacoplada sin romper comportamiento?
+> The app was not designed _for_ serverless. It was designed _from_ the domain logic, and serverless was just one adapter.
 
-El uso de interfaces fue sistemático. No como patrón, sino como regla de gobernabilidad. El objetivo fue que las decisiones locales (como el tipo de base de datos, proveedor de auth o framework de routing) no se propagaran globalmente. Esto garantiza que el cambio de contexto (migrar a contenedores, FaaS distinto o incluso a un monolito) no implique reescritura, solo sustitución de adaptadores.
-
----
-
-### ⚙️ Modularidad orientada a consistencia
-
-Dividí el sistema en módulos que responden a consistencia funcional, no técnica. Cada componente existe porque representa una unidad conceptual de negocio (user, task) y cada módulo incluye sus propios contratos, casos de uso y adaptadores. Esto elimina el riesgo de módulos utilitarios ambiguos o infraestructuras globales opacas.
-
-La infraestructura, lejos de ser un conjunto de helpers, se comporta como una colección de adaptadores inyectables. Ningún componente interno tiene conocimiento de su implementación.
+This allowed me to build the domain without external dependencies, using layers that don’t depend on transport, storage, or frameworks. The domain doesn’t know about the outside world; it only communicates through ports.
 
 ---
 
-### 🧪 Calidad validada por diseño
+### 🔄 Reversibility and Decoupling as Core Principles
 
-La validación del sistema no se limitó al testeo automatizado. Fue complementada por una verificación de **contratos explícitos** a través de herramientas externas, emulando consumidores reales. Se trabajó sobre flujos completos, evaluando tanto rutas autenticadas como condiciones límite. El objetivo era garantizar que la semántica de la API —más allá de su forma técnica— se comportara de acuerdo al modelo de negocio.
+Every decision followed two questions:
 
-El uso de herramientas como **Postman** permitió simular de forma controlada distintas combinaciones de roles, datos y respuestas, funcionando como una validación exploratoria y semántica del comportamiento. Así, se contrastaron las definiciones del Swagger generado dinámicamente con su comportamiento real, identificando posibles desviaciones entre el diseño y la ejecución
+1. Is it easy to reverse?
+2. Can we change it without breaking behavior?
 
----
-
-### 🔐 Seguridad: el privilegio como contexto, no como regla
-
-El modelo de roles no fue aplicado desde una política externa, sino como una condición de negocio encapsulada en los casos de uso. Esto asegura que las decisiones sobre permisos se mantengan **coherentes con el contexto funcional**, no solo técnicas.
-
-Cada endpoint traduce una intención, y cada intención es evaluada según el sujeto y su relación con el objeto. Nada es implícito.
+Interfaces were used everywhere — not just as a pattern but as a rule. The idea was to make local decisions (like choosing a database or auth provider) without affecting the whole system. This way, we can switch to containers, another FaaS, or even a monolith without rewriting code — only changing the adapters.
 
 ---
 
-### 📦 Serverless: entorno optimizado, no restrictivo
+### ⚙️ Modularity Based on Business Consistency
 
-El entorno serverless no fue una restricción, sino una oportunidad para validar la arquitectura. Cada cold start, cada limitación de acceso al filesystem, cada entorno de build fue un mecanismo de validación del diseño desacoplado.
+I organized the system in modules that represent business logic, not just technical parts. Each module (like `user` or `task`) has its own contracts, use cases, and adapters. This avoids unclear utility modules or global infrastructure files.
 
-Tuve que reconfigurar procesos como Swagger, compilación de TypeScript, y path resolution para cumplir con los contratos sin traicionar el diseño. La solución: adaptadores que transforman sin alterar.
+The infrastructure is not just helpers — it’s a set of injectible adapters. No internal module knows how they are implemented.
 
 ---
 
-## 📊 Criterios de Evaluación y Cumplimiento
+### 🧪 Quality by Design
+
+Quality was not only tested with automated tests. We also checked **explicit contracts** using tools like Postman, simulating real user flows. We tested both authenticated routes and edge cases to make sure the API’s meaning matched the business logic.
+
+Postman helped test different roles, inputs, and responses. We compared the Swagger documentation with the real behavior to find any differences.
+
+---
+
+### 🔐 Security: Privilege as Context, Not Rule
+
+Role logic was not added from outside, but inside each use case. This makes sure that **permissions match business context**, not just technical checks.
+
+Each endpoint represents an action, and we check the person and their relation to the object. Nothing is assumed.
+
+---
+
+### 📦 Serverless: An Opportunity, Not a Limitation
+
+Serverless was not a problem — it was a way to test our architecture. Cold starts, file system access, and build steps all helped validate the design.
+
+I had to adapt things like Swagger generation, TypeScript compilation, and path resolution to work correctly without changing the architecture. We solved it by using adapters.
+
+---
+
+## 📊 Evaluation Criteria and Results
 
 ### 🎯 **Code Quality and Organization**
 
-**Arquitectura Hexagonal Implementada:**
+**Hexagonal Architecture Used:**
 
-- **Separación de capas**: Dominio, aplicación e infraestructura claramente delimitadas
-- **Inversión de dependencias**: El dominio no conoce la infraestructura
-- **Interfaces explícitas**: Puertos de entrada y salida bien definidos
-- **Modularidad funcional**: Módulos `user`, `task`, `auth` con responsabilidades específicas
+- **Layer separation**: Domain, application, infrastructure
+- **Dependency inversion**: Domain does not depend on infrastructure
+- **Interfaces**: Clear input/output ports
+- **Functional modules**: `user`, `task`, `auth` modules with clear roles
 
-**Patrones de Diseño Aplicados:**
+**Design Patterns Applied:**
 
-- **Repository Pattern**: Abstracción de persistencia con implementaciones Prisma
-- **Use Case Pattern**: Lógica de negocio encapsulada en casos de uso específicos
-- **Factory Pattern**: Creación de entidades con validación
-- **Strategy Pattern**: Diferentes estrategias de autenticación y autorización
+- **Repository Pattern**: Separate data layer using Prisma
+- **Use Case Pattern**: Business logic in separate use cases
+- **Factory Pattern**: Entity creation with validation
+- **Strategy Pattern**: Auth and permission strategies
 
-**Organización del Código:**
+**Code Organization:**
 
 ```
 core/
-├── user/           # Módulo de usuarios
-│   ├── domain/     # Entidades y reglas de negocio
-│   ├── application/# Casos de uso
-│   └── infrastructure/ # Adaptadores
-├── task/           # Módulo de tareas
-└── common/         # Utilidades compartidas
+├── user/
+│   ├── domain/
+│   ├── application/
+│   └── infrastructure/
+├── task/
+└── common/
 ```
 
-### 🗄️ **Proper use of SQL database features**
+---
 
-**Esquema de Base de Datos Optimizado:**
+### 🗄️ **Proper Use of SQL Features**
 
-- **Índices estratégicos**: 15+ índices compuestos para consultas complejas
-- **Relaciones bien definidas**: Foreign keys con `onDelete` apropiados
-- **Tipos de datos específicos**: `@db.VarChar(255)`, `@db.Text` para optimización
-- **Enums nativos**: `UserRole`, `TaskStatus`, `TaskPriority` como tipos PostgreSQL
+**Optimized Schema:**
 
-**Optimizaciones de Rendimiento:**
+- **15+ composite indexes** for better queries
+- **Clear relationships** with foreign keys and onDelete
+- **Specific data types** like `@db.VarChar(255)`
+- **Native enums** for role, task status, and priority
+
+**Performance Optimizations:**
 
 ```sql
--- Índices compuestos para consultas frecuentes
-@@index([role, createdAt])     -- Admin queries con ordenamiento
-@@index([status, priority])    -- Filtrado por estado y prioridad
-@@index([assignedTo, status])  -- Tareas de usuario por estado
-@@index([country, stateOrProvince, city]) -- Jerarquía geográfica
+@@index([role, createdAt])
+@@index([status, priority])
+@@index([assignedTo, status])
+@@index([country, stateOrProvince, city])
 ```
 
-**Características PostgreSQL Aprovechadas:**
+**PostgreSQL Features:**
 
-- **UUID como primary keys**: Mejor distribución y seguridad
-- **Timestamps automáticos**: `@default(now())`, `@updatedAt`
-- **Constraints de unicidad**: Email único, addressId único
-- **Cascading deletes**: Eliminación en cascada para mantener integridad
+- **UUID primary keys**
+- **Auto timestamps**
+- **Unique constraints**
+- **Cascading deletes**
 
-### 🧪 **Completeness of unit tests**
+---
 
-**Cobertura de Pruebas Exhaustiva:**
+### 🧪 **Unit Test Coverage**
 
-- **93.62% statements, 86.78% branches, 93.05% functions, 94.16% lines**
-- **842 tests pasando** en 43 suites de prueba
-- **Umbral de cobertura**: 80% mínimo configurado en CI/CD
+**Strong Coverage:**
 
-**Estrategia de Testing:**
+- **93.62% statements, 86.78% branches**
+- **842 tests in 43 test suites**
+- **CI/CD threshold at 80%**
 
-- **Tests unitarios**: Cada caso de uso, entidad y adaptador
-- **Mocks estratégicos**: Repositorios, servicios externos, middleware
-- **Casos edge**: Validación de errores, datos inválidos, permisos
-- **Tests de integración**: Flujos completos con Postman
+**Testing Strategy:**
 
-**Ejemplos de Cobertura:**
+- **Unit tests** for use cases and adapters
+- **Mocks** for repositories and services
+- **Edge cases** with invalid data and permission errors
+- **Integration tests** with Postman
+
+Example:
 
 ```typescript
-// Tests de casos de uso con mocks
 describe("DeleteUserUseCase", () => {
   it("should delete user when admin and user exists", async () => {
-    // Arrange, Act, Assert con mocks completos
+    // test with mocks
   });
 
   it("should fail when non-admin tries to delete", async () => {
-    // Validación de permisos
+    // test for permissions
   });
 });
 ```
 
-### ⚠️ **Error handling and edge cases**
+---
 
-**Sistema de Errores Jerárquico:**
+### ⚠️ **Error Handling and Edge Cases**
 
-- **DomainError**: Base para errores de dominio
-- **EntityNotFoundError**: Entidades no encontradas
-- **UnauthorizedError**: Errores de autenticación/autorización
-- **ValidationError**: Errores de validación de datos
+**Error Types:**
 
-**Manejo de Casos Edge:**
+- **DomainError**
+- **EntityNotFoundError**
+- **UnauthorizedError**
+- **ValidationError**
 
-- **Autenticación fallida**: Tokens inválidos, expirados, usuarios inexistentes
-- **Autorización granular**: Roles específicos por operación
-- **Validación de datos**: Emails, UUIDs, fechas, campos requeridos
-- **Errores de infraestructura**: Fallos de base de datos, servicios externos
+**Handled Cases:**
 
-**Middleware de Manejo de Errores:**
+- **Auth errors**: Invalid/expired tokens
+- **Granular permissions**
+- **Input validation**: Emails, UUIDs, dates
+- **Infra errors**: DB/service failures
+
+Example middleware:
 
 ```typescript
-// Error handler middleware centralizado
-export function errorHandler(
-  error: Error,
-  req: VercelRequest,
-  res: VercelResponse,
-) {
+export function errorHandler(error: Error, req, res) {
   if (error instanceof UnauthorizedError) {
     return res.status(401).json({ error: error.message });
   }
-  // Mapeo de errores a códigos HTTP apropiados
 }
 ```
 
-### 🌐 **API design and documentation**
+---
 
-**Diseño RESTful Consistente:**
+### 🌐 **API Design and Documentation**
 
-- **Endpoints semánticos**: `/api/users`, `/api/tasks`, `/api/auth/login`
-- **Métodos HTTP apropiados**: GET, POST, PUT, DELETE
-- **Códigos de estado HTTP**: 200, 201, 400, 401, 403, 404, 500
-- **Respuestas estructuradas**: Formato JSON consistente
+**RESTful API:**
 
-**Documentación Automática:**
+- Endpoints like `/api/users`, `/api/tasks`
+- Methods: GET, POST, PUT, DELETE
+- Status codes: 200, 201, 400, 401, etc.
+- Consistent JSON responses
 
-- **OpenAPI 3.0**: Especificación completa en `/docs/openapi.json`
-- **Swagger UI**: Interfaz interactiva para testing
-- **Postman Collection**: 123KB de tests de integración
-- **Ejemplos de uso**: Request/response examples en documentación
+**Docs:**
 
-**Validación de Entrada:**
+- **OpenAPI 3.0**
+- **Swagger UI**
+- **Postman Collection (123KB)**
+- **Request/response examples**
+
+Example validation:
 
 ```typescript
-// Middleware de validación con Zod
-export function validateRequest(schema: ZodSchema) {
-  return async (req: VercelRequest, res: VercelResponse) => {
+export function validateRequest(schema) {
+  return async (req, res) => {
     try {
       req.body = await schema.parseAsync(req.body);
-    } catch (error) {
+    } catch {
       return res.status(400).json({ error: "Validation failed" });
     }
   };
 }
 ```
 
-### 🔒 **Security considerations**
+---
 
-**Autenticación Robusta:**
+### 🔒 **Security Considerations**
 
-- **JWT con Supabase**: Tokens seguros con verificación en tiempo real
-- **Middleware de autenticación**: Verificación automática en endpoints protegidos
-- **Validación de tokens**: Verificación con servicio externo + base de datos local
+**Auth:**
 
-**Autorización Basada en Roles:**
+- **JWT via Supabase**
+- **Middleware** for auth check
+- **Token validation** with external + local check
 
-- **Roles granulares**: `admin` y `user` con permisos específicos
-- **Verificación contextual**: Permisos evaluados por operación
-- **Protección de endpoints**: Middleware `createAuthenticatedEndpoint`
+**Role-based Access:**
 
-**Seguridad de Datos:**
+- `admin`, `user` roles
+- Context-aware permissions
+- Protected endpoints
 
-- **Validación de entrada**: Sanitización con Zod schemas
-- **Variables de entorno**: Configuración segura para credenciales
-- **Logs seguros**: Información sensible no expuesta en logs
+**Data Security:**
 
-**Ejemplo de Autorización:**
+- Input validation with Zod
+- Env variables for secrets
+- Safe logging
+
+Example:
 
 ```typescript
-// Endpoint protegido con roles específicos
 export default createAuthenticatedEndpoint(
   ["DELETE"],
   ["admin"],
 )(async ({ authContext, pathParam }) => {
-  // Solo admins pueden ejecutar esta operación
+  // Only admins can run this
 });
 ```
 
-### ⚡ **Performance optimization techniques**
+---
 
-**Optimizaciones de Base de Datos:**
+### ⚡ **Performance Optimization**
 
-- **Índices estratégicos**: 20+ índices para consultas frecuentes
-- **Consultas optimizadas**: Uso de Prisma con queries eficientes
-- **Paginación**: Límites en consultas de listado
-- **Caching**: Servicio de cache para datos frecuentemente accedidos
+**Database:**
 
-**Optimizaciones Serverless:**
+- 20+ indexes
+- Prisma with optimized queries
+- Pagination
+- Caching
 
-- **Cold start optimization**: Dependencias minimizadas
-- **Timeouts configurados**: `maxDuration: 30` en Vercel
-- **Bundle optimization**: Tree shaking y code splitting
-- **Connection pooling**: Reutilización de conexiones de base de datos
+**Serverless:**
 
-**Integración con IA:**
+- Smaller dependencies
+- Timeouts: `maxDuration: 30`
+- Tree shaking and code splitting
+- DB connection pooling
 
-- **Gemini AI Service**: Resúmenes inteligentes de tareas
-- **Procesamiento asíncrono**: Generación de resúmenes sin bloquear
-- **Fallbacks**: Respuestas alternativas si la IA falla
+**AI Integration:**
 
-**Monitoreo y Métricas:**
+- Gemini AI for task summaries
+- Async processing
+- Fallback responses
 
-- **Logs estructurados**: Trazabilidad completa de operaciones
-- **Error tracking**: Captura y reporte de errores
-- **Performance monitoring**: Tiempos de respuesta y uso de recursos
+**Monitoring:**
+
+- Structured logs
+- Error tracking
+- Performance metrics
 
 ---
 
-## 🎯 **Resultados y Métricas**
+## 🎯 **Results and Metrics**
 
-### **Cobertura de Código:**
+### **Code Coverage:**
 
 - **Statements**: 93.62%
 - **Branches**: 86.78%
@@ -279,35 +281,35 @@ export default createAuthenticatedEndpoint(
 
 ### **Tests:**
 
-- **Total de tests**: 842
-- **Suites de prueba**: 43
-- **Tiempo de ejecución**: ~15 segundos
-- **Configuración CI/CD**: Umbral de 80% mínimo
+- **842 total tests**
+- **43 suites**
+- **\~15 seconds runtime**
+- **CI/CD: 80% threshold**
 
-### **Arquitectura:**
+### **Architecture:**
 
-- **Módulos principales**: 3 (user, task, auth)
-- **Casos de uso**: 15+
-- **Entidades de dominio**: 4
-- **Adaptadores**: 8+
-- **Endpoints API**: 12+
+- 3 main modules: `user`, `task`, `auth`
+- 15+ use cases
+- 4 domain entities
+- 8+ adapters
+- 12+ API endpoints
 
-### **Base de Datos:**
+### **Database:**
 
-- **Tablas**: 3 (users, tasks, addresses)
-- **Índices**: 20+
-- **Relaciones**: 6
-- **Enums**: 3
+- 3 tables: `users`, `tasks`, `addresses`
+- 20+ indexes
+- 6 relationships
+- 3 enums
 
 ---
 
-Una buena arquitectura no se define por su forma, sino por su capacidad de mutar sin romper. Este proyecto fue una práctica deliberada de diseño evolutivo. El valor no está en el stack elegido, sino en que nada de ese stack es imprescindible.
+A good architecture is not defined by shape, but by its ability to change without breaking. This project was a deliberate exercise in **evolutionary design**. The value is not in the tools we used, but in the fact that **none of them are required**.
 
-**La arquitectura demostró ser:**
+**This architecture proved to be:**
 
-- ✅ **Evolutiva**: Cambios sin reescritura
-- ✅ **Testeable**: 93%+ cobertura
-- ✅ **Segura**: Autenticación y autorización robustas
-- ✅ **Performante**: Optimizaciones en múltiples capas
-- ✅ **Documentada**: APIs completamente especificadas
-- ✅ **Mantenible**: Código organizado y modular
+- **Evolvable**: Change without rewriting
+- **Testable**: 93%+ coverage
+- **Secure**: Strong auth and permissions
+- **Performant**: Optimized at multiple levels
+- **Well-documented**: Complete API specs
+- **Maintainable**: Organized and modular code

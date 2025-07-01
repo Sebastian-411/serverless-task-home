@@ -11,7 +11,10 @@ const mockSupabaseClient = { storage: mockStorage };
 const createClient = jest.fn(() => mockSupabaseClient);
 
 jest.mock("@supabase/supabase-js", () => ({
-  createClient: jest.fn((...args) => createClient(...args)),
+  createClient: jest.fn(function () {
+    // eslint-disable-next-line prefer-rest-params
+    return createClient.apply(this, arguments as any);
+  }),
 }));
 
 describe("SupabaseStorageService", () => {
@@ -26,7 +29,7 @@ describe("SupabaseStorageService", () => {
   });
 
   it("inicializa correctamente con y sin serviceRoleKey", () => {
-    const service = new SupabaseStorageService(config);
+    new SupabaseStorageService(config);
     expect(createClient).toHaveBeenCalledWith(config.url, config.key);
     expect(createClient).toHaveBeenCalledWith(
       config.url,
