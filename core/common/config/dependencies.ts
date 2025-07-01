@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
+import { PrismaClient } from "../../../lib/generated/prisma";
 import { ChangeUserRoleUseCase } from "../../user/application/change-user-role.usecase";
 import { CreateUserUseCase } from "../../user/application/create-user.usecase";
 import { GetUserByIdUseCase } from "../../user/application/get-user-by-id.usecase";
