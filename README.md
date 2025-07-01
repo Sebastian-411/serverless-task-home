@@ -237,6 +237,7 @@ Set in Vercel Dashboard:
 
 ## Another resources
 
+- **Swagger**: [Swagger](https://serverless-task-home.vercel.app/api/docs-swagger)
 - **Issues**: [GitHub Issues](https://github.com/Sebastian-411/serverless-task-home/issues)
 - **Docs**: [docs/](docs/)
 - **Postman**: [Test Collection](tests/postman/)
