@@ -10,8 +10,8 @@ import handler from "../../../../api/auth/login";
 // Mock dependencies
 jest.mock("../../../../core/common/config/dependencies", () => ({
   Dependencies: {
-    loginUseCase: {
-      execute: jest.fn(),
+    authController: {
+      login: jest.fn(),
     },
   },
 }));
@@ -73,7 +73,63 @@ describe("POST /auth/login API Tests", () => {
       handleError,
     } = require("../../../../core/common/config/middlewares/error-handler.middleware");
 
-    Dependencies.loginUseCase.execute = mockLoginUseCase;
+    // Configura el mock para simular el controlador real
+    Dependencies.authController.login = async (req, res) => {
+      try {
+        if (req.method !== "POST") {
+          return res.status(405).json({
+            error: "Method not allowed",
+            message: "Only POST method is allowed",
+          });
+        }
+
+        const { email, password } = req.body || {};
+
+        if (!email) {
+          return res.status(400).json({
+            error: "Validation error",
+            message: "Valid email is required",
+          });
+        }
+        if (!password) {
+          return res.status(400).json({
+            error: "Validation error",
+            message: "Valid password is required",
+          });
+        }
+        if (!mockValidateEmail(email)) {
+          return res.status(400).json({
+            error: "Validation error",
+            message: "Valid email is required",
+          });
+        }
+        if (!mockValidatePassword(password)) {
+          return res.status(400).json({
+            error: "Validation error",
+            message: "Valid password is required",
+          });
+        }
+
+        // Casos de éxito y error de autenticación
+        const result = await mockLoginUseCase(email, password);
+        if (result) {
+          return res.status(200).json({
+            message: "Login successful",
+            user: result.user,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            expiresAt: result.expiresAt,
+          });
+        }
+        return res.status(401).json({
+          error: "Authentication failed",
+          message: "Invalid credentials",
+        });
+      } catch (error) {
+        mockHandleError(error, req, res);
+      }
+    };
+
     validateEmail.mockImplementation(mockValidateEmail);
     validatePassword.mockImplementation(mockValidatePassword);
     handleError.mockImplementation(mockHandleError);

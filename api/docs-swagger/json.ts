@@ -1,33 +1,18 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import swaggerJSDoc from "swagger-jsdoc";
 
-const swaggerDefinition = {
-  openapi: "3.0.0",
-  info: {
-    title: "Serverless Task API",
-    version: "1.0.0",
-    description:
-      "Documentación de la API de tareas con Vercel Functions y Supabase",
-  },
-  components: {
-    securitySchemes: {
-      BearerAuth: {
-        type: "http",
-        scheme: "bearer",
-      },
-    },
-  },
-  security: [{ BearerAuth: [] }],
-};
+import { swaggerSpec } from "../../swagger/swaggerConfig";
+
+const swaggerDefinition = swaggerSpec;
 
 const options = {
   swaggerDefinition,
   apis: ["api/**/*.ts"],
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+const swaggerSpecConfig = swaggerJSDoc(options);
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Content-Type", "application/json");
-  return res.status(200).send(swaggerSpec);
+  return res.status(200).send(swaggerSpecConfig);
 }

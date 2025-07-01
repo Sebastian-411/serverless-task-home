@@ -1,9 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import type { AuthControllerPort } from '../../../domain/ports/in/auth-controller.port';
-import type { LoginUseCase } from '../../../application/login.usecase';
-import { validateEmail, validatePassword } from '../../../../common/config/middlewares/validation.middleware';
-import { handleError } from '../../../../common/config/middlewares/error-handler.middleware';
+import type { AuthControllerPort } from "../../../domain/ports/in/auth-controller.port";
+import type { LoginUseCase } from "../../../application/login.usecase";
+import {
+  validateEmail,
+  validatePassword,
+} from "../../../../common/config/middlewares/validation.middleware";
+import { handleError } from "../../../../common/config/middlewares/error-handler.middleware";
 
 /**
  * HttpAuthController handles HTTP-specific concerns related to authentication.
@@ -35,19 +38,30 @@ export class HttpAuthController implements AuthControllerPort {
    */
   async login(req: VercelRequest, res: VercelResponse): Promise<void> {
     try {
-      console.log('[HttpAuthController] Received login request', {
+      console.log("[HttpAuthController] Received login request", {
         method: req.method,
-        path: req.url
+        path: req.url,
       });
 
-      if (req.method !== 'POST') {
-        console.warn('[HttpAuthController] Method not allowed', {
-          method: req.method
+      if (req.method !== "POST") {
+        console.warn("[HttpAuthController] Method not allowed", {
+          method: req.method,
         });
 
         res.status(405).json({
-          error: 'Method not allowed',
-          message: 'Only POST method is allowed'
+          error: "Method not allowed",
+          message: "Only POST method is allowed",
+        });
+        return;
+      }
+
+      if (!req.body || typeof req.body !== "object") {
+        console.warn("[HttpAuthController] Email validation failed", {
+          email: undefined,
+        });
+        res.status(400).json({
+          error: "Validation error",
+          message: "Valid email is required",
         });
         return;
       }
@@ -55,46 +69,52 @@ export class HttpAuthController implements AuthControllerPort {
       const { email, password } = req.body;
 
       if (!email || !validateEmail(email)) {
-        console.warn('[HttpAuthController] Email validation failed', { email });
+        console.warn("[HttpAuthController] Email validation failed", { email });
 
         res.status(400).json({
-          error: 'Validation error',
-          message: 'Valid email is required'
+          error: "Validation error",
+          message: "Valid email is required",
         });
         return;
       }
 
       if (!password || !validatePassword(password)) {
-        console.warn('[HttpAuthController] Password validation failed');
+        console.warn("[HttpAuthController] Password validation failed");
 
         res.status(400).json({
-          error: 'Validation error',
-          message: 'Password must be at least 8 characters with uppercase, lowercase, and number'
+          error: "Validation error",
+          message:
+            "Password must be at least 8 characters with uppercase, lowercase, and number",
         });
         return;
       }
 
-      console.log('[HttpAuthController] Credentials validated. Executing use case.', { email });
+      console.log(
+        "[HttpAuthController] Credentials validated. Executing use case.",
+        { email },
+      );
 
       const loginResult = await this.loginUseCase.execute({ email, password });
 
-      console.log('[HttpAuthController] Login successful', {
+      console.log("[HttpAuthController] Login successful", {
         userId: loginResult.user.id,
         email: loginResult.user.email,
-        role: loginResult.user.role
+        role: loginResult.user.role,
       });
 
       res.status(200).json({
-        message: 'Login successful',
+        message: "Login successful",
         user: loginResult.user,
-        token: loginResult.token
+        token: loginResult.token,
       });
-
     } catch (error) {
-      console.error('[HttpAuthController] Unexpected error occurred during login', {
-        error: (error as Error).message,
-        path: req.url
-      });
+      console.error(
+        "[HttpAuthController] Unexpected error occurred during login",
+        {
+          error: (error as Error).message,
+          path: req.url,
+        },
+      );
 
       handleError(error as Error, req, res);
     }

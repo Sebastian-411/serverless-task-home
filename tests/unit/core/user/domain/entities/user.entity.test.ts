@@ -1,25 +1,28 @@
-import { User, UserRole } from '@/core/user/domain/entities/user.entity';
-import { ValidationError } from '@/core/common/domain/exceptions/validation.error';
+import {
+  User,
+  UserRole,
+} from "../../../../../../core/user/domain/entities/user.entity";
+import { ValidationError } from "../../../../../../core/common/domain/exceptions/validation.error";
 
-describe('User Entity', () => {
+describe("User Entity", () => {
   const validUserData = {
-    email: 'test@example.com',
-    password: 'Password123',
-    name: 'Test User',
+    email: "test@example.com",
+    password: "Password123",
+    name: "Test User",
     role: UserRole.USER,
-    phoneNumber: '+1234567890',
+    phoneNumber: "+1234567890",
     address: {
-      addressLine1: '123 Main St',
-      addressLine2: 'Apt 4B',
-      city: 'New York',
-      stateOrProvince: 'NY',
-      postalCode: '10001',
-      country: 'USA'
-    }
+      addressLine1: "123 Main St",
+      addressLine2: "Apt 4B",
+      city: "New York",
+      stateOrProvince: "NY",
+      postalCode: "10001",
+      country: "USA",
+    },
   };
 
-  describe('constructor', () => {
-    it('should create user with valid data', () => {
+  describe("constructor", () => {
+    it("should create user with valid data", () => {
       // Act
       const user = new User(validUserData);
 
@@ -34,19 +37,19 @@ describe('User Entity', () => {
       expect(user.emailVerified).toBe(false);
     });
 
-    it('should create user with generated ID when not provided', () => {
+    it("should create user with generated ID when not provided", () => {
       // Act
       const user = new User(validUserData);
 
       // Assert
       expect(user.id).toBeDefined();
-      expect(typeof user.id).toBe('string');
+      expect(typeof user.id).toBe("string");
       expect(user.id.length).toBeGreaterThan(0);
     });
 
-    it('should create user with provided ID', () => {
+    it("should create user with provided ID", () => {
       // Arrange
-      const providedId = 'user-123';
+      const providedId = "user-123";
       const userDataWithId = { ...validUserData, id: providedId };
 
       // Act
@@ -56,40 +59,40 @@ describe('User Entity', () => {
       expect(user.id).toBe(providedId);
     });
 
-    it('should normalize email to lowercase', () => {
+    it("should normalize email to lowercase", () => {
       // Arrange
       const userDataWithUpperCaseEmail = {
         ...validUserData,
-        email: 'TEST@EXAMPLE.COM'
+        email: "TEST@EXAMPLE.COM",
       };
 
       // Act
       const user = new User(userDataWithUpperCaseEmail);
 
       // Assert
-      expect(user.email).toBe('test@example.com');
+      expect(user.email).toBe("test@example.com");
     });
 
-    it('should trim name', () => {
+    it("should trim name", () => {
       // Arrange
       const userDataWithWhitespace = {
         ...validUserData,
-        name: '  Test User  '
+        name: "  Test User  ",
       };
 
       // Act
       const user = new User(userDataWithWhitespace);
 
       // Assert
-      expect(user.name).toBe('Test User');
+      expect(user.name).toBe("Test User");
     });
 
-    it('should set default values', () => {
+    it("should set default values", () => {
       // Arrange
       const minimalUserData = {
-        email: 'test@example.com',
-        password: 'Password123',
-        name: 'Test User'
+        email: "test@example.com",
+        password: "Password123",
+        name: "Test User",
       };
 
       // Act
@@ -103,44 +106,44 @@ describe('User Entity', () => {
       expect(user.address).toBeUndefined();
     });
 
-    it('should throw ValidationError for invalid email', () => {
+    it("should throw ValidationError for invalid email", () => {
       // Arrange
       const invalidEmailData = {
         ...validUserData,
-        email: 'invalid-email'
+        email: "invalid-email",
       };
 
       // Act & Assert
       expect(() => new User(invalidEmailData)).toThrow(ValidationError);
     });
 
-    it('should throw ValidationError for invalid password', () => {
+    it("should throw ValidationError for invalid password", () => {
       // Arrange
       const invalidPasswordData = {
         ...validUserData,
-        password: 'weak'
+        password: "weak",
       };
 
       // Act & Assert
       expect(() => new User(invalidPasswordData)).toThrow(ValidationError);
     });
 
-    it('should throw ValidationError for invalid name', () => {
+    it("should throw ValidationError for invalid name", () => {
       // Arrange
       const invalidNameData = {
         ...validUserData,
-        name: ''
+        name: "",
       };
 
       // Act & Assert
       expect(() => new User(invalidNameData)).toThrow(ValidationError);
     });
 
-    it('should throw ValidationError for invalid role', () => {
+    it("should throw ValidationError for invalid role", () => {
       // Arrange
       const invalidRoleData = {
         ...validUserData,
-        role: 'invalid-role' as any
+        role: "invalid-role" as any,
       };
 
       // Act & Assert
@@ -148,58 +151,58 @@ describe('User Entity', () => {
     });
   });
 
-  describe('getters', () => {
+  describe("getters", () => {
     let user: User;
 
     beforeEach(() => {
       user = new User(validUserData);
     });
 
-    it('should return correct email', () => {
-      expect(user.email).toBe('test@example.com');
+    it("should return correct email", () => {
+      expect(user.email).toBe("test@example.com");
     });
 
-    it('should return correct password', () => {
-      expect(user.password).toBe('Password123');
+    it("should return correct password", () => {
+      expect(user.password).toBe("Password123");
     });
 
-    it('should return correct name', () => {
-      expect(user.name).toBe('Test User');
+    it("should return correct name", () => {
+      expect(user.name).toBe("Test User");
     });
 
-    it('should return correct role', () => {
+    it("should return correct role", () => {
       expect(user.role).toBe(UserRole.USER);
     });
 
-    it('should return correct phone number', () => {
-      expect(user.phoneNumber).toBe('+1234567890');
+    it("should return correct phone number", () => {
+      expect(user.phoneNumber).toBe("+1234567890");
     });
 
-    it('should return correct address', () => {
+    it("should return correct address", () => {
       expect(user.address).toEqual(validUserData.address);
     });
 
-    it('should return correct isActive status', () => {
+    it("should return correct isActive status", () => {
       expect(user.isActive).toBe(true);
     });
 
-    it('should return correct emailVerified status', () => {
+    it("should return correct emailVerified status", () => {
       expect(user.emailVerified).toBe(false);
     });
 
-    it('should return correct lastLoginAt', () => {
+    it("should return correct lastLoginAt", () => {
       expect(user.lastLoginAt).toBeUndefined();
     });
 
-    it('should return correct isAdmin status', () => {
+    it("should return correct isAdmin status", () => {
       expect(user.isAdmin).toBe(false);
     });
 
-    it('should return true for admin user', () => {
+    it("should return true for admin user", () => {
       // Arrange
       const adminUser = new User({
         ...validUserData,
-        role: UserRole.ADMIN
+        role: UserRole.ADMIN,
       });
 
       // Assert
@@ -207,17 +210,17 @@ describe('User Entity', () => {
     });
   });
 
-  describe('setters', () => {
+  describe("setters", () => {
     let user: User;
 
     beforeEach(() => {
       user = new User(validUserData);
     });
 
-    describe('setEmail', () => {
-      it('should update email with valid value', () => {
+    describe("setEmail", () => {
+      it("should update email with valid value", () => {
         // Arrange
-        const newEmail = 'new@example.com';
+        const newEmail = "new@example.com";
 
         // Act
         user.setEmail(newEmail);
@@ -226,12 +229,12 @@ describe('User Entity', () => {
         expect(user.email).toBe(newEmail.toLowerCase());
       });
 
-      it('should throw ValidationError for invalid email', () => {
+      it("should throw ValidationError for invalid email", () => {
         // Act & Assert
-        expect(() => user.setEmail('invalid-email')).toThrow(ValidationError);
+        expect(() => user.setEmail("invalid-email")).toThrow(ValidationError);
       });
 
-      it('should update timestamp', () => {
+      it("should update timestamp", () => {
         // Arrange
         const originalUpdatedAt = user.updatedAt;
 
@@ -243,17 +246,19 @@ describe('User Entity', () => {
         }
 
         // Act
-        user.setEmail('new@example.com');
+        user.setEmail("new@example.com");
 
         // Assert
-        expect(new Date(user.updatedAt).getTime()).toBeGreaterThan(new Date(originalUpdatedAt).getTime());
+        expect(new Date(user.updatedAt).getTime()).toBeGreaterThan(
+          new Date(originalUpdatedAt).getTime(),
+        );
       });
     });
 
-    describe('setPassword', () => {
-      it('should update password with valid value', () => {
+    describe("setPassword", () => {
+      it("should update password with valid value", () => {
         // Arrange
-        const newPassword = 'NewPassword123';
+        const newPassword = "NewPassword123";
 
         // Act
         user.setPassword(newPassword);
@@ -262,16 +267,16 @@ describe('User Entity', () => {
         expect(user.password).toBe(newPassword);
       });
 
-      it('should throw ValidationError for invalid password', () => {
+      it("should throw ValidationError for invalid password", () => {
         // Act & Assert
-        expect(() => user.setPassword('weak')).toThrow(ValidationError);
+        expect(() => user.setPassword("weak")).toThrow(ValidationError);
       });
     });
 
-    describe('setName', () => {
-      it('should update name with valid value', () => {
+    describe("setName", () => {
+      it("should update name with valid value", () => {
         // Arrange
-        const newName = 'New Name';
+        const newName = "New Name";
 
         // Act
         user.setName(newName);
@@ -280,14 +285,14 @@ describe('User Entity', () => {
         expect(user.name).toBe(newName);
       });
 
-      it('should throw ValidationError for invalid name', () => {
+      it("should throw ValidationError for invalid name", () => {
         // Act & Assert
-        expect(() => user.setName('')).toThrow(ValidationError);
+        expect(() => user.setName("")).toThrow(ValidationError);
       });
     });
 
-    describe('setRole', () => {
-      it('should update role with valid value', () => {
+    describe("setRole", () => {
+      it("should update role with valid value", () => {
         // Act
         user.setRole(UserRole.ADMIN);
 
@@ -296,16 +301,16 @@ describe('User Entity', () => {
         expect(user.isAdmin).toBe(true);
       });
 
-      it('should throw ValidationError for invalid role', () => {
+      it("should throw ValidationError for invalid role", () => {
         // Act & Assert
-        expect(() => user.setRole('invalid' as any)).toThrow(ValidationError);
+        expect(() => user.setRole("invalid" as any)).toThrow(ValidationError);
       });
     });
 
-    describe('setPhoneNumber', () => {
-      it('should update phone number with valid value', () => {
+    describe("setPhoneNumber", () => {
+      it("should update phone number with valid value", () => {
         // Arrange
-        const newPhone = '+9876543210';
+        const newPhone = "+9876543210";
 
         // Act
         user.setPhoneNumber(newPhone);
@@ -314,21 +319,21 @@ describe('User Entity', () => {
         expect(user.phoneNumber).toBe(newPhone);
       });
 
-      it('should throw ValidationError for invalid phone number', () => {
+      it("should throw ValidationError for invalid phone number", () => {
         // Act & Assert
-        expect(() => user.setPhoneNumber('123')).toThrow(ValidationError);
+        expect(() => user.setPhoneNumber("123")).toThrow(ValidationError);
       });
     });
 
-    describe('setAddress', () => {
-      it('should update address', () => {
+    describe("setAddress", () => {
+      it("should update address", () => {
         // Arrange
         const newAddress = {
-          addressLine1: '456 New St',
-          city: 'Los Angeles',
-          stateOrProvince: 'CA',
-          postalCode: '90210',
-          country: 'USA'
+          addressLine1: "456 New St",
+          city: "Los Angeles",
+          stateOrProvince: "CA",
+          postalCode: "90210",
+          country: "USA",
         };
 
         // Act
@@ -339,8 +344,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('setActive', () => {
-      it('should update active status', () => {
+    describe("setActive", () => {
+      it("should update active status", () => {
         // Act
         user.setActive(false);
 
@@ -349,8 +354,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('setEmailVerified', () => {
-      it('should update email verified status', () => {
+    describe("setEmailVerified", () => {
+      it("should update email verified status", () => {
         // Act
         user.setEmailVerified(true);
 
@@ -359,10 +364,10 @@ describe('User Entity', () => {
       });
     });
 
-    describe('setLastLoginAt', () => {
-      it('should update last login timestamp', () => {
+    describe("setLastLoginAt", () => {
+      it("should update last login timestamp", () => {
         // Arrange
-        const timestamp = '2024-01-01T00:00:00Z';
+        const timestamp = "2024-01-01T00:00:00Z";
 
         // Act
         user.setLastLoginAt(timestamp);
@@ -373,15 +378,15 @@ describe('User Entity', () => {
     });
   });
 
-  describe('business methods', () => {
+  describe("business methods", () => {
     let user: User;
 
     beforeEach(() => {
       user = new User(validUserData);
     });
 
-    describe('updateLastLogin', () => {
-      it('should update last login timestamp', () => {
+    describe("updateLastLogin", () => {
+      it("should update last login timestamp", () => {
         // Arrange
         const beforeUpdate = new Date();
 
@@ -391,13 +396,17 @@ describe('User Entity', () => {
         // Assert
         const afterUpdate = new Date();
         expect(user.lastLoginAt).toBeDefined();
-        expect(new Date(user.lastLoginAt!).getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
-        expect(new Date(user.lastLoginAt!).getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+        expect(new Date(user.lastLoginAt!).getTime()).toBeGreaterThanOrEqual(
+          beforeUpdate.getTime(),
+        );
+        expect(new Date(user.lastLoginAt!).getTime()).toBeLessThanOrEqual(
+          afterUpdate.getTime(),
+        );
       });
     });
 
-    describe('activate', () => {
-      it('should activate user', () => {
+    describe("activate", () => {
+      it("should activate user", () => {
         // Arrange
         user.setActive(false);
 
@@ -409,8 +418,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('deactivate', () => {
-      it('should deactivate user', () => {
+    describe("deactivate", () => {
+      it("should deactivate user", () => {
         // Act
         user.deactivate();
 
@@ -419,8 +428,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('verifyEmail', () => {
-      it('should verify email', () => {
+    describe("verifyEmail", () => {
+      it("should verify email", () => {
         // Act
         user.verifyEmail();
 
@@ -429,8 +438,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('promoteToAdmin', () => {
-      it('should promote user to admin', () => {
+    describe("promoteToAdmin", () => {
+      it("should promote user to admin", () => {
         // Act
         user.promoteToAdmin();
 
@@ -440,8 +449,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('demoteToUser', () => {
-      it('should demote admin to user', () => {
+    describe("demoteToUser", () => {
+      it("should demote admin to user", () => {
         // Arrange
         user.promoteToAdmin();
 
@@ -455,15 +464,15 @@ describe('User Entity', () => {
     });
   });
 
-  describe('utility methods', () => {
+  describe("utility methods", () => {
     let user: User;
 
     beforeEach(() => {
       user = new User(validUserData);
     });
 
-    describe('equals', () => {
-      it('should return true for same user', () => {
+    describe("equals", () => {
+      it("should return true for same user", () => {
         // Arrange
         const sameUser = new User({ ...validUserData, id: user.id });
 
@@ -471,24 +480,24 @@ describe('User Entity', () => {
         expect(user.equals(sameUser)).toBe(true);
       });
 
-      it('should return false for different users', () => {
+      it("should return false for different users", () => {
         // Arrange
         const user = new User({
-          email: 'test@example.com',
-          password: 'Password123',
-          name: 'Test User'
+          email: "test@example.com",
+          password: "Password123",
+          name: "Test User",
         });
         const differentUser = new User({
-          email: 'different@example.com',
-          password: 'Password123',
-          name: 'Different User'
+          email: "different@example.com",
+          password: "Password123",
+          name: "Different User",
         });
 
         // Act & Assert
         expect(user.equals(differentUser)).toBe(false);
       });
 
-      it('should return false for non-user objects', () => {
+      it("should return false for non-user objects", () => {
         // Arrange
         const nonUser = { id: user.id };
 
@@ -497,23 +506,23 @@ describe('User Entity', () => {
       });
     });
 
-    describe('hasSameEmail', () => {
-      it('should return true for same email', () => {
+    describe("hasSameEmail", () => {
+      it("should return true for same email", () => {
         // Arrange
         const sameEmailUser = new User({
           ...validUserData,
-          email: 'test@example.com'
+          email: "test@example.com",
         });
 
         // Act & Assert
         expect(user.hasSameEmail(sameEmailUser)).toBe(true);
       });
 
-      it('should return false for different email', () => {
+      it("should return false for different email", () => {
         // Arrange
         const differentEmailUser = new User({
           ...validUserData,
-          email: 'other@example.com'
+          email: "other@example.com",
         });
 
         // Act & Assert
@@ -521,8 +530,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('toJSON', () => {
-      it('should return user as plain object', () => {
+    describe("toJSON", () => {
+      it("should return user as plain object", () => {
         // Act
         const json = user.toJSON();
 
@@ -538,13 +547,13 @@ describe('User Entity', () => {
           emailVerified: user.emailVerified,
           lastLoginAt: user.lastLoginAt,
           createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          updatedAt: user.updatedAt,
         });
       });
     });
 
-    describe('toSafeJSON', () => {
-      it('should return user as plain object without password', () => {
+    describe("toSafeJSON", () => {
+      it("should return user as plain object without password", () => {
         // Act
         const safeJson = user.toSafeJSON();
 
@@ -560,41 +569,43 @@ describe('User Entity', () => {
           emailVerified: user.emailVerified,
           lastLoginAt: user.lastLoginAt,
           createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          updatedAt: user.updatedAt,
         });
-        expect(safeJson).not.toHaveProperty('password');
+        expect(safeJson).not.toHaveProperty("password");
       });
     });
 
-    describe('validate', () => {
-      it('should not throw for valid user', () => {
+    describe("validate", () => {
+      it("should not throw for valid user", () => {
         // Act & Assert
         expect(() => user.validate()).not.toThrow();
       });
 
-      it('should throw ValidationError for invalid user', () => {
+      it("should throw ValidationError for invalid user", () => {
         // Arrange
         const invalidUser = new User({
-          email: 'test@example.com',
-          password: 'Password123',
-          name: 'Test User'
+          email: "test@example.com",
+          password: "Password123",
+          name: "Test User",
         });
-        
+
         // Mock the validation methods to throw
-        jest.spyOn(invalidUser as any, '_validateEmail').mockImplementation(() => {
-          throw new ValidationError('Invalid email format');
-        });
+        jest
+          .spyOn(invalidUser as any, "_validateEmail")
+          .mockImplementation(() => {
+            throw new ValidationError("Invalid email format");
+          });
 
         // Act & Assert
         expect(() => invalidUser.validate()).toThrow(ValidationError);
-        expect(() => invalidUser.validate()).toThrow('Invalid email format');
+        expect(() => invalidUser.validate()).toThrow("Invalid email format");
       });
     });
   });
 
-  describe('static methods', () => {
-    describe('create', () => {
-      it('should create user with factory method', () => {
+  describe("static methods", () => {
+    describe("create", () => {
+      it("should create user with factory method", () => {
         // Act
         const user = User.create(validUserData);
 
@@ -604,8 +615,8 @@ describe('User Entity', () => {
       });
     });
 
-    describe('createAdmin', () => {
-      it('should create admin user', () => {
+    describe("createAdmin", () => {
+      it("should create admin user", () => {
         // Arrange
         const { role, ...userDataWithoutRole } = validUserData;
 
@@ -618,71 +629,69 @@ describe('User Entity', () => {
       });
     });
 
-    describe('isValidEmail', () => {
-      it('should return true for valid emails', () => {
+    describe("isValidEmail", () => {
+      it("should return true for valid emails", () => {
         const validEmails = [
-          'test@example.com',
-          'user.name@domain.co.uk',
-          'user+tag@example.org'
+          "test@example.com",
+          "user.name@domain.co.uk",
+          "user+tag@example.org",
         ];
 
-        validEmails.forEach(email => {
+        validEmails.forEach((email) => {
           expect(User.isValidEmail(email)).toBe(true);
         });
       });
 
-      it('should return false for invalid emails', () => {
+      it("should return false for invalid emails", () => {
         const invalidEmails = [
-          'invalid-email',
-          '@example.com',
-          'test@',
-          'test.example.com',
-          'a'.repeat(256) + '@example.com' // Too long
+          "invalid-email",
+          "@example.com",
+          "test@",
+          "test.example.com",
+          "a".repeat(256) + "@example.com", // Too long
         ];
 
-        invalidEmails.forEach(email => {
+        invalidEmails.forEach((email) => {
           expect(User.isValidEmail(email)).toBe(false);
         });
       });
     });
 
-    describe('isValidPassword', () => {
-      it('should return true for valid passwords', () => {
-        const validPasswords = [
-          'Password123',
-          'SecurePass1',
-          'MyP@ssw0rd'
-        ];
+    describe("isValidPassword", () => {
+      it("should return true for valid passwords", () => {
+        const validPasswords = ["Password123", "SecurePass1", "MyP@ssw0rd"];
 
-        validPasswords.forEach(password => {
+        validPasswords.forEach((password) => {
           expect(User.isValidPassword(password)).toBe(true);
         });
       });
 
-      it('should return false for invalid passwords', () => {
+      it("should return false for invalid passwords", () => {
         const invalidPasswords = [
-          'short',
-          'nouppercase123',
-          'NOLOWERCASE123',
-          'NoNumbers'
+          "short",
+          "nouppercase123",
+          "NOLOWERCASE123",
+          "NoNumbers",
         ];
 
-        invalidPasswords.forEach(password => {
+        invalidPasswords.forEach((password) => {
           expect(User.isValidPassword(password)).toBe(false);
         });
       });
     });
 
-    describe('normalizeEmail', () => {
-      it('should normalize email to lowercase and trim', () => {
-        expect(User.normalizeEmail('  TEST@EXAMPLE.COM  ')).toBe('test@example.com');
+    describe("normalizeEmail", () => {
+      it("should normalize email to lowercase and trim", () => {
+        expect(User.normalizeEmail("  TEST@EXAMPLE.COM  ")).toBe(
+          "test@example.com",
+        );
       });
     });
 
-    describe('normalizeName', () => {
-      it('should trim name', () => {
-        expect(User.normalizeName('  Test User  ')).toBe('Test User');
+    describe("normalizeName", () => {
+      it("should trim name", () => {
+        expect(User.normalizeName("  Test User  ")).toBe("Test User");
       });
     });
   });
-}); 
+});
