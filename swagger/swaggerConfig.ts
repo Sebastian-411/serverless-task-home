@@ -21,12 +21,12 @@ const swaggerSpec = {
   },
   servers: [
     {
-      url: "http://localhost:3000",
-      description: "Development server",
-    },
-    {
-      url: "https://your-vercel-app.vercel.app",
-      description: "Production server",
+      url: process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000",
+      description: process.env.VERCEL_URL
+        ? "Production server"
+        : "Development server",
     },
   ],
   components: {
