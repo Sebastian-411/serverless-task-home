@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start:dev": "vercel dev",
-    "build": "tsc",
+    "build": "tsc && npm run db:generate",
     "deploy": "vercel --prod",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
