@@ -68,7 +68,7 @@ describe("GetTaskByIdUseCase", () => {
       // Act & Assert
       await expect(
         getTaskByIdUseCase.getTaskById("task-123", "other-user-789", "USER"),
-      ).rejects.toThrow("No tienes permisos para ver esta tarea");
+      ).rejects.toThrow("You don't have permission to view this task");
     });
 
     it("should return null when task does not exist", async () => {

@@ -12,6 +12,8 @@ const mockTaskRepository: jest.Mocked<TaskRepositoryPort> = {
   findTaskById: jest.fn(),
   updateTask: jest.fn(),
   deleteTask: jest.fn(),
+  findRecentTasks: jest.fn(),
+  findRecentTasksByUser: jest.fn(),
 };
 
 describe("GetUserTasksUseCase", () => {
@@ -160,7 +162,7 @@ describe("GetUserTasksUseCase", () => {
           currentUserId,
           currentUserRole,
         ),
-      ).rejects.toThrow("ID de usuario inválido");
+      ).rejects.toThrow("Invalid user ID");
     });
 
     it("debería aplicar filtros correctamente", async () => {
@@ -281,7 +283,7 @@ describe("GetUserTasksUseCase", () => {
           currentUserId,
           currentUserRole,
         ),
-      ).rejects.toThrow("Error al obtener tareas del repositorio");
+      ).rejects.toThrow("Error retrieving tasks from repository");
     });
   });
 });

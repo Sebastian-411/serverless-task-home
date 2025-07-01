@@ -358,7 +358,11 @@ export class Task extends BaseEntity {
     if (data.description !== undefined) this._description = data.description;
     if (data.status !== undefined) this._status = data.status;
     if (data.priority !== undefined) this._priority = data.priority;
-    if (data.dueDate !== undefined) this._dueDate = data.dueDate;
+    if (data.dueDate !== undefined) {
+      this._dueDate = data.dueDate;
+    } else if (Object.prototype.hasOwnProperty.call(data, "dueDate")) {
+      this._dueDate = undefined;
+    }
     if (data.assignedTo !== undefined) this._assignedTo = data.assignedTo;
     this.updateTimestamp();
 

@@ -183,11 +183,18 @@ import { HttpTaskController } from "../../core/task/infrastructure/adapters/in/h
 const taskController = new HttpTaskController();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method === "GET") {
-    return await taskController.getTasks(req, res);
+  console.log(`[${req.method}] /api/tasks - Request received`);
+
+  try {
+    if (req.method === "GET") {
+      return await taskController.getTasks(req, res);
+    }
+    if (req.method === "POST") {
+      return await taskController.createTask(req, res);
+    }
+    return res.status(405).json({ error: "Method not allowed" });
+  } catch (error) {
+    console.error("[GET /api/tasks] Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-  if (req.method === "POST") {
-    return await taskController.createTask(req, res);
-  }
-  return res.status(405).json({ error: "Method not allowed" });
 }

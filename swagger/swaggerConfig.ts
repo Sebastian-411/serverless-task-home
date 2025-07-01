@@ -423,6 +423,96 @@ const swaggerSpec = {
         },
       },
     },
+    "/api/tasks/summary": {
+      get: {
+        tags: ["Tasks"],
+        summary: "Get AI-powered task summary",
+        description:
+          "Generate an AI-powered summary of recent tasks based on user role. Admins get summaries of all recent tasks, while users get summaries of only their assigned tasks.",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            in: "query",
+            name: "limit",
+            schema: {
+              type: "integer",
+              minimum: 1,
+              maximum: 50,
+              default: 10,
+            },
+            description:
+              "Number of recent tasks to include in the summary (max 50)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "AI-generated summary retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    summary: {
+                      type: "string",
+                      description:
+                        "AI-generated natural language summary of tasks",
+                      example:
+                        "Recent tasks include improving login flow, updating UI, and setting up CI/CD pipelines.",
+                    },
+                    taskCount: {
+                      type: "integer",
+                      description: "Number of tasks included in the summary",
+                      example: 5,
+                    },
+                    userRole: {
+                      type: "string",
+                      description: "Role of the user requesting the summary",
+                      example: "admin",
+                    },
+                    limit: {
+                      type: "integer",
+                      description: "Limit parameter used for the request",
+                      example: 10,
+                    },
+                  },
+                  required: ["summary", "taskCount", "userRole", "limit"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid limit parameter",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Authentication required",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+              },
+            },
+          },
+          "500": {
+            description: "AI service error or internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
 };
 

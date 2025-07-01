@@ -31,6 +31,8 @@ describe("GetTasksUseCase", () => {
       findTaskById: jest.fn(),
       updateTask: jest.fn(),
       deleteTask: jest.fn(),
+      findRecentTasks: jest.fn(),
+      findRecentTasksByUser: jest.fn(),
     };
     getTasksUseCase = new GetTasksUseCase(mockTaskRepository);
   });
@@ -242,9 +244,15 @@ describe("GetTasksUseCase", () => {
     });
 
     it("should throw error when user tries to see tasks assigned to others", async () => {
+      // No need to mock repository since authorization should fail before reaching it
+      mockTaskRepository.findTasks.mockResolvedValue({
+        tasks: [mockTask],
+        total: 1,
+      });
+
       await expect(
         getTasksUseCase.getTasks(
-          { assignedTo: "other-user-123" },
+          { assignedTo: "123e4567-e89b-12d3-a456-426614174000" },
           "user-123",
           "USER",
         ),
@@ -254,9 +262,15 @@ describe("GetTasksUseCase", () => {
     });
 
     it("should throw error when user tries to see tasks created by others", async () => {
+      // No need to mock repository since authorization should fail before reaching it
+      mockTaskRepository.findTasks.mockResolvedValue({
+        tasks: [mockTask],
+        total: 1,
+      });
+
       await expect(
         getTasksUseCase.getTasks(
-          { createdBy: "other-user-123" },
+          { createdBy: "123e4567-e89b-12d3-a456-426614174000" },
           "user-123",
           "USER",
         ),
@@ -274,15 +288,18 @@ describe("GetTasksUseCase", () => {
       mockTaskRepository.findTasks.mockResolvedValue(mockResult);
 
       await getTasksUseCase.getTasks(
-        { assignedTo: "other-user-123", createdBy: "another-user-456" },
+        {
+          assignedTo: "123e4567-e89b-12d3-a456-426614174000",
+          createdBy: "987fcdeb-51a2-43d1-b789-123456789abc",
+        },
         "admin-123",
         "ADMIN",
       );
 
       expect(mockTaskRepository.findTasks).toHaveBeenCalledWith(
         expect.objectContaining({
-          assignedTo: "other-user-123",
-          createdBy: "another-user-456",
+          assignedTo: "123e4567-e89b-12d3-a456-426614174000",
+          createdBy: "987fcdeb-51a2-43d1-b789-123456789abc",
         }),
         "admin-123",
         "ADMIN",
@@ -369,14 +386,14 @@ describe("GetTasksUseCase", () => {
       mockTaskRepository.findTasks.mockResolvedValue(mockResult);
 
       await getTasksUseCase.getTasks(
-        { assignedTo: "123e4567-e89b-12d3-a456-426614174000" },
+        { assignedTo: "user-123" },
         "user-123",
         "USER",
       );
 
       expect(mockTaskRepository.findTasks).toHaveBeenCalledWith(
         expect.objectContaining({
-          assignedTo: "123e4567-e89b-12d3-a456-426614174000",
+          assignedTo: "user-123",
         }),
         "user-123",
         "USER",

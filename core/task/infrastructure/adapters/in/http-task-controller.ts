@@ -8,11 +8,13 @@ import {
   DeleteTaskUseCase,
   AssignTaskUseCase,
   GetUserTasksUseCase,
+  GetTaskSummaryUseCase,
 } from "../../../application";
 import type { GetTasksFilters } from "../../../domain/ports/in/task-controller.port";
 import { TaskRepositoryPrisma } from "../../../infrastructure/task.repository.prisma";
 import { PrismaClient } from "../../../../../lib/generated/prisma";
 import { authenticate } from "../../../../common/config/middlewares/auth.middleware";
+import { GeminiService } from "../../../../common/config/ai/gemini.service";
 
 /**
  * HTTP controller for task-related operations.
@@ -27,6 +29,7 @@ export class HttpTaskController {
   private deleteTaskUseCase: DeleteTaskUseCase;
   private assignTaskUseCase: AssignTaskUseCase;
   private getUserTasksUseCase: GetUserTasksUseCase;
+  private getTaskSummaryUseCase: GetTaskSummaryUseCase;
 
   /**
    * Initializes the HTTP task controller with all required use cases.
@@ -47,11 +50,15 @@ export class HttpTaskController {
     this.deleteTaskUseCase = new DeleteTaskUseCase(taskRepository);
     this.assignTaskUseCase = new AssignTaskUseCase(taskRepository);
     this.getUserTasksUseCase = new GetUserTasksUseCase(taskRepository);
+    this.getTaskSummaryUseCase = new GetTaskSummaryUseCase(
+      taskRepository,
+      new GeminiService(),
+    );
 
     console.log("HttpTaskController.constructor completed", {
       method: "constructor",
       component: "HttpTaskController",
-      useCasesInitialized: 7,
+      useCasesInitialized: 8,
     });
   }
 
@@ -1010,6 +1017,143 @@ export class HttpTaskController {
         requestId,
         error: error instanceof Error ? error.message : String(error),
       });
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
+  /**
+   * Handles GET request to generate AI-powered task summary.
+   *
+   * @param req - Vercel request object containing optional limit parameter
+   * @param res - Vercel response object
+   * @returns Promise that resolves when the response is sent
+   * @throws May throw authentication, authorization, or AI service errors
+   */
+  async getTaskSummary(req: VercelRequest, res: VercelResponse): Promise<void> {
+    const requestId = Math.random().toString(36).substring(7);
+
+    console.log("HttpTaskController.getTaskSummary called", {
+      method: "getTaskSummary",
+      requestId,
+      endpoint: "GET /tasks/summary",
+      queryParams: req.query,
+    });
+
+    try {
+      // Authenticate user
+      const authContext = await authenticate(req, res);
+      if (!authContext.isAuthenticated || !authContext.user) {
+        console.warn(
+          "HttpTaskController.getTaskSummary - User not authenticated",
+          {
+            method: "getTaskSummary",
+            requestId,
+          },
+        );
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const { id: userId, role } = authContext.user;
+      console.log("HttpTaskController.getTaskSummary - User authenticated", {
+        method: "getTaskSummary",
+        requestId,
+        userId,
+        userRole: role,
+      });
+
+      // Parse query parameters
+      const limitParam = req.query.limit as string;
+      const limit = limitParam ? parseInt(limitParam, 10) : 10;
+
+      // Validate limit parameter
+      if (isNaN(limit) || limit < 1 || limit > 50) {
+        console.warn(
+          "HttpTaskController.getTaskSummary - Invalid limit parameter",
+          {
+            method: "getTaskSummary",
+            requestId,
+            limitParam,
+          },
+        );
+        res.status(400).json({
+          error: "Limit must be a number between 1 and 50",
+        });
+        return;
+      }
+
+      console.log("HttpTaskController.getTaskSummary - Processing request", {
+        method: "getTaskSummary",
+        requestId,
+        limit,
+      });
+
+      // Execute use case
+      const result = await this.getTaskSummaryUseCase.execute({
+        limit,
+        authContext: { userId, role },
+      });
+
+      console.log(
+        "HttpTaskController.getTaskSummary - Summary generated successfully",
+        {
+          method: "getTaskSummary",
+          requestId,
+          taskCount: result.taskCount,
+        },
+      );
+
+      // Return success response
+      res.status(200).json({
+        summary: result.summary,
+        taskCount: result.taskCount,
+        userRole: result.userRole,
+        limit: limit,
+      });
+    } catch (error) {
+      console.error("HttpTaskController.getTaskSummary failed", {
+        method: "getTaskSummary",
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      if (error instanceof Error) {
+        if (error.message.includes("GEMINI_API_KEY")) {
+          console.warn(
+            "HttpTaskController.getTaskSummary - AI service configuration error",
+            {
+              method: "getTaskSummary",
+              requestId,
+              error: error.message,
+            },
+          );
+          res.status(500).json({ error: "AI service configuration error" });
+          return;
+        }
+
+        if (error.message.includes("Authentication required")) {
+          console.warn(
+            "HttpTaskController.getTaskSummary - Authentication error",
+            {
+              method: "getTaskSummary",
+              requestId,
+              error: error.message,
+            },
+          );
+          res.status(401).json({ error: "Authentication required" });
+          return;
+        }
+      }
+
+      // Generic error response
+      console.error(
+        "HttpTaskController.getTaskSummary - Internal server error",
+        {
+          method: "getTaskSummary",
+          requestId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
       res.status(500).json({ error: "Internal server error" });
     }
   }

@@ -1,0 +1,26 @@
+# Ignore Next.js specific files
+.next/
+out/
+dist/
+build/
+
+# Ignore test files
+tests/
+coverage/
+
+# Ignore development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore documentation
+docs/
+*.md
+
+# Ignore scripts
+scripts/
+
+# Ignore git
+.git/
+.husky/ 

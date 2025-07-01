@@ -40,7 +40,7 @@ export class AssignTaskUseCase {
 
     // Validar que el assignToUserId sea un UUID válido
     if (!this.isValidUUID(assignToUserId)) {
-      throw new Error("ID de usuario inválido");
+      throw new Error("Invalid user ID");
     }
 
     // Buscar la tarea

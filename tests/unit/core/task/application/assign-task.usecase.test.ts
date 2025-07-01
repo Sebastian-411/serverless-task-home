@@ -12,6 +12,8 @@ const mockTaskRepository: jest.Mocked<TaskRepositoryPort> = {
   findTaskById: jest.fn(),
   updateTask: jest.fn(),
   deleteTask: jest.fn(),
+  findRecentTasks: jest.fn(),
+  findRecentTasksByUser: jest.fn(),
 };
 
 describe("AssignTaskUseCase", () => {
@@ -97,7 +99,7 @@ describe("AssignTaskUseCase", () => {
           currentUserId,
           "ADMIN",
         ),
-      ).rejects.toThrow("ID de usuario inválido");
+      ).rejects.toThrow("Invalid user ID");
     });
 
     it("debería lanzar error cuando la tarea no existe", async () => {

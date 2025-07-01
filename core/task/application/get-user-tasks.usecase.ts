@@ -249,9 +249,7 @@ export class GetUserTasksUseCase {
           reason: "Regular user attempting to view another user's tasks",
         },
       );
-      throw new Error(
-        "You don't have permission to view tasks from other users",
-      );
+      throw new Error("No tienes permisos para ver tareas de otros usuarios");
     }
 
     console.log(
@@ -302,7 +300,7 @@ export class GetUserTasksUseCase {
           },
         );
         throw new Error(
-          "You don't have permission to view tasks assigned to other users",
+          "No tienes permisos para ver tareas asignadas a otros usuarios",
         );
       }
       if (filters.createdBy && filters.createdBy !== currentUserId) {
@@ -316,7 +314,7 @@ export class GetUserTasksUseCase {
           },
         );
         throw new Error(
-          "You don't have permission to view tasks created by other users",
+          "No tienes permisos para ver tareas creadas por otros usuarios",
         );
       }
     }

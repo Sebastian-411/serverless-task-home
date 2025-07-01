@@ -1,7 +1,7 @@
 {
   "name": "serverless-task-home",
   "version": "1.0.0",
-  "description": "API REST serverless con autenticación basada en roles, gestión de tareas y usuarios usando Next.js, Prisma y Supabase",
+  "description": "API REST serverless con autenticación basada en roles, gestión de tareas y usuarios usando Vercel Functions, Prisma y Supabase",
   "main": "index.js",
   "type": "commonjs",
   "engines": {
@@ -51,7 +51,7 @@
   "keywords": [
     "serverless",
     "api",
-    "nextjs",
+    "vercel-functions",
     "prisma",
     "supabase",
     "typescript",
@@ -73,12 +73,15 @@
   },
   "homepage": "https://github.com/Sebastian-411/serverless-task-home#readme",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.10.1",
     "@supabase/supabase-js": "^2.50.2",
     "axios": "^1.10.0",
     "dotenv": "^16.5.0",
     "prisma": "^6.10.1",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-dist": "^5.25.3",
+    "tsconfig-paths": "^4.2.0",
     "uuid": "^11.1.0",
     "zod": "^3.25.67"
   },
@@ -86,6 +89,7 @@
     "@eslint/js": "^9.30.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
+    "@types/swagger-jsdoc": "^6.0.4",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",

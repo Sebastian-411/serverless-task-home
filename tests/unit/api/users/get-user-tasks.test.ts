@@ -81,7 +81,7 @@ describe("GET /users/:id/tasks", () => {
       // Assert
       expect(mockSetHeader).toHaveBeenCalledWith("Allow", ["GET"]);
       expect(mockStatus).toHaveBeenCalledWith(405);
-      expect(mockJson).toHaveBeenCalledWith({ error: "Método no permitido" });
+      expect(mockJson).toHaveBeenCalledWith({ error: "Method not allowed" });
     });
   });
 

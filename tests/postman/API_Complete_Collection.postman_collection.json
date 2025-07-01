@@ -2061,6 +2061,69 @@
                   "path": ["tasks", "{{unassigned_task_id}}", "assign"]
                 }
               }
+            },
+            {
+              "name": "✅ Get Tasks Summary - Admin (AI)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 200\", function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "pm.test(\"Response tiene summary y taskCount\", function () {",
+                      "    const response = pm.response.json();",
+                      "    pm.expect(response).to.have.property('summary');",
+                      "    pm.expect(response).to.have.property('taskCount');",
+                      "    pm.expect(response).to.have.property('userRole');",
+                      "    pm.expect(response.userRole).to.equal('admin');",
+                      "});",
+                      "console.log('🧠 Resumen IA:', pm.response.json().summary);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tasks/summary?limit=5",
+                  "host": ["{{base_url}}"],
+                  "path": ["tasks", "summary"],
+                  "query": [{ "key": "limit", "value": "5" }]
+                },
+                "description": "Obtiene un resumen generado por IA de las tareas más recientes (admin: todas las tareas)."
+              },
+              "response": [
+                {
+                  "name": "Ejemplo Admin",
+                  "originalRequest": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{admin_token}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{base_url}}/tasks/summary?limit=5",
+                      "host": ["{{base_url}}"],
+                      "path": ["tasks", "summary"],
+                      "query": [{ "key": "limit", "value": "5" }]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "body": "{\n  \"summary\": \"Recent tasks include improving login flow, updating UI, and setting up CI/CD pipelines.\",\n  \"taskCount\": 5,\n  \"userRole\": \"admin\",\n  \"limit\": 5\n}"
+                }
+              ]
             }
           ]
         },

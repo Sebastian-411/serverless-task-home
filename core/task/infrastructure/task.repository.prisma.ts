@@ -351,4 +351,107 @@ export class TaskRepositoryPrisma implements TaskRepositoryPort {
       throw error;
     }
   }
+
+  /**
+   * Finds the most recent tasks in the system.
+   *
+   * @param limit - Maximum number of tasks to return
+   * @returns Promise resolving to array of recent tasks
+   */
+  async findRecentTasks(limit: number): Promise<Task[]> {
+    console.log("TaskRepository.findRecentTasks called", {
+      method: "findRecentTasks",
+      limit,
+    });
+
+    try {
+      const tasks = await this.prisma.task.findMany({
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          priority: true,
+          dueDate: true,
+          assignedTo: true,
+          createdBy: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      const mappedTasks = tasks.map((task) => this.mapToTask(task));
+
+      console.log("TaskRepository.findRecentTasks completed", {
+        method: "findRecentTasks",
+        tasksFound: mappedTasks.length,
+        limit,
+      });
+
+      return mappedTasks;
+    } catch (error) {
+      console.error("TaskRepository.findRecentTasks failed", {
+        method: "findRecentTasks",
+        limit,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Finds the most recent tasks assigned to a specific user.
+   *
+   * @param userId - ID of the user
+   * @param limit - Maximum number of tasks to return
+   * @returns Promise resolving to array of recent tasks assigned to the user
+   */
+  async findRecentTasksByUser(userId: string, limit: number): Promise<Task[]> {
+    console.log("TaskRepository.findRecentTasksByUser called", {
+      method: "findRecentTasksByUser",
+      userId,
+      limit,
+    });
+
+    try {
+      const tasks = await this.prisma.task.findMany({
+        where: { assignedTo: userId },
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          priority: true,
+          dueDate: true,
+          assignedTo: true,
+          createdBy: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      const mappedTasks = tasks.map((task) => this.mapToTask(task));
+
+      console.log("TaskRepository.findRecentTasksByUser completed", {
+        method: "findRecentTasksByUser",
+        userId,
+        tasksFound: mappedTasks.length,
+        limit,
+      });
+
+      return mappedTasks;
+    } catch (error) {
+      console.error("TaskRepository.findRecentTasksByUser failed", {
+        method: "findRecentTasksByUser",
+        userId,
+        limit,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
 }

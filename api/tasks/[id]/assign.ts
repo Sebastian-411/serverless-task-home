@@ -71,10 +71,9 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 import { HttpTaskController } from "../../../core/task/infrastructure/adapters/in/http-task-controller";
 
-const taskController = new HttpTaskController();
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === "POST") {
+    const taskController = new HttpTaskController();
     return await taskController.assignTask(req, res);
   }
 

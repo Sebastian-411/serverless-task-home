@@ -54,6 +54,23 @@ export interface TaskRepositoryPort {
    * @returns Promise that resolves when the task is deleted
    */
   deleteTask(id: string): Promise<void>;
+
+  /**
+   * Finds the most recent tasks in the system.
+   *
+   * @param limit - Maximum number of tasks to return
+   * @returns Promise resolving to array of recent tasks
+   */
+  findRecentTasks(limit: number): Promise<Task[]>;
+
+  /**
+   * Finds the most recent tasks assigned to a specific user.
+   *
+   * @param userId - ID of the user
+   * @param limit - Maximum number of tasks to return
+   * @returns Promise resolving to array of recent tasks assigned to the user
+   */
+  findRecentTasksByUser(userId: string, limit: number): Promise<Task[]>;
 }
 
 /**
@@ -109,7 +126,8 @@ export class GetTasksUseCase {
     const originalPage = page;
     const originalLimit = limit;
     if (page < 1) page = 1;
-    if (limit < 1 || limit > 100) limit = 10;
+    if (limit < 1) limit = 10;
+    if (limit > 100) limit = 100;
 
     console.log("GetTasksUseCase.getTasks - Parameters normalized", {
       method: "getTasks",
@@ -136,7 +154,7 @@ export class GetTasksUseCase {
       method: "getTasks",
       authorizedFilters,
     });
-    const validatedFilters = this.validateFilters(authorizedFilters);
+    const validatedFilters = this.validateFilters(authorizedFilters, userId);
 
     // Get tasks from repository
     console.log("GetTasksUseCase.getTasks - Retrieving tasks from repository", {
@@ -203,9 +221,13 @@ export class GetTasksUseCase {
    * Ensures filter values are valid and converts them to appropriate types.
    *
    * @param filters - Raw filter criteria to validate
+   * @param userId - ID of the authenticated user
    * @returns Validated and normalized filter criteria
    */
-  private validateFilters(filters: GetTasksFilters): GetTasksFilters {
+  private validateFilters(
+    filters: GetTasksFilters,
+    userId?: string,
+  ): GetTasksFilters {
     console.log("GetTasksUseCase.validateFilters called", {
       method: "validateFilters",
       filters,
@@ -250,21 +272,39 @@ export class GetTasksUseCase {
       );
     }
 
-    // Validate assignedTo (can be any non-empty string)
-    if (filters.assignedTo && filters.assignedTo.trim()) {
+    // Validate assignedTo (must be valid UUID or igual al userId)
+    if (
+      filters.assignedTo &&
+      (this.isValidUUID(filters.assignedTo) ||
+        (userId && filters.assignedTo === userId))
+    ) {
       validated.assignedTo = filters.assignedTo;
       console.log("GetTasksUseCase.validateFilters - AssignedTo validated", {
         method: "validateFilters",
         assignedTo: filters.assignedTo,
       });
+    } else if (filters.assignedTo) {
+      console.warn("GetTasksUseCase.validateFilters - Invalid assignedTo", {
+        method: "validateFilters",
+        invalidAssignedTo: filters.assignedTo,
+      });
     }
 
-    // Validate createdBy (can be any non-empty string)
-    if (filters.createdBy && filters.createdBy.trim()) {
+    // Validate createdBy (must be valid UUID o igual al userId)
+    if (
+      filters.createdBy &&
+      (this.isValidUUID(filters.createdBy) ||
+        (userId && filters.createdBy === userId))
+    ) {
       validated.createdBy = filters.createdBy;
       console.log("GetTasksUseCase.validateFilters - CreatedBy validated", {
         method: "validateFilters",
         createdBy: filters.createdBy,
+      });
+    } else if (filters.createdBy) {
+      console.warn("GetTasksUseCase.validateFilters - Invalid createdBy", {
+        method: "validateFilters",
+        invalidCreatedBy: filters.createdBy,
       });
     }
 
@@ -333,38 +373,27 @@ export class GetTasksUseCase {
 
     // If user is not ADMIN, apply authorization restrictions
     if (userRole !== "ADMIN") {
-      // If there are specific filters, verify that the user has permissions
-      if (filters.assignedTo && filters.assignedTo !== userId) {
-        console.warn(
-          "GetTasksUseCase.applyAuthorizationFilters - Unauthorized assignedTo filter",
-          {
-            method: "applyAuthorizationFilters",
-            requestedAssignedTo: filters.assignedTo,
-            userId,
-            userRole,
-          },
-        );
+      // Si el filtro assignedTo es igual al usuario autenticado, se permite
+      if (
+        filters.assignedTo &&
+        this.isValidUUID(filters.assignedTo) &&
+        filters.assignedTo !== userId
+      ) {
         throw new Error(
-          "You don't have permission to view tasks assigned to other users",
+          "No tienes permisos para ver tareas asignadas a otros usuarios",
         );
       }
-      if (filters.createdBy && filters.createdBy !== userId) {
-        console.warn(
-          "GetTasksUseCase.applyAuthorizationFilters - Unauthorized createdBy filter",
-          {
-            method: "applyAuthorizationFilters",
-            requestedCreatedBy: filters.createdBy,
-            userId,
-            userRole,
-          },
-        );
+      // Si el filtro createdBy es igual al usuario autenticado, se permite
+      if (
+        filters.createdBy &&
+        this.isValidUUID(filters.createdBy) &&
+        filters.createdBy !== userId
+      ) {
         throw new Error(
-          "You don't have permission to view tasks created by other users",
+          "No tienes permisos para ver tareas creadas por otros usuarios",
         );
       }
-
-      // If there are no specific filters, don't apply additional filters here
-      // Authorization logic will be handled in the repository
+      // Si no son UUID válidos, se ignoran en la validación
     }
 
     console.log("GetTasksUseCase.applyAuthorizationFilters completed", {
