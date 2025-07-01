@@ -1,667 +1,242 @@
-# Serverless Task Home API
+# **Serverless Task Home API**
 
-API RESTful construida con arquitectura hexagonal, desplegada en Vercel con autenticación Supabase y base de datos PostgreSQL.
+RESTful API for user management, built using **hexagonal architecture**, deployed with Vercel Functions. Designed to be portable between environments, easy to test, and easy to maintain.
 
-## 🏗️ Arquitectura
+[![Tests](https://img.shields.io/badge/tests-842%20passing-brightgreen)](https://github.com/Sebastian-411/serverless-task-home)
+[![Coverage](https://img.shields.io/badge/coverage-93.6%25-brightgreen)](https://github.com/Sebastian-411/serverless-task-home)
+[![Architecture](https://img.shields.io/badge/architecture-hexagonal-blue)](https://github.com/Sebastian-411/serverless-task-home)
+[![Deployment](https://img.shields.io/badge/deployment-vercel-black)](https://vercel.com)
 
-- **Arquitectura Hexagonal (Clean Architecture)**
-- **API RESTful** con endpoints para gestión de usuarios
-- **Autenticación** con Supabase Auth
-- **Base de datos** PostgreSQL con Prisma ORM
-- **Storage** Supabase Storage para archivos de usuario
-- **Despliegue** en Vercel (serverless)
+## 🧭 Introduction
 
-## 🚀 Características
+User management system with role-based authentication, following principles from **Clean Architecture** and **Domain-Driven Design**. This project shows how to build serverless APIs that are scalable and maintainable, with clear separation of responsibilities and high test coverage.
 
-### Gestión de Usuarios
-- ✅ Crear usuarios (Admin)
-- ✅ Listar usuarios (Admin)
-- ✅ Obtener usuario por ID (Admin)
-- ✅ Actualizar usuario (Admin)
-- ✅ Eliminar usuario (Admin) - **Incluye limpieza automática de Storage**
-- ✅ Cambiar rol de usuario (Admin)
+**Project status**: ✅ **Ready for production** with 93.6% code coverage and 842 passing tests.
 
-### Autenticación
-- ✅ Login con email/password
-- ✅ Verificación de tokens JWT
-- ✅ Roles: Admin, User, Anonymous
+## 🏗️ Architecture and Principles
 
-### Storage Management
-- ✅ **Eliminación automática de archivos** cuando se elimina un usuario
-- ✅ **Limpieza completa de Storage** en reset de base de datos
-- ✅ Scripts manuales para limpieza de Storage/Auth
-
-## 📁 Estructura del Proyecto
+### Project Structure
 
 ```
 serverless-task-home/
-├── api/                    # Endpoints de Vercel
-├── core/                   # Lógica de negocio (arquitectura hexagonal)
-│   ├── auth/              # Módulo de autenticación
-│   ├── user/              # Módulo de usuarios
-│   └── common/            # Configuraciones y utilidades
-├── prisma/                # Esquema y migraciones de BD
-├── scripts/               # Scripts de utilidad
-├── tests/                 # Tests unitarios y Postman
-└── lib/                   # Código generado
+├── api/                    # Vercel Functions endpoints
+├── core/                   # Business logic (hexagonal architecture)
+│   ├── auth/              # Auth module
+│   ├── user/              # User module
+│   ├── task/              # Task module
+│   └── common/            # Config and utilities
+├── prisma/                # DB schema and migrations
+├── tests/                 # Unit tests and Postman
+└── docs/                  # Technical documentation
 ```
 
-## 🛠️ Instalación
+### Main Principles
 
-1. **Clonar el repositorio**
+- **Hexagonal Architecture**: Clear separation between domain, application, and infrastructure
+- **SOLID**: Object-oriented design principles
+- **DDD**: Domain-Driven Design with entities and value objects
+- **Clean Code**: Readable and maintainable code
+- **TDD**: Test-Driven Development with 93.6% coverage
+
+### Technical Decisions
+
+- **Serverless + Vercel**: Auto-scaling and low-cost deployment
+- **Supabase**: Auth and PostgreSQL database as a service
+- **Prisma ORM**: Type-safe database access
+- **TypeScript**: Type safety and better DX
+
+📖 **Detailed development process**: [docs/Report.md](docs/Report.md)
+
+## 🚀 Installation and Run
+
+### Requirements
+
+- Node.js >= 18.0.0
+- npm >= 9.0.0
+- Vercel CLI (optional for local dev)
+
+### Local Installation
+
 ```bash
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/Sebastian-411/serverless-task-home.git
 cd serverless-task-home
-```
 
-2. **Instalar dependencias**
-```bash
+# Install dependencies
 npm install
-```
 
-3. **Configurar variables de entorno**
-```bash
-# Crear archivo .env
-DATABASE_URL="postgresql://..."
-SUPABASE_URL="https://..."
-SUPABASE_ANON_KEY="..."
-SUPABASE_SERVICE_ROLE_KEY="..."  # Requerida para operaciones de admin
-```
+# Set environment variables
+cp .env.example .env
+# Edit .env with your credentials
 
-4. **Configurar base de datos**
-```bash
+# Setup database
 npm run db:generate
 npm run db:migrate
 npm run db:seed
+
+# Start in dev mode
+npm run start:dev
+```
+
+### Environment Variables
+
+```env
+DATABASE_URL="postgresql://..."
+SUPABASE_URL="https://..."
+SUPABASE_ANON_KEY="..."
+SUPABASE_SERVICE_ROLE_KEY="..."
+GEMINI_API_KEY="..."  # Optional: AI-based summaries
+```
+
+## 📬 API Endpoints
+
+### Auth
+
+- `POST /api/auth/login` - User login
+
+### User Management (requires auth)
+
+- `GET /api/users` - List users (Admin)
+- `POST /api/users` - Create user (Admin/Anonymous)
+- `GET /api/users/[id]` - Get user (Admin/User)
+- `PUT /api/users/[id]` - Update user (Admin)
+- `DELETE /api/users/[id]` - Delete user (Admin)
+- `PATCH /api/users/[id]/role` - Change user role (Admin)
+
+### Task Management
+
+- `GET /api/tasks` - List tasks
+- `POST /api/tasks` - Create task
+- `GET /api/tasks/[id]` - Get task
+- `PUT /api/tasks/[id]` - Update task
+- `DELETE /api/tasks/[id]` - Delete task
+- `PATCH /api/tasks/[id]/assign` - Assign task
+- `GET /api/tasks/summary` - Task summary (AI)
+
+### Interactive Documentation
+
+- **Swagger UI**: `/api/docs-swagger`
+- **OpenAPI Spec**: `/docs/openapi.json`
+- **Postman Collection**: `tests/postman/API_Complete_Collection.postman_collection.json`
+
+### Usage Example
+
+```bash
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@test.com", "password": "Juansebastia4231"}'
+
+# List users (needs token)
+curl -X GET http://localhost:3000/api/users \
+  -H "Authorization: Bearer <token>"
 ```
 
 ## 🧪 Testing
 
-### Tests Unitarios
+### Unit Tests
+
 ```bash
-# Todos los tests
+# Run all tests
 npm test
 
-# Tests con coverage
+# Run tests with coverage
 npm run test:coverage
 
-# Tests del core con coverage
+# Run core tests
 npm run test:core
 
-# Tests en modo watch
+# Watch mode
 npm run test:watch
 ```
 
-### Tests de Postman
-- **Colección completa**: `tests/postman/API_Complete_Collection.postman_collection.json`
-- **25 tests** cubriendo 8 endpoints y 3 roles
-- **Variables de entorno**: `tests/postman/Local_Environment.postman_environment.json`
+### Quality Metrics
 
-## 🗄️ Base de Datos
+- **842 passing tests** in 43 test suites
+- **93.6% statements**, **86.8% branches**
+- **93.1% functions**, **94.2% lines**
+- Minimum threshold: **80%** (set in CI/CD)
 
-### Comandos Prisma
+### Integration Tests
+
+- **Postman Collection**: 25 tests for 8 endpoints
+- **Env variables**: Configured for testing
+- **Semantic validation**: Real behavior vs spec
+
+## 📦 Deployment
+
+### Vercel (Recommended)
+
 ```bash
-# Generar cliente Prisma
-npm run db:generate
-
-# Ejecutar migraciones
-npm run db:migrate
-
-# Reset completo (incluye limpieza de Supabase)
-npm run db:seed:dev
-
-# Abrir Prisma Studio
-npm run db:studio
-```
-
-### Seed de Datos
-El seed crea automáticamente:
-- **Usuario Admin**: `admin@test.com` / `Juansebastia4231`
-- **Usuario Regular**: `user@test.com` / `Juansebastia4231`
-
-## 🧹 Limpieza de Supabase
-
-### Limpieza Automática
-- **Eliminación de usuario**: Automáticamente elimina archivos de Storage
-- **Reset de BD**: Limpia Auth y Storage completamente
-
-### Scripts Manuales
-```bash
-# Limpiar solo Storage
-npm run cleanup:storage
-
-# Limpiar solo Auth
-npm run cleanup:auth
-
-# Limpiar Storage y Auth
-npm run cleanup:all
-```
-
-## 📡 Endpoints API
-
-### Autenticación
-- `POST /api/auth/login` - Login de usuario
-
-### Usuarios (requieren autenticación Admin)
-- `GET /api/users` - Listar usuarios
-- `POST /api/users` - Crear usuario
-- `GET /api/users/[id]` - Obtener usuario
-- `PUT /api/users/[id]` - Actualizar usuario
-- `PATCH /api/users/[id]` - Actualizar parcialmente
-- `DELETE /api/users/[id]` - Eliminar usuario (incluye Storage)
-- `PATCH /api/users/[id]/role` - Cambiar rol
-
-## 🔐 Roles y Permisos
-
-### Admin
-- Acceso completo a todos los endpoints
-- Puede crear, leer, actualizar y eliminar usuarios
-- Puede cambiar roles de usuarios
-
-### User
-- Acceso limitado a endpoints de lectura
-- No puede modificar otros usuarios
-
-### Anonymous
-- Solo puede hacer login
-- No tiene acceso a endpoints protegidos
-
-## 📋 Detalle Completo de Endpoints
-
-### 🔐 **Autenticación**
-
-#### `POST /api/auth/login`
-- **Descripción**: Autenticación de usuario con email y password
-- **Roles permitidos**: `Anonymous`, `User`, `Admin`
-- **Body**:
-  ```json
-  {
-    "email": "user@example.com",
-    "password": "password123"
-  }
-  ```
-- **Respuesta exitosa** (200):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "user": {
-        "id": "uuid",
-        "name": "User Name",
-        "email": "user@example.com",
-        "role": "admin",
-        "phoneNumber": "+1234567890",
-        "isActive": true,
-        "emailVerified": true,
-        "lastLoginAt": "2024-01-01T00:00:00Z",
-        "address": {
-          "id": "uuid",
-          "addressLine1": "123 Main St",
-          "addressLine2": "Apto 8B",
-          "city": "Medellín",
-          "stateOrProvince": "Antioquia",
-          "postalCode": "050001",
-          "country": "CO",
-          "createdAt": "2024-01-01T00:00:00Z",
-          "updatedAt": "2024-01-01T00:00:00Z"
-        }
-      },
-      "token": "jwt_token_here"
-    }
-  }
-  ```
-- **Respuesta de error** (401):
-  ```json
-  {
-    "success": false,
-    "error": {
-      "message": "Invalid credentials",
-      "code": "INVALID_CREDENTIALS"
-    }
-  }
-  ```
-
----
-
-### 👥 **Gestión de Usuarios**
-
-#### `GET /api/users`
-- **Descripción**: Obtener lista paginada de usuarios
-- **Roles permitidos**: `Admin`
-- **Headers requeridos**: `Authorization: Bearer <token>`
-- **Query parameters**:
-  - `page` (opcional): Número de página (default: 1)
-  - `limit` (opcional): Usuarios por página (default: 10, max: 100)
-- **Respuesta exitosa** (200):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "users": [
-        {
-          "id": "uuid",
-          "name": "User Name",
-          "email": "user@example.com",
-          "role": "admin",
-          "phoneNumber": "+1234567890",
-          "isActive": true,
-          "emailVerified": true,
-          "lastLoginAt": "2024-01-01T00:00:00Z",
-          "address": { ... }
-        }
-      ],
-      "pagination": {
-        "page": 1,
-        "limit": 10,
-        "total": 25,
-        "totalPages": 3
-      }
-    }
-  }
-  ```
-- **Respuesta de error** (401/403):
-  ```json
-  {
-    "success": false,
-    "error": {
-      "message": "Only administrators can access users list",
-      "code": "UNAUTHORIZED"
-    }
-  }
-  ```
-
-#### `POST /api/users`
-- **Descripción**: Crear nuevo usuario
-- **Roles permitidos**: `Admin`, `Anonymous` (solo para registro de usuarios regulares)
-- **Headers requeridos**: `Authorization: Bearer <token>` (solo para Admin)
-- **Body**:
-  ```json
-  {
-    "name": "New User",
-    "email": "newuser@example.com",
-    "password": "Password123",
-    "phoneNumber": "+1234567890",
-    "role": "user",
-    "address": {
-      "addressLine1": "123 Main St",
-      "addressLine2": "Apto 8B",
-      "city": "Medellín",
-      "stateOrProvince": "Antioquia",
-      "postalCode": "050001",
-      "country": "CO"
-    }
-  }
-  ```
-- **Restricciones**:
-  - `Anonymous` solo puede crear usuarios con `role: "user"`
-  - `Admin` puede crear usuarios con cualquier rol
-- **Respuesta exitosa** (201):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "user": {
-        "id": "uuid",
-        "name": "New User",
-        "email": "newuser@example.com",
-        "role": "user",
-        "phoneNumber": "+1234567890",
-        "isActive": true,
-        "emailVerified": false,
-        "address": {
-          "id": "uuid",
-          "addressLine1": "123 Main St",
-          "addressLine2": "Apto 8B",
-          "city": "Medellín",
-          "stateOrProvince": "Antioquia",
-          "postalCode": "050001",
-          "country": "CO",
-          "createdAt": "2024-01-01T00:00:00Z",
-          "updatedAt": "2024-01-01T00:00:00Z"
-        }
-      }
-    }
-  }
-  ```
-
-#### `GET /api/users/[id]`
-- **Descripción**: Obtener usuario específico por ID
-- **Roles permitidos**: `Admin`, `User` (solo su propio perfil)
-- **Headers requeridos**: `Authorization: Bearer <token>`
-- **Respuesta exitosa** (200):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "user": {
-        "id": "uuid",
-        "name": "User Name",
-        "email": "user@example.com",
-        "role": "admin",
-        "phoneNumber": "+1234567890",
-        "isActive": true,
-        "emailVerified": true,
-        "lastLoginAt": "2024-01-01T00:00:00Z",
-        "address": { ... }
-      }
-    }
-  }
-  ```
-- **Respuesta de error** (403):
-  ```json
-  {
-    "success": false,
-    "error": {
-      "message": "You can only access your own profile",
-      "code": "FORBIDDEN"
-    }
-  }
-  ```
-
-#### `PUT /api/users/[id]`
-- **Descripción**: Actualizar usuario completo
-- **Roles permitidos**: `Admin`
-- **Headers requeridos**: `Authorization: Bearer <token>`
-- **Body** (todos los campos requeridos):
-  ```json
-  {
-    "name": "Updated Name",
-    "email": "updated@example.com",
-    "phoneNumber": "+1234567890",
-    "role": "admin",
-    "address": {
-      "addressLine1": "456 New St",
-      "addressLine2": "Piso 3",
-      "city": "Bogotá",
-      "stateOrProvince": "Cundinamarca",
-      "postalCode": "110111",
-      "country": "CO"
-    }
-  }
-  ```
-- **Respuesta exitosa** (200):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "user": {
-        "id": "uuid",
-        "name": "Updated Name",
-        "email": "updated@example.com",
-        "role": "admin",
-        "phoneNumber": "+1234567890",
-        "isActive": true,
-        "emailVerified": true,
-        "lastLoginAt": "2024-01-01T00:00:00Z",
-        "address": { ... }
-      }
-    }
-  }
-  ```
-
-#### `PATCH /api/users/[id]`
-- **Descripción**: Actualizar usuario parcialmente
-- **Roles permitidos**: `Admin`
-- **Headers requeridos**: `Authorization: Bearer <token>`
-- **Body** (campos opcionales):
-  ```json
-  {
-    "name": "Updated Name",
-    "phoneNumber": "+1234567890"
-  }
-  ```
-- **Respuesta exitosa** (200): Similar a PUT
-
-#### `DELETE /api/users/[id]`
-- **Descripción**: Eliminar usuario (incluye limpieza automática de Storage)
-- **Roles permitidos**: `Admin`
-- **Headers requeridos**: `Authorization: Bearer <token>`
-- **Restricciones**: No se puede eliminar el propio usuario admin
-- **Funcionalidad**: 
-  - Elimina usuario de Supabase Auth
-  - Elimina archivos del usuario en Supabase Storage
-  - Elimina usuario de base de datos local
-- **Respuesta exitosa** (200):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "message": "User deleted successfully"
-    }
-  }
-  ```
-- **Respuesta de error** (403):
-  ```json
-  {
-    "success": false,
-    "error": {
-      "message": "Administrators cannot delete their own account",
-      "code": "FORBIDDEN"
-    }
-  }
-  ```
-
-#### `PATCH /api/users/[id]/role`
-- **Descripción**: Cambiar rol de usuario
-- **Roles permitidos**: `Admin`
-- **Headers requeridos**: `Authorization: Bearer <token>`
-- **Body**:
-  ```json
-  {
-    "role": "admin"
-  }
-  ```
-- **Restricciones**: No se puede cambiar el propio rol
-- **Respuesta exitosa** (200):
-  ```json
-  {
-    "success": true,
-    "data": {
-      "user": {
-        "id": "uuid",
-        "name": "User Name",
-        "email": "user@example.com",
-        "role": "admin",
-        "phoneNumber": "+1234567890",
-        "isActive": true,
-        "emailVerified": true,
-        "lastLoginAt": "2024-01-01T00:00:00Z",
-        "address": { ... }
-      }
-    }
-  }
-  ```
-
----
-
-### 📊 **Códigos de Estado HTTP**
-
-| Código | Descripción |
-|--------|-------------|
-| 200 | OK - Operación exitosa |
-| 201 | Created - Recurso creado exitosamente |
-| 400 | Bad Request - Datos inválidos |
-| 401 | Unauthorized - No autenticado |
-| 403 | Forbidden - No autorizado para la operación |
-| 404 | Not Found - Recurso no encontrado |
-| 409 | Conflict - Conflicto (ej: email ya existe) |
-| 422 | Unprocessable Entity - Validación fallida |
-| 500 | Internal Server Error - Error del servidor |
-
-### 🔒 **Autenticación y Autorización**
-
-#### Headers Requeridos
-```http
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-```
-
-#### Estructura del Token JWT
-```json
-{
-  "sub": "user_id",
-  "email": "user@example.com",
-  "role": "admin",
-  "iat": 1640995200,
-  "exp": 1641081600
-}
-```
-
-### 📝 **Validaciones**
-
-#### Email
-- Formato válido de email
-- Máximo 255 caracteres
-- Normalizado a minúsculas
-
-#### Password
-- Mínimo 8 caracteres
-- Al menos 1 mayúscula
-- Al menos 1 minúscula
-- Al menos 1 número
-
-#### Name
-- Mínimo 1 carácter
-- Máximo 100 caracteres
-- Trim de espacios
-
-#### Phone Number
-- Formato internacional (+1234567890)
-- Validación de formato
-
-#### Role
-- Valores permitidos: `"admin"`, `"user"`
-- Case insensitive
-
-### 🗄️ **Base de Datos**
-
-#### Esquema de Usuario
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(20) NOT NULL DEFAULT 'user',
-  phoneNumber VARCHAR(20),
-  isActive BOOLEAN DEFAULT true,
-  emailVerified BOOLEAN DEFAULT false,
-  lastLoginAt TIMESTAMP,
-  createdAt TIMESTAMP DEFAULT NOW(),
-  updatedAt TIMESTAMP DEFAULT NOW()
-);
-```
-
-#### Esquema de Dirección
-```sql
-CREATE TABLE addresses (
-  id UUID PRIMARY KEY,
-  addressLine1 VARCHAR(500) NOT NULL,
-  addressLine2 VARCHAR(500),
-  city VARCHAR(100) NOT NULL,
-  stateOrProvince VARCHAR(100) NOT NULL,
-  postalCode VARCHAR(20) NOT NULL,
-  country VARCHAR(100) NOT NULL,
-  createdAt TIMESTAMP DEFAULT NOW(),
-  updatedAt TIMESTAMP DEFAULT NOW()
-);
-```
-
-## 🚀 Despliegue
-
-### Vercel
-```bash
-# Desplegar
+# Deploy
 vercel
 
-# Desplegar en producción
+# Deploy to production
 vercel --prod
 ```
 
-### Variables de Entorno en Vercel
+### Prod Environment Variables
+
+Set in Vercel Dashboard:
+
 - `DATABASE_URL`
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `GEMINI_API_KEY`
 
-## 📊 Monitoreo
+### CI/CD
 
-### Logs
-- Logs detallados de eliminación de usuarios
-- Logs de limpieza de Storage
-- Logs de operaciones de Auth
+- **Pre-commit hooks**: Auto lint and test
+- **PR validation**: Tests and coverage check
+- **Auto deploy**: On push to `main` branch
 
-### Métricas
-- Tiempo de respuesta de endpoints
-- Cobertura de tests
-- Estado de la base de datos
+## 🤖 Main Technologies
 
-## 🔧 Desarrollo
+| Technology     | Version | Role                |
+| -------------- | ------- | ------------------- |
+| **TypeScript** | 5.7.2   | Main language       |
+| **Vercel**     | 44.2.6  | Serverless platform |
+| **Supabase**   | 2.50.2  | Auth and database   |
+| **Prisma**     | 6.10.1  | ORM                 |
+| **Jest**       | 30.0.3  | Testing framework   |
+| **Zod**        | 3.25.67 | Schema validation   |
+| **Swagger**    | 6.2.8   | API docs            |
 
-### Estructura de Commits
-- `feat:` Nuevas características
-- `fix:` Correcciones de bugs
-- `docs:` Documentación
-- `test:` Tests
-- `refactor:` Refactorización
+## 🧠 Architecture Decisions
 
-### Pre-commit Hooks
-- Linting automático con ESLint
-- Tests unitarios
-- Validación de tipos TypeScript
+### Hexagonal Architecture
 
-## 🤝 Contribución
+- **Domain**: Pure business entities and rules
+- **Application**: Use cases and logic
+- **Infrastructure**: Adapters for DB, Auth, HTTP
 
-1. Fork el proyecto
-2. Crear rama feature (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir Pull Request
+### Security and Auth
 
-## 📝 Licencia
+- **JWT via Supabase**: Safe tokens with real-time check
+- **Role-based auth**: Contextual and granular
+- **Input validation**: With Zod schemas
 
-Este proyecto está bajo la Licencia ISC.
+### Database
 
-## 🆘 Soporte
+- **PostgreSQL**: Relational with JSON support
+- **Prisma ORM**: Type-safe with auto migrations
+- **Optimized indexes**: 20+ for performance
 
-Para soporte técnico o preguntas:
-- Crear un issue en GitHub
-- Revisar la documentación de Postman
-- Consultar los logs de la aplicación
+### Serverless
 
-## Matriz de permisos por endpoint y rol
+- **Cold start optimization**: Small dependencies
+- **Timeouts**: 30s per function
+- **Connection pooling**: Reuse DB connections
 
-| Endpoint                | ADMIN                                                                 | USER                                 | NO AUTH                                  |
-|-------------------------|-----------------------------------------------------------------------|--------------------------------------|-------------------------------------------|
-| **GET /users**          | Puede acceder a todos los usuarios                                    | No puede acceder a ninguno           | No puede acceder                         |
-| **GET /users/:id**      | Puede acceder a cualquier usuario                                     | Solo puede acceder a su propio perfil| No puede acceder                         |
-| **POST /users**         | Puede crear usuarios (tanto USER como ADMIN)                          | No puede crear usuarios              | Puede registrarse solo como USER          |
-| **PATCH /users/:id/role** | Puede cambiar el rol a cualquier usuario                            | No puede cambiar el rol a nadie      | No puede acceder                         |
+## 🪪 Author & Credits
 
-### Lógica de acceso y validaciones
+**Developed by**: [Sebastian](https://github.com/Sebastian-411)
+**Contact**: [info@sebastiandiazdev.com](mailto:info@sebastiandiazdev.com)
+**Repository**: [GitHub](https://github.com/Sebastian-411/serverless-task-home)
 
-- **GET /users**
-  - Solo ADMIN puede listar todos los usuarios.
-  - USER y NO AUTH reciben error de autorización.
+## Another resources
 
-- **GET /users/:id**
-  - ADMIN puede consultar cualquier usuario.
-  - USER solo puede consultar su propio usuario (por su ID).
-  - NO AUTH recibe error de autorización.
-
-- **POST /users**
-  - ADMIN puede crear usuarios de cualquier rol (USER o ADMIN).
-  - USER no puede crear usuarios.
-  - NO AUTH puede registrarse, pero solo como USER (no puede auto-registrarse como ADMIN).
-
-- **PATCH /users/:id/role**
-  - Solo ADMIN puede cambiar el rol de cualquier usuario.
-  - USER no puede cambiar el rol de nadie (ni el suyo ni el de otros).
-  - NO AUTH no tiene acceso.
-
-#### Notas adicionales
-- Todos los endpoints (excepto el registro de usuario) requieren autenticación con token válido.
-- La autorización se valida estrictamente según el rol y la identidad del usuario.
-- Si NO AUTH intenta crear un usuario con rol distinto a USER, la petición será rechazada.
-- Si un USER intenta acceder a recursos de otros usuarios o realizar acciones administrativas, recibirá un error de autorización.
-- Los mensajes de error siguen el formato estándar de la API con códigos HTTP apropiados (401, 403, etc).
+- **Issues**: [GitHub Issues](https://github.com/Sebastian-411/serverless-task-home/issues)
+- **Docs**: [docs/](docs/)
+- **Postman**: [Test Collection](tests/postman/)
