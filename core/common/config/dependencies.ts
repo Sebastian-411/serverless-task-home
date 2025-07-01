@@ -1,15 +1,16 @@
-import { ChangeUserRoleUseCase } from '../../user/application/change-user-role.usecase';
-import { CreateUserUseCase } from '../../user/application/create-user.usecase';
-import { GetUserByIdUseCase } from '../../user/application/get-user-by-id.usecase';
-import { GetUsersUseCase } from '../../user/application/get-users.usecase';
-import { UpdateUserUseCase } from '../../user/application/update-user.usecase';
-import { DeleteUserUseCaseImpl as DeleteUserUseCase } from '../../user/application/delete-user.usecase';
-import { LoginUseCase } from '../../auth/application/login.usecase';
-import { UserRepositoryPrisma } from '../../user/infrastructure/adapters/out/user-repository-prisma';
-import { SupabaseAuthService } from '../../auth/infrastructure/adapters/out/supabase-auth.service';
-import { HttpUserController } from '../../user/infrastructure/adapters/in/http-user-controller';
-import { HttpAuthController } from '../../auth/infrastructure/adapters/in/http-auth-controller';
-import { PrismaClient } from '../../../lib/generated/prisma';
+import { PrismaClient } from "@prisma/client";
+
+import { ChangeUserRoleUseCase } from "../../user/application/change-user-role.usecase";
+import { CreateUserUseCase } from "../../user/application/create-user.usecase";
+import { GetUserByIdUseCase } from "../../user/application/get-user-by-id.usecase";
+import { GetUsersUseCase } from "../../user/application/get-users.usecase";
+import { UpdateUserUseCase } from "../../user/application/update-user.usecase";
+import { DeleteUserUseCaseImpl as DeleteUserUseCase } from "../../user/application/delete-user.usecase";
+import { LoginUseCase } from "../../auth/application/login.usecase";
+import { UserRepositoryPrisma } from "../../user/infrastructure/adapters/out/user-repository-prisma";
+import { SupabaseAuthService } from "../../auth/infrastructure/adapters/out/supabase-auth.service";
+import { HttpUserController } from "../../user/infrastructure/adapters/in/http-user-controller";
+import { HttpAuthController } from "../../auth/infrastructure/adapters/in/http-auth-controller";
 
 /**
  * High-performance Dependency Injection Container
@@ -49,16 +50,16 @@ class DependencyContainer {
     if (!this._prisma) {
       this._prisma = new PrismaClient({
         // Performance optimizations
-        log: process.env.NODE_ENV === 'development' ? ['error'] : [],
-        errorFormat: 'minimal',
-        
+        log: process.env.NODE_ENV === "development" ? ["error"] : [],
+        errorFormat: "minimal",
+
         // Connection pooling configuration for serverless environments
         datasources: {
           db: {
-            url: process.env.DATABASE_URL
-          }
+            url: process.env.DATABASE_URL,
+          },
         },
-        
+
         // Optimize for serverless/edge functions
         transactionOptions: {
           maxWait: 5000, // 5 seconds max wait
@@ -90,7 +91,7 @@ class DependencyContainer {
       this._authService = new SupabaseAuthService({
         url: process.env.SUPABASE_URL!,
         key: process.env.SUPABASE_ANON_KEY!,
-        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
       });
     }
     return this._authService;
@@ -115,7 +116,10 @@ class DependencyContainer {
 
   get createUserUseCase(): CreateUserUseCase {
     if (!this._createUserUseCase) {
-      this._createUserUseCase = new CreateUserUseCase(this.userRepository, this.authService);
+      this._createUserUseCase = new CreateUserUseCase(
+        this.userRepository,
+        this.authService,
+      );
     }
     return this._createUserUseCase;
   }
@@ -129,21 +133,29 @@ class DependencyContainer {
 
   get deleteUserUseCase(): DeleteUserUseCase {
     if (!this._deleteUserUseCase) {
-      this._deleteUserUseCase = new DeleteUserUseCase(this.userRepository, this.authService);
+      this._deleteUserUseCase = new DeleteUserUseCase(
+        this.userRepository,
+        this.authService,
+      );
     }
     return this._deleteUserUseCase;
   }
 
   get changeUserRoleUseCase(): ChangeUserRoleUseCase {
     if (!this._changeUserRoleUseCase) {
-      this._changeUserRoleUseCase = new ChangeUserRoleUseCase(this.userRepository);
+      this._changeUserRoleUseCase = new ChangeUserRoleUseCase(
+        this.userRepository,
+      );
     }
     return this._changeUserRoleUseCase;
   }
 
   get loginUseCase(): LoginUseCase {
     if (!this._loginUseCase) {
-      this._loginUseCase = new LoginUseCase(this.authService, this.userRepository);
+      this._loginUseCase = new LoginUseCase(
+        this.authService,
+        this.userRepository,
+      );
     }
     return this._loginUseCase;
   }
@@ -159,7 +171,7 @@ class DependencyContainer {
         this.getUserByIdUseCase,
         this.updateUserUseCase,
         this.deleteUserUseCase,
-        this.changeUserRoleUseCase
+        this.changeUserRoleUseCase,
       );
     }
     return this._userController;
@@ -187,5 +199,5 @@ class DependencyContainer {
 export const Dependencies = DependencyContainer.getInstance();
 
 // Export types for better IDE support
-export type { AuthContext } from './middlewares/auth.middleware';
-export type { UserRepositoryPrisma } from '../../user/infrastructure/adapters/out/user-repository-prisma'; 
+export type { AuthContext } from "./middlewares/auth.middleware";
+export type { UserRepositoryPrisma } from "../../user/infrastructure/adapters/out/user-repository-prisma";

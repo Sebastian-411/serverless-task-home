@@ -3,7 +3,8 @@ import {
   UserRole,
   TaskStatus,
   TaskPriority,
-} from "../lib/generated/prisma";
+} from "@prisma/client";
+
 import { SupabaseAuthService } from "../core/auth/infrastructure/adapters/out/supabase-auth.service";
 import type {
   AuthUser,
